@@ -21,17 +21,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.annotation.Inherited;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
@@ -817,6 +810,19 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
     }
   }
 
+  @Override
+  public List<String> fetchDistinctExecutorGroups() throws ExecutorManagerException {
+    QueryRunner runner = createQueryRunner();
+    FetchExecutorGroupHandler executorGroupHandler = new FetchExecutorGroupHandler();
+    try {
+      List<String> groups = runner.query(FetchExecutorGroupHandler.FETCH_DISTINCT_EXECUTOR_GROUPS,
+              executorGroupHandler);
+      return groups;
+    } catch (Exception e) {
+      throw new ExecutorManagerException("Error fetching executor groups");
+    }
+  }
+
   /**
    *
    * {@inheritDoc}
@@ -1517,15 +1523,15 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   private static class FetchExecutorHandler implements
     ResultSetHandler<List<Executor>> {
     private static String FETCH_ALL_EXECUTORS =
-      "SELECT id, host, port, active FROM executors";
+      "SELECT id, host, port, active ,`group` FROM executors";
     private static String FETCH_ACTIVE_EXECUTORS =
-      "SELECT id, host, port, active FROM executors where active=true";
+      "SELECT id, host, port, active,`group` FROM executors where active=true";
     private static String FETCH_EXECUTOR_BY_ID =
-      "SELECT id, host, port, active FROM executors where id=?";
+      "SELECT id, host, port, active,`group` FROM executors where id=?";
     private static String FETCH_EXECUTOR_BY_HOST_PORT =
-      "SELECT id, host, port, active FROM executors where host=? AND port=?";
+      "SELECT id, host, port, active,`group` FROM executors where host=? AND port=?";
     private static String FETCH_EXECUTION_EXECUTOR =
-      "SELECT ex.id, ex.host, ex.port, ex.active FROM "
+      "SELECT ex.id, ex.host, ex.port, ex.active, ex.`group` FROM "
         + " executors ex INNER JOIN execution_flows ef "
         + "on ex.id = ef.executor_id  where exec_id=?";
 
@@ -1541,11 +1547,34 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
         String host = rs.getString(2);
         int port = rs.getInt(3);
         boolean active = rs.getBoolean(4);
-        Executor executor = new Executor(id, host, port, active);
+        String group = rs.getString(5);
+        Executor executor = new Executor(id, host, port, active,group);
         executors.add(executor);
       } while (rs.next());
 
       return executors;
+    }
+  }
+
+  /**
+   * JDBC ResuultSetHandler for executor_groups
+   */
+  private static class FetchExecutorGroupHandler implements
+          ResultSetHandler<List<String >> {
+    private static String FETCH_DISTINCT_EXECUTOR_GROUPS =
+            "SELECT distinct(`group`) from executors";
+    @Override
+    public List<String> handle(ResultSet rs) throws SQLException {
+      if(!rs.next()) {
+        return Collections.<String> emptyList();
+      }
+      List<String> groups = new ArrayList<>();
+      do {
+        String grp = rs.getString(1);
+        groups.add(grp);
+      } while (rs.next());
+
+      return groups;
     }
   }
 

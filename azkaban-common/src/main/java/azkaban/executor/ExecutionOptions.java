@@ -16,15 +16,10 @@
 
 package azkaban.executor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import azkaban.executor.mail.DefaultMailCreator;
 import azkaban.utils.TypedMapWrapper;
+
+import java.util.*;
 
 /**
  * Execution options for submitted flows and scheduled flows
@@ -53,11 +48,13 @@ public class ExecutionOptions {
   private static final String SUCCESS_EMAILS_OVERRIDE = "successEmailsOverride";
   private static final String MAIL_CREATOR = "mailCreator";
   private static final String MEMORY_CHECK = "memoryCheck";
+  private static final String EXECUTOR_GROUP = "executorGroup";
 
   private boolean notifyOnFirstFailure = true;
   private boolean notifyOnLastFailure = false;
   private boolean failureEmailsOverride = false;
   private boolean successEmailsOverride = false;
+  private String executorGroup = null;
   private ArrayList<String> failureEmails = new ArrayList<String>();
   private ArrayList<String> successEmails = new ArrayList<String>();
 
@@ -103,6 +100,14 @@ public class ExecutionOptions {
 
   public void setFailureEmailsOverridden(boolean override) {
     this.failureEmailsOverride = override;
+  }
+
+  public String getExecutorGroup() {
+    return executorGroup;
+  }
+
+  public void setExecutorGroup(String executorGroup) {
+    this.executorGroup = executorGroup;
   }
 
   public List<String> getFailureEmails() {
@@ -211,6 +216,7 @@ public class ExecutionOptions {
     flowOptionObj.put(SUCCESS_EMAILS_OVERRIDE, successEmailsOverride);
     flowOptionObj.put(MAIL_CREATOR, mailCreator);
     flowOptionObj.put(MEMORY_CHECK, memoryCheck);
+    flowOptionObj.put(EXECUTOR_GROUP,executorGroup);
     return flowOptionObj;
   }
 
@@ -268,6 +274,7 @@ public class ExecutionOptions {
         false));
 
     options.setMemoryCheck(wrapper.getBool(MEMORY_CHECK, true));
+    options.setExecutorGroup(wrapper.getString(EXECUTOR_GROUP,null));
 
     return options;
   }

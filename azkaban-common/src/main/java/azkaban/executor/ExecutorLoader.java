@@ -59,7 +59,16 @@ public interface ExecutorLoader {
    * @return List<Executor>
    * @throws ExecutorManagerException
    */
-  List<Executor> fetchAllExecutors() throws ExecutorManagerException;
+  public List<Executor> fetchAllExecutors() throws ExecutorManagerException;
+
+  /**
+  * Fetch all distinct executorGroups for executors table
+  * Returns an empty list if no group is specified
+  *
+  * @return
+  * @throws ExecutorManagerException
+  */
+  public List<String> fetchDistinctExecutorGroups() throws ExecutorManagerException;
 
   /**
    * <pre>

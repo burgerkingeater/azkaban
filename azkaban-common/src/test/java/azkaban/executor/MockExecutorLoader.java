@@ -16,17 +16,13 @@
 
 package azkaban.executor;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import azkaban.executor.ExecutorLogEvent.EventType;
 import azkaban.utils.FileIOUtils.LogData;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
+
+import java.io.File;
+import java.util.*;
 
 public class MockExecutorLoader implements ExecutorLoader {
 
@@ -344,6 +340,11 @@ public class MockExecutorLoader implements ExecutorLoader {
   @Override
   public List<Executor> fetchAllExecutors() throws ExecutorManagerException {
     return executors;
+  }
+
+  @Override
+  public List<String> fetchDistinctExecutorGroups() throws ExecutorManagerException {
+    return new ArrayList<>();
   }
 
   @Override

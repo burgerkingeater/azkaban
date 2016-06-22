@@ -1,0 +1,1 @@
+Alter table executors add column `group` varchar(64) DEFAULT NULL;
