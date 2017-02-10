@@ -102,19 +102,9 @@ public class FileIOUtils {
       throw new IOException("Source or Destination is not a directory.");
     }
 
-    Set<String> paths = new HashSet<String>();
-    createDirsFindFiles(sourceDir, sourceDir, destDir, paths);
-
-    StringBuffer buffer = new StringBuffer();
-    for (String path : paths) {
-      File sourceLink = new File(sourceDir, path);
-      path = "." + path;
-
-      buffer.append("ln ").append(sourceLink.getAbsolutePath()).append("/*")
-          .append(" ").append(path).append(";");
-    }
-
-    runShellCommand(buffer.toString(), destDir);
+    StringBuffer copyhardlink = new StringBuffer();
+    copyhardlink.append("cp -arl ").append(sourceDir.getAbsolutePath()+"/* ").append(destDir);
+    runShellCommand(copyhardlink.toString(), destDir);
   }
 
   private static void runShellCommand(String command, File workingDir)
