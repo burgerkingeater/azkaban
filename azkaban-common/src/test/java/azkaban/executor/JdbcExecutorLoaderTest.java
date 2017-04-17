@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,11 +41,8 @@ import org.junit.Test;
 
 import azkaban.database.DataSourceUtils;
 import azkaban.executor.ExecutorLogEvent.EventType;
-import azkaban.flow.Flow;
-import azkaban.project.Project;
 import azkaban.user.User;
 import azkaban.utils.FileIOUtils.LogData;
-import azkaban.utils.JSONUtils;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
 import azkaban.utils.TestUtils;
@@ -567,7 +563,7 @@ public class JdbcExecutorLoaderTest {
       return;
     }
     ExecutorLoader loader = createLoader();
-    Executor executor = new Executor(1, "localhost", 12345, true);
+    Executor executor = new Executor(1, "localhost", 12345, true, null);
     List<ExecutorLogEvent> executorEvents =
       loader.getExecutorEvents(executor, 5, 0);
     Assert.assertEquals(executorEvents.size(), 0);
@@ -582,7 +578,7 @@ public class JdbcExecutorLoaderTest {
     ExecutorLoader loader = createLoader();
     int skip = 1;
     User user = new User("testUser");
-    Executor executor = new Executor(1, "localhost", 12345, true);
+    Executor executor = new Executor(1, "localhost", 12345, true, null);
     String message = "My message ";
     EventType[] events =
       { EventType.CREATED, EventType.HOST_UPDATE, EventType.INACTIVATION };
@@ -632,7 +628,7 @@ public class JdbcExecutorLoaderTest {
     }
     ExecutorLoader loader = createLoader();
     try {
-      Executor executor = new Executor(1, "localhost", 1234, true);
+      Executor executor = new Executor(1, "localhost", 1234, true, null);
       loader.updateExecutor(executor);
       Assert.fail("Expecting exception, but didn't get one");
     } catch (ExecutorManagerException ex) {
@@ -786,7 +782,7 @@ public class JdbcExecutorLoaderTest {
     ExecutorLoader loader = createLoader();
     ExecutableFlow flow1 = TestUtils.createExecutableFlow("exectest1", "exec1");
     loader.uploadExecutableFlow(flow1);
-    Executor executor = new Executor(2, "test", 1, true);
+    Executor executor = new Executor(2, "test", 1, true, null);
     ExecutionReference ref1 =
         new ExecutionReference(flow1.getExecutionId(), executor);
     loader.addActiveExecutableReference(ref1);

@@ -25,9 +25,6 @@ import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
-import azkaban.executor.Executor;
-import azkaban.executor.ExecutorLoader;
-import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.lang.StringUtils;
 
 import azkaban.executor.ExecutionOptions;
@@ -61,9 +58,9 @@ public class HttpRequestUtils {
       boolean override = getBooleanParam(req, "failureEmailsOverride", false);
       execOptions.setFailureEmailsOverridden(override);
     }
-    if (hasParam(req,"executorGroup")) {
-      String executorGroup = getParam(req,"executorGroup",null);
-      execOptions.setExecutorGroup(executorGroup);
+    if (hasParam(req,"executorPool")) {
+      String executorPool = getParam(req,"executorPool",null);
+      execOptions.setExecutorPool(executorPool);
     }
     if (hasParam(req, "successEmailsOverride")) {
       boolean override = getBooleanParam(req, "successEmailsOverride", false);

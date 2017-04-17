@@ -62,13 +62,13 @@ public interface ExecutorLoader {
   public List<Executor> fetchAllExecutors() throws ExecutorManagerException;
 
   /**
-  * Fetch all distinct executorGroups for executors table
+  * Fetch all distinct executorPools for executors table
   * Returns an empty list if no group is specified
   *
   * @return
   * @throws ExecutorManagerException
   */
-  public List<String> fetchDistinctExecutorGroups() throws ExecutorManagerException;
+  public List<String> fetchDistinctExecutorPools() throws ExecutorManagerException;
 
   /**
    * <pre>

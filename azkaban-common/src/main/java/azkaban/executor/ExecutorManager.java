@@ -61,16 +61,6 @@ import azkaban.utils.FileIOUtils.LogData;
 import azkaban.utils.JSONUtils;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-import org.joda.time.DateTime;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.Thread.State;
-import java.net.URI;
-import java.util.*;
-import java.util.concurrent.*;
 
 /**
  * Executor manager used to manage the client side job.
@@ -131,7 +121,7 @@ public class ExecutorManager extends EventHandler implements
   private long lastSuccessfulExecutorInfoRefresh;
   private ExecutorService executorInforRefresherService;
 
-  public ExecutorManager(Props azkProps, ExecutorLoader loader,
+    public ExecutorManager(Props azkProps, ExecutorLoader loader,
       Map<String, Alerter> alerters) throws ExecutorManagerException {
     this.alerters = alerters;
     this.azkProps = azkProps;
@@ -221,7 +211,7 @@ public class ExecutorManager extends EventHandler implements
         executorLoader.updateExecutor(executor);
       }
       newExecutors.add(new Executor(executor.getId(), executorHost,
-        executorPort, true));
+        executorPort, true, null));
     }
 
     if (newExecutors.isEmpty()) {
@@ -1005,7 +995,7 @@ public class ExecutorManager extends EventHandler implements
 
         //Validating the executor group name provided by user
         if(isMultiExecutorMode()) {
-          validateExecutorGroup(exflow);
+          validateExecutorPool(exflow);
         }
 
         // The exflow id is set by the loader. So it's unavailable until after
@@ -1046,18 +1036,14 @@ public class ExecutorManager extends EventHandler implements
    * @param exflow
    * @throws ExecutorManagerException
    */
-  private void validateExecutorGroup(ExecutableFlow exflow) throws ExecutorManagerException {
-    List<String> activeGroups = executorLoader.fetchDistinctExecutorGroups();
-    String groupName = exflow.getExecutionOptions().getExecutorGroup();
-    boolean isValidGroup = true;
+  private void validateExecutorPool(ExecutableFlow exflow) throws ExecutorManagerException {
+    List<String> activePools = executorLoader.fetchDistinctExecutorPools();
+    String poolName = exflow.getExecutionOptions().getExecutorPool();
 
-    if (groupName != null && !activeGroups.contains(groupName)) {
-      isValidGroup = false;
-    }
-    if(!isValidGroup) {
+    if (poolName != null && !activePools.contains(poolName)) {
       throw new ExecutorManagerException(String.format("Executor group [%s] is not valid. Following are the valid " +
                       "executor groups %s",
-              exflow.getExecutionOptions().getExecutorGroup(),activeGroups.toString()));
+              exflow.getExecutionOptions().getExecutorPool(),activePools));
     }
   }
 

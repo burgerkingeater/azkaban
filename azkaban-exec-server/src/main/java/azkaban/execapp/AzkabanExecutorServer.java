@@ -69,7 +69,6 @@ import azkaban.project.JdbcProjectLoader;
 import azkaban.project.ProjectLoader;
 import azkaban.server.AzkabanServer;
 import azkaban.utils.Props;
-import azkaban.utils.StdOutErrRedirect;
 import azkaban.utils.SystemMemoryInfo;
 import azkaban.utils.Utils;
 import azkaban.metrics.MetricsManager;
@@ -86,6 +85,7 @@ public class AzkabanExecutorServer {
   public static final String JOBTYPE_PLUGIN_DIR = "azkaban.jobtype.plugin.dir";
   public static final String METRIC_INTERVAL = "executor.metric.milisecinterval.";
   public static final int DEFAULT_HEADER_BUFFER_SIZE = 4096;
+  public static final String DEFAULT_EXECUTOR_POOL_NAME = "DEFAULT_POOL";
 
   private static final String DEFAULT_TIMEZONE_ID = "default.timezone.id";
   private static final int DEFAULT_THREAD_NUMBER = 50;
@@ -132,7 +132,6 @@ public class AzkabanExecutorServer {
       logger.error(e);
       Utils.croak(e.getMessage(), 1);
     }
-
     insertExecutorEntryIntoDB();
     dumpPortToFile();
 
@@ -194,6 +193,7 @@ public class AzkabanExecutorServer {
       final String host = requireNonNull(getHost());
       final int port = getPort();
       checkState(port != -1);
+      final String poolName = props.getString(ServerProperties.EXECUTOR_POOL_NAME, DEFAULT_EXECUTOR_POOL_NAME);
       final Executor executor = executionLoader.fetchExecutor(host, port);
       if (executor == null) {
         executionLoader.addExecutor(host, port);
@@ -345,8 +345,9 @@ public class AzkabanExecutorServer {
    * @throws IOException
    */
   public static void main(String[] args) throws Exception {
+    System.out.println("hello");
     // Redirect all std out and err messages into log4j
-    StdOutErrRedirect.redirectOutAndErrToLog();
+    //StdOutErrRedirect.redirectOutAndErrToLog();
 
     logger.info("Starting Jetty Azkaban Executor...");
     Props azkabanSettings = AzkabanServer.loadProps(args);

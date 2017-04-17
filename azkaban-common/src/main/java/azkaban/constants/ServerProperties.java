@@ -55,4 +55,6 @@ public class ServerProperties {
 
   // The property is used for the web server to get the host name of the executor when running in SOLO mode.
   public static final String EXECUTOR_HOST = "executor.host";
+
+  public static final String EXECUTOR_POOL_NAME = "executor.poolname";
 }

@@ -292,7 +292,7 @@ public class MockExecutorLoader implements ExecutorLoader {
     Executor executor = null;
     if (fetchExecutor(host, port) == null) {
       executorIdCounter++;
-      executor = new Executor(executorIdCounter, host, port, true);
+      executor = new Executor(executorIdCounter, host, port, true, null);
       executors.add(executor);
     }
     return executor;
@@ -343,7 +343,7 @@ public class MockExecutorLoader implements ExecutorLoader {
   }
 
   @Override
-  public List<String> fetchDistinctExecutorGroups() throws ExecutorManagerException {
+  public List<String> fetchDistinctExecutorPools() throws ExecutorManagerException {
     return new ArrayList<>();
   }
 

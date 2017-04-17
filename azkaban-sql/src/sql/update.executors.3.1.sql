@@ -1,1 +1,1 @@
-Alter table executors add column `group` varchar(64) DEFAULT NULL;
+Alter table executors add column pool varchar(64) DEFAULT NULL;

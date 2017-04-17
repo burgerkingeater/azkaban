@@ -811,12 +811,12 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   }
 
   @Override
-  public List<String> fetchDistinctExecutorGroups() throws ExecutorManagerException {
+  public List<String> fetchDistinctExecutorPools() throws ExecutorManagerException {
     QueryRunner runner = createQueryRunner();
-    FetchExecutorGroupHandler executorGroupHandler = new FetchExecutorGroupHandler();
+    FetchExecutorPoolHandler executorPoolHandler = new FetchExecutorPoolHandler();
     try {
-      List<String> groups = runner.query(FetchExecutorGroupHandler.FETCH_DISTINCT_EXECUTOR_GROUPS,
-              executorGroupHandler);
+      List<String> groups = runner.query(FetchExecutorPoolHandler.FETCH_DISTINCT_EXECUTOR_POOLS,
+              executorPoolHandler);
       return groups;
     } catch (Exception e) {
       throw new ExecutorManagerException("Error fetching executor groups");
@@ -847,7 +847,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   /**
    * {@inheritDoc}
    *
-   * @see azkaban.executor.ExecutorLoader#fetchExecutor(java.lang.String, int)
+   * @see ExecutorLoader#fetchExecutor(String, int)
    */
   @Override
   public Executor fetchExecutor(String host, int port)
@@ -1399,7 +1399,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
 
             ExecutableFlow exFlow =
                 ExecutableFlow.createExecutableFlowFromObject(flowObj);
-            Executor executor = new Executor(executorId, host, port, executorStatus);
+            Executor executor = new Executor(executorId, host, port, executorStatus, null);
             ExecutionReference ref = new ExecutionReference(id, executor);
             ref.setUpdateTime(updateTime);
 
@@ -1523,15 +1523,15 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   private static class FetchExecutorHandler implements
     ResultSetHandler<List<Executor>> {
     private static String FETCH_ALL_EXECUTORS =
-      "SELECT id, host, port, active ,`group` FROM executors";
+      "SELECT id, host, port, active , pool FROM executors";
     private static String FETCH_ACTIVE_EXECUTORS =
-      "SELECT id, host, port, active,`group` FROM executors where active=true";
+      "SELECT id, host, port, active, pool FROM executors where active=true";
     private static String FETCH_EXECUTOR_BY_ID =
-      "SELECT id, host, port, active,`group` FROM executors where id=?";
+      "SELECT id, host, port, active, pool FROM executors where id=?";
     private static String FETCH_EXECUTOR_BY_HOST_PORT =
-      "SELECT id, host, port, active,`group` FROM executors where host=? AND port=?";
+      "SELECT id, host, port, active, pool FROM executors where host=? AND port=?";
     private static String FETCH_EXECUTION_EXECUTOR =
-      "SELECT ex.id, ex.host, ex.port, ex.active, ex.`group` FROM "
+      "SELECT ex.id, ex.host, ex.port, ex.active, ex.pool FROM "
         + " executors ex INNER JOIN execution_flows ef "
         + "on ex.id = ef.executor_id  where exec_id=?";
 
@@ -1547,8 +1547,8 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
         String host = rs.getString(2);
         int port = rs.getInt(3);
         boolean active = rs.getBoolean(4);
-        String group = rs.getString(5);
-        Executor executor = new Executor(id, host, port, active,group);
+        String pool = rs.getString(5);
+        Executor executor = new Executor(id, host, port, active, pool);
         executors.add(executor);
       } while (rs.next());
 
@@ -1559,10 +1559,10 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   /**
    * JDBC ResuultSetHandler for executor_groups
    */
-  private static class FetchExecutorGroupHandler implements
+  private static class FetchExecutorPoolHandler implements
           ResultSetHandler<List<String >> {
-    private static String FETCH_DISTINCT_EXECUTOR_GROUPS =
-            "SELECT distinct(`group`) from executors";
+    private static String FETCH_DISTINCT_EXECUTOR_POOLS =
+            "SELECT distinct(pool) from executors";
     @Override
     public List<String> handle(ResultSet rs) throws SQLException {
       if(!rs.next()) {
