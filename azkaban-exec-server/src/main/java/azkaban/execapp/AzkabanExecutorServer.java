@@ -85,7 +85,6 @@ public class AzkabanExecutorServer {
   public static final String JOBTYPE_PLUGIN_DIR = "azkaban.jobtype.plugin.dir";
   public static final String METRIC_INTERVAL = "executor.metric.milisecinterval.";
   public static final int DEFAULT_HEADER_BUFFER_SIZE = 4096;
-  public static final String DEFAULT_EXECUTOR_POOL_NAME = "DEFAULT_POOL";
 
   private static final String DEFAULT_TIMEZONE_ID = "default.timezone.id";
   private static final int DEFAULT_THREAD_NUMBER = 50;
@@ -193,10 +192,10 @@ public class AzkabanExecutorServer {
       final String host = requireNonNull(getHost());
       final int port = getPort();
       checkState(port != -1);
-      final String poolName = props.getString(ServerProperties.EXECUTOR_POOL_NAME, DEFAULT_EXECUTOR_POOL_NAME);
-      final Executor executor = executionLoader.fetchExecutor(host, port);
+      final String poolName = props.getString(ServerProperties.EXECUTOR_POOL_NAME, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+      final Executor executor = executionLoader.fetchExecutor(host, port, poolName);
       if (executor == null) {
-        executionLoader.addExecutor(host, port);
+        executionLoader.addExecutor(host, port, poolName);
       }
       // If executor already exists, ignore it
     } catch (ExecutorManagerException e) {

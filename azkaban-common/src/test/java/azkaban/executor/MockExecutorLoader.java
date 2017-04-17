@@ -16,6 +16,7 @@
 
 package azkaban.executor;
 
+import azkaban.constants.ServerProperties;
 import azkaban.executor.ExecutorLogEvent.EventType;
 import azkaban.utils.FileIOUtils.LogData;
 import azkaban.utils.Pair;
@@ -266,7 +267,7 @@ public class MockExecutorLoader implements ExecutorLoader {
   }
 
   @Override
-  public Executor fetchExecutor(String host, int port)
+  public Executor fetchExecutor(String host, int port, String pool)
     throws ExecutorManagerException {
     for (Executor executor : executors) {
       if (executor.getHost().equals(host) && executor.getPort() == port) {
@@ -287,10 +288,10 @@ public class MockExecutorLoader implements ExecutorLoader {
   }
 
   @Override
-  public Executor addExecutor(String host, int port)
+  public Executor addExecutor(String host, int port, String pool)
     throws ExecutorManagerException {
     Executor executor = null;
-    if (fetchExecutor(host, port) == null) {
+    if (fetchExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME) == null) {
       executorIdCounter++;
       executor = new Executor(executorIdCounter, host, port, true, null);
       executors.add(executor);
@@ -300,7 +301,7 @@ public class MockExecutorLoader implements ExecutorLoader {
 
   @Override
   public void removeExecutor(String host, int port) throws ExecutorManagerException {
-    Executor executor = fetchExecutor(host, port);
+    Executor executor = fetchExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     if (executor != null) {
         executorIdCounter--;
         executors.remove(executor);

@@ -203,9 +203,9 @@ public class ExecutorManager extends EventHandler implements
       logger.info(String.format("Initializing local executor %s:%d",
         executorHost, executorPort));
       Executor executor =
-        executorLoader.fetchExecutor(executorHost, executorPort);
+        executorLoader.fetchExecutor(executorHost, executorPort, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
       if (executor == null) {
-        executor = executorLoader.addExecutor(executorHost, executorPort);
+        executor = executorLoader.addExecutor(executorHost, executorPort, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
       } else if (!executor.isActive()) {
         executor.setActive(true);
         executorLoader.updateExecutor(executor);

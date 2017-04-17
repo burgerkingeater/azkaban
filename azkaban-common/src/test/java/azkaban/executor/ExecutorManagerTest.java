@@ -16,7 +16,6 @@
 
 package azkaban.executor;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,14 +23,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import azkaban.constants.ServerProperties;
 import org.junit.Assert;
 import org.junit.Test;
 
 import azkaban.alert.Alerter;
-import azkaban.flow.Flow;
-import azkaban.project.Project;
 import azkaban.user.User;
-import azkaban.utils.JSONUtils;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
 import azkaban.utils.TestUtils;
@@ -57,8 +54,8 @@ public class ExecutorManagerTest {
     props.put(ExecutorManager.AZKABAN_USE_MULTIPLE_EXECUTORS, "true");
     props.put(ExecutorManager.AZKABAN_QUEUEPROCESSING_ENABLED, "false");
 
-    loader.addExecutor("localhost", 12345);
-    loader.addExecutor("localhost", 12346);
+    loader.addExecutor("localhost", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    loader.addExecutor("localhost", 12346, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     return new ExecutorManager(props, loader, new HashMap<String, Alerter>());
   }
 
@@ -106,8 +103,8 @@ public class ExecutorManagerTest {
     Props props = new Props();
     props.put(ExecutorManager.AZKABAN_USE_MULTIPLE_EXECUTORS, "true");
     ExecutorLoader loader = new MockExecutorLoader();
-    Executor executor1 = loader.addExecutor("localhost", 12345);
-    Executor executor2 = loader.addExecutor("localhost", 12346);
+    Executor executor1 = loader.addExecutor("localhost", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    Executor executor2 = loader.addExecutor("localhost", 12346, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
 
     ExecutorManager manager =
       new ExecutorManager(props, loader, new HashMap<String, Alerter>());
@@ -125,7 +122,7 @@ public class ExecutorManagerTest {
     Props props = new Props();
     props.put(ExecutorManager.AZKABAN_USE_MULTIPLE_EXECUTORS, "true");
     ExecutorLoader loader = new MockExecutorLoader();
-    Executor executor1 = loader.addExecutor("localhost", 12345);
+    Executor executor1 = loader.addExecutor("localhost", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
 
     ExecutorManager manager =
       new ExecutorManager(props, loader, new HashMap<String, Alerter>());
@@ -135,8 +132,8 @@ public class ExecutorManagerTest {
     // mark older executor as inactive
     executor1.setActive(false);
     loader.updateExecutor(executor1);
-    Executor executor2 = loader.addExecutor("localhost", 12346);
-    Executor executor3 = loader.addExecutor("localhost", 12347);
+    Executor executor2 = loader.addExecutor("localhost", 12346, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    Executor executor3 = loader.addExecutor("localhost", 12347, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     manager.setupExecutors();
 
     Assert.assertArrayEquals(manager.getAllActiveExecutors().toArray(),
@@ -152,7 +149,7 @@ public class ExecutorManagerTest {
     Props props = new Props();
     props.put(ExecutorManager.AZKABAN_USE_MULTIPLE_EXECUTORS, "true");
     ExecutorLoader loader = new MockExecutorLoader();
-    Executor executor1 = loader.addExecutor("localhost", 12345);
+    Executor executor1 = loader.addExecutor("localhost", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
 
     ExecutorManager manager =
       new ExecutorManager(props, loader, new HashMap<String, Alerter>());

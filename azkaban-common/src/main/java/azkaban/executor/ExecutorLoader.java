@@ -95,7 +95,7 @@ public interface ExecutorLoader {
    * @return Executor
    * @throws ExecutorManagerException
    */
-  Executor fetchExecutor(String host, int port)
+  Executor fetchExecutor(String host, int port, String pool)
     throws ExecutorManagerException;
 
   /**
@@ -116,14 +116,14 @@ public interface ExecutorLoader {
    * create an executor and insert in executors table.
    * Note:-
    * 1. throws an Exception in case of a SQL issue
-   * 2. throws an Exception if a executor with (host, port) already exist
+   * 2. throws an Exception if a executor with (host, port, pool) already exist
    * 3. return null when no executor is found with the given executorId
    * </pre>
    *
    * @return Executor
    * @throws ExecutorManagerException
    */
-  Executor addExecutor(String host, int port)
+  Executor addExecutor(String host, int port, String pool)
     throws ExecutorManagerException;
 
   /**

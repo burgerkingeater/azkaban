@@ -57,4 +57,5 @@ public class ServerProperties {
   public static final String EXECUTOR_HOST = "executor.host";
 
   public static final String EXECUTOR_POOL_NAME = "executor.poolname";
+  public static final String DEFAULT_EXECUTOR_POOL_NAME = "default_pool";
 }
