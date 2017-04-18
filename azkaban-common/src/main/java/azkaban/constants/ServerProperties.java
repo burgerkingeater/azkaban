@@ -56,6 +56,9 @@ public class ServerProperties {
   // The property is used for the web server to get the host name of the executor when running in SOLO mode.
   public static final String EXECUTOR_HOST = "executor.host";
 
+  //The property is used to get the pool name of executor specified by user in azkaban.properties file of ExecutorServer
   public static final String EXECUTOR_POOL_NAME = "executor.poolname";
+
+  // The value will be used when user is not specifying #EXECUTOR_POOL_NAME in properties file
   public static final String DEFAULT_EXECUTOR_POOL_NAME = "default_pool";
 }

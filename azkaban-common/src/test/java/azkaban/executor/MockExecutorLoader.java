@@ -24,6 +24,7 @@ import azkaban.utils.Props;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MockExecutorLoader implements ExecutorLoader {
 
@@ -267,7 +268,7 @@ public class MockExecutorLoader implements ExecutorLoader {
   }
 
   @Override
-  public Executor fetchExecutor(String host, int port, String pool)
+  public Executor fetchExecutor(String host, int port)
     throws ExecutorManagerException {
     for (Executor executor : executors) {
       if (executor.getHost().equals(host) && executor.getPort() == port) {
@@ -291,9 +292,9 @@ public class MockExecutorLoader implements ExecutorLoader {
   public Executor addExecutor(String host, int port, String pool)
     throws ExecutorManagerException {
     Executor executor = null;
-    if (fetchExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME) == null) {
+    if (fetchExecutor(host, port) == null) {
       executorIdCounter++;
-      executor = new Executor(executorIdCounter, host, port, true, null);
+      executor = new Executor(executorIdCounter, host, port, true, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
       executors.add(executor);
     }
     return executor;
@@ -301,7 +302,7 @@ public class MockExecutorLoader implements ExecutorLoader {
 
   @Override
   public void removeExecutor(String host, int port) throws ExecutorManagerException {
-    Executor executor = fetchExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    Executor executor = fetchExecutor(host, port);
     if (executor != null) {
         executorIdCounter--;
         executors.remove(executor);
@@ -344,8 +345,8 @@ public class MockExecutorLoader implements ExecutorLoader {
   }
 
   @Override
-  public List<String> fetchDistinctExecutorPools() throws ExecutorManagerException {
-    return new ArrayList<>();
+  public Set<String> fetchDistinctExecutorPools() throws ExecutorManagerException {
+    return executors.stream().map(executor -> executor.getPool()).collect(Collectors.toSet());
   }
 
   @Override

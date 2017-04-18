@@ -193,7 +193,7 @@ public class AzkabanExecutorServer {
       final int port = getPort();
       checkState(port != -1);
       final String poolName = props.getString(ServerProperties.EXECUTOR_POOL_NAME, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
-      final Executor executor = executionLoader.fetchExecutor(host, port, poolName);
+      final Executor executor = executionLoader.fetchExecutor(host, port);
       if (executor == null) {
         executionLoader.addExecutor(host, port, poolName);
       }
@@ -344,7 +344,6 @@ public class AzkabanExecutorServer {
    * @throws IOException
    */
   public static void main(String[] args) throws Exception {
-    System.out.println("hello");
     // Redirect all std out and err messages into log4j
     //StdOutErrRedirect.redirectOutAndErrToLog();
 

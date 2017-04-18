@@ -553,7 +553,7 @@ public class JdbcExecutorLoaderTest {
       return;
     }
     ExecutorLoader loader = createLoader();
-    Executor executor = loader.fetchExecutor("localhost", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    Executor executor = loader.fetchExecutor("localhost", 12345);
     Assert.assertEquals(executor, null);
   }
 
@@ -699,7 +699,7 @@ public class JdbcExecutorLoaderTest {
     List<Executor> executors = addTestExecutors(loader);
     for (Executor executor : executors) {
       Executor fetchedExecutor =
-        loader.fetchExecutor(executor.getHost(), executor.getPort(), ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+        loader.fetchExecutor(executor.getHost(), executor.getPort());
       Assert.assertEquals(executor, fetchedExecutor);
     }
   }
@@ -747,7 +747,7 @@ public class JdbcExecutorLoaderTest {
     Executor executor = loader.addExecutor("localhost1", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     Assert.assertNotNull(executor);
     loader.removeExecutor("localhost1", 12345);
-    Executor fetchedExecutor = loader.fetchExecutor("localhost1", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    Executor fetchedExecutor = loader.fetchExecutor("localhost1", 12345);
     Assert.assertNull(fetchedExecutor);
   }
 

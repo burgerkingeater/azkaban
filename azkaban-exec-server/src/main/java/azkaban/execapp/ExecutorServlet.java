@@ -16,7 +16,6 @@
 
 package azkaban.execapp;
 
-import azkaban.constants.ServerProperties;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
@@ -371,7 +370,7 @@ public class ExecutorServlet extends HttpServlet implements ConnectorParams {
   private void setActiveInternal(boolean value)
       throws ExecutorManagerException {
     ExecutorLoader executorLoader = application.getExecutorLoader();
-    Executor executor = executorLoader.fetchExecutor(application.getHost(), application.getPort(), ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    Executor executor = executorLoader.fetchExecutor(application.getHost(), application.getPort());
     Preconditions.checkState(executor != null, "Unable to obtain self entry in DB");
     if (executor.isActive() != value) {
       executor.setActive(value);
@@ -407,7 +406,7 @@ public class ExecutorServlet extends HttpServlet implements ConnectorParams {
       throws ServletException {
     try {
       ExecutorLoader executorLoader = application.getExecutorLoader();
-      final Executor executor = requireNonNull(executorLoader.fetchExecutor(application.getHost(), application.getPort(), ServerProperties.DEFAULT_EXECUTOR_POOL_NAME),
+      final Executor executor = requireNonNull(executorLoader.fetchExecutor(application.getHost(), application.getPort()),
           "The executor can not be null");
 
       respMap.put("executor_id", Integer.toString(executor.getId()));

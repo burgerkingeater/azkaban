@@ -183,8 +183,8 @@ public final class ExecutorFilter extends CandidateFilter<Executor, ExecutableFl
           logger.debug(String.format("%s : filtering out the target as it is null.", EXECUTOR_POOLING_FILTER_NAME));
           return false;
         }
-        String group = filteringTarget.getPool();
-        if (group == null) {
+        String pool = filteringTarget.getPool();
+        if (pool == null) {
           logger.debug(String.format("%s : Not filtering out %s as it's pool is not specified. Falling back " +
                           "to old selection",
                   EXECUTOR_POOLING_FILTER_NAME,
@@ -208,7 +208,7 @@ public final class ExecutorFilter extends CandidateFilter<Executor, ExecutableFl
         }
 
         // Actual filtering based on equality of groupName specified by user and group accessed from db
-        return group.equals(referencingObject.getExecutionOptions().getExecutorPool());
+        return pool.equals(referencingObject.getExecutionOptions().getExecutorPool());
       }
     });
   }

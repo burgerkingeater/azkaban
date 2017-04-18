@@ -26,7 +26,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-import azkaban.constants.ServerProperties;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
@@ -812,11 +811,11 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   }
 
   @Override
-  public List<String> fetchDistinctExecutorPools() throws ExecutorManagerException {
+  public Set<String> fetchDistinctExecutorPools() throws ExecutorManagerException {
     QueryRunner runner = createQueryRunner();
     FetchExecutorPoolHandler executorPoolHandler = new FetchExecutorPoolHandler();
     try {
-      List<String> groups = runner.query(FetchExecutorPoolHandler.FETCH_DISTINCT_EXECUTOR_POOLS,
+      Set<String> groups = runner.query(FetchExecutorPoolHandler.FETCH_DISTINCT_EXECUTOR_POOLS,
               executorPoolHandler);
       return groups;
     } catch (Exception e) {
@@ -848,18 +847,18 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   /**
    * {@inheritDoc}
    *
-   * @see ExecutorLoader#fetchExecutor(String, int, String)
+   * @see ExecutorLoader#fetchExecutor(String, int)
    */
   @Override
-  public Executor fetchExecutor(String host, int port, String pool)
+  public Executor fetchExecutor(String host, int port)
     throws ExecutorManagerException {
     QueryRunner runner = createQueryRunner();
     FetchExecutorHandler executorHandler = new FetchExecutorHandler();
 
     try {
       List<Executor> executors =
-        runner.query(FetchExecutorHandler.FETCH_EXECUTOR_BY_HOST_PORT_POOL,
-          executorHandler, host, port, pool);
+        runner.query(FetchExecutorHandler.FETCH_EXECUTOR_BY_HOST_PORT,
+          executorHandler, host, port);
       if (executors.isEmpty()) {
         return null;
       } else {
@@ -930,7 +929,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   public Executor addExecutor(String host, int port, String pool)
     throws ExecutorManagerException {
     // verify, if executor already exists
-    Executor executor = fetchExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    Executor executor = fetchExecutor(host, port);
     if (executor != null) {
       throw new ExecutorManagerException(String.format(
         "Executor %s:%d already exist", host, port));
@@ -938,7 +937,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
     // add new executor
     addExecutorHelper(host, port, pool);
     // fetch newly added executor
-    executor = fetchExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+    executor = fetchExecutor(host, port);
 
     return executor;
   }
@@ -1529,8 +1528,8 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
       "SELECT id, host, port, active, pool FROM executors where active=true";
     private static String FETCH_EXECUTOR_BY_ID =
       "SELECT id, host, port, active, pool FROM executors where id=?";
-    private static String FETCH_EXECUTOR_BY_HOST_PORT_POOL =
-      "SELECT id, host, port, active, pool FROM executors where host=? AND port=? AND pool=?";
+    private static String FETCH_EXECUTOR_BY_HOST_PORT =
+      "SELECT id, host, port, active, pool FROM executors where host=? AND port=?";
     private static String FETCH_EXECUTION_EXECUTOR =
       "SELECT ex.id, ex.host, ex.port, ex.active, ex.pool FROM "
         + " executors ex INNER JOIN execution_flows ef "
@@ -1561,15 +1560,15 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
    * JDBC ResuultSetHandler for executor_groups
    */
   private static class FetchExecutorPoolHandler implements
-          ResultSetHandler<List<String >> {
+          ResultSetHandler<Set<String >> {
     private static String FETCH_DISTINCT_EXECUTOR_POOLS =
-            "SELECT distinct(pool) from executors";
+            "SELECT distinct(pool) from executors where active=true";
     @Override
-    public List<String> handle(ResultSet rs) throws SQLException {
+    public Set<String> handle(ResultSet rs) throws SQLException {
       if(!rs.next()) {
-        return Collections.<String> emptyList();
+        return Collections.<String> emptySet();
       }
-      List<String> groups = new ArrayList<>();
+      Set<String> groups = new HashSet<>();
       do {
         String grp = rs.getString(1);
         groups.add(grp);

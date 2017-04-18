@@ -16,6 +16,7 @@
 
 package azkaban.executor;
 
+import azkaban.constants.ServerProperties;
 import azkaban.executor.mail.DefaultMailCreator;
 import azkaban.utils.TypedMapWrapper;
 
@@ -59,7 +60,7 @@ public class ExecutionOptions {
   private boolean notifyOnLastFailure = false;
   private boolean failureEmailsOverride = false;
   private boolean successEmailsOverride = false;
-  private String executorPool = null;
+  private String executorPool = ServerProperties.DEFAULT_EXECUTOR_POOL_NAME;
   private ArrayList<String> failureEmails = new ArrayList<String>();
   private ArrayList<String> successEmails = new ArrayList<String>();
 

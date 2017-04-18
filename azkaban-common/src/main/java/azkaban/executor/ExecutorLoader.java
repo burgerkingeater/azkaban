@@ -19,6 +19,7 @@ package azkaban.executor;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import azkaban.executor.ExecutorLogEvent.EventType;
 import azkaban.utils.FileIOUtils.LogData;
@@ -68,7 +69,7 @@ public interface ExecutorLoader {
   * @return
   * @throws ExecutorManagerException
   */
-  public List<String> fetchDistinctExecutorPools() throws ExecutorManagerException;
+  public Set<String> fetchDistinctExecutorPools() throws ExecutorManagerException;
 
   /**
    * <pre>
@@ -95,7 +96,7 @@ public interface ExecutorLoader {
    * @return Executor
    * @throws ExecutorManagerException
    */
-  Executor fetchExecutor(String host, int port, String pool)
+  Executor fetchExecutor(String host, int port)
     throws ExecutorManagerException;
 
   /**
