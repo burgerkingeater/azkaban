@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,6 +29,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import azkaban.constants.ServerProperties;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
@@ -42,11 +42,8 @@ import org.junit.Test;
 
 import azkaban.database.DataSourceUtils;
 import azkaban.executor.ExecutorLogEvent.EventType;
-import azkaban.flow.Flow;
-import azkaban.project.Project;
 import azkaban.user.User;
 import azkaban.utils.FileIOUtils.LogData;
-import azkaban.utils.JSONUtils;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
 import azkaban.utils.TestUtils;
@@ -361,7 +358,7 @@ public class JdbcExecutorLoaderTest {
     ExecutorLoader loader = createLoader();
     String host = "localhost";
     int port = 12345;
-    Executor executor = loader.addExecutor(host, port);
+    Executor executor = loader.addExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     ExecutableFlow flow = TestUtils.createExecutableFlow("exectest1", "exec1");
     loader.uploadExecutableFlow(flow);
     loader.assignExecutor(executor.getId(), flow.getExecutionId());
@@ -400,7 +397,7 @@ public class JdbcExecutorLoaderTest {
     ExecutorLoader loader = createLoader();
     String host = "localhost";
     int port = 12345;
-    Executor executor = loader.addExecutor(host, port);
+    Executor executor = loader.addExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     try {
       loader.assignExecutor(2, executor.getId());
       Assert.fail("Expecting exception, but didn't get one");
@@ -444,7 +441,7 @@ public class JdbcExecutorLoaderTest {
     ExecutorLoader loader = createLoader();
     String host = "localhost";
     int port = 12345;
-    Executor executor = loader.addExecutor(host, port);
+    Executor executor = loader.addExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     ExecutableFlow flow = TestUtils.createExecutableFlow("exectest1", "exec1");
     loader.uploadExecutableFlow(flow);
     loader.assignExecutor(executor.getId(), flow.getExecutionId());
@@ -469,7 +466,7 @@ public class JdbcExecutorLoaderTest {
 
     String host = "lcoalhost";
     int port = 12345;
-    Executor executor = loader.addExecutor(host, port);
+    Executor executor = loader.addExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
 
     ExecutableFlow flow = TestUtils.createExecutableFlow("exectest1", "exec1");
     loader.uploadExecutableFlow(flow);
@@ -567,7 +564,7 @@ public class JdbcExecutorLoaderTest {
       return;
     }
     ExecutorLoader loader = createLoader();
-    Executor executor = new Executor(1, "localhost", 12345, true);
+    Executor executor = new Executor(1, "localhost", 12345, true, null);
     List<ExecutorLogEvent> executorEvents =
       loader.getExecutorEvents(executor, 5, 0);
     Assert.assertEquals(executorEvents.size(), 0);
@@ -582,7 +579,7 @@ public class JdbcExecutorLoaderTest {
     ExecutorLoader loader = createLoader();
     int skip = 1;
     User user = new User("testUser");
-    Executor executor = new Executor(1, "localhost", 12345, true);
+    Executor executor = new Executor(1, "localhost", 12345, true, null);
     String message = "My message ";
     EventType[] events =
       { EventType.CREATED, EventType.HOST_UPDATE, EventType.INACTIVATION };
@@ -616,8 +613,8 @@ public class JdbcExecutorLoaderTest {
     try {
       String host = "localhost";
       int port = 12345;
-      loader.addExecutor(host, port);
-      loader.addExecutor(host, port);
+      loader.addExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+      loader.addExecutor(host, port, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
       Assert.fail("Expecting exception, but didn't get one");
     } catch (ExecutorManagerException ex) {
       System.out.println("Test true");
@@ -632,7 +629,7 @@ public class JdbcExecutorLoaderTest {
     }
     ExecutorLoader loader = createLoader();
     try {
-      Executor executor = new Executor(1, "localhost", 1234, true);
+      Executor executor = new Executor(1, "localhost", 1234, true, null);
       loader.updateExecutor(executor);
       Assert.fail("Expecting exception, but didn't get one");
     } catch (ExecutorManagerException ex) {
@@ -711,9 +708,9 @@ public class JdbcExecutorLoaderTest {
   private List<Executor> addTestExecutors(ExecutorLoader loader)
     throws ExecutorManagerException {
     List<Executor> executors = new ArrayList<Executor>();
-    executors.add(loader.addExecutor("localhost1", 12345));
-    executors.add(loader.addExecutor("localhost2", 12346));
-    executors.add(loader.addExecutor("localhost1", 12347));
+    executors.add(loader.addExecutor("localhost1", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME));
+    executors.add(loader.addExecutor("localhost2", 12346, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME));
+    executors.add(loader.addExecutor("localhost1", 12347, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME));
     return executors;
   }
 
@@ -725,7 +722,7 @@ public class JdbcExecutorLoaderTest {
     }
 
     ExecutorLoader loader = createLoader();
-    Executor executor = loader.addExecutor("localhost1", 12345);
+    Executor executor = loader.addExecutor("localhost1", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     Assert.assertTrue(executor.isActive());
 
     executor.setActive(false);
@@ -747,7 +744,7 @@ public class JdbcExecutorLoaderTest {
     }
 
     ExecutorLoader loader = createLoader();
-    Executor executor = loader.addExecutor("localhost1", 12345);
+    Executor executor = loader.addExecutor("localhost1", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     Assert.assertNotNull(executor);
     loader.removeExecutor("localhost1", 12345);
     Executor fetchedExecutor = loader.fetchExecutor("localhost1", 12345);
@@ -762,7 +759,7 @@ public class JdbcExecutorLoaderTest {
     }
 
     ExecutorLoader loader = createLoader();
-    Executor executor = loader.addExecutor("localhost1", 12345);
+    Executor executor = loader.addExecutor("localhost1", 12345, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
     Assert.assertTrue(executor.isActive());
 
     executor.setActive(false);
@@ -786,7 +783,7 @@ public class JdbcExecutorLoaderTest {
     ExecutorLoader loader = createLoader();
     ExecutableFlow flow1 = TestUtils.createExecutableFlow("exectest1", "exec1");
     loader.uploadExecutableFlow(flow1);
-    Executor executor = new Executor(2, "test", 1, true);
+    Executor executor = new Executor(2, "test", 1, true, null);
     ExecutionReference ref1 =
         new ExecutionReference(flow1.getExecutionId(), executor);
     loader.addActiveExecutableReference(ref1);

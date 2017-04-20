@@ -207,13 +207,13 @@ public class ExecutorManager extends EventHandler implements
       Executor executor =
         executorLoader.fetchExecutor(executorHost, executorPort);
       if (executor == null) {
-        executor = executorLoader.addExecutor(executorHost, executorPort);
+        executor = executorLoader.addExecutor(executorHost, executorPort, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
       } else if (!executor.isActive()) {
         executor.setActive(true);
         executorLoader.updateExecutor(executor);
       }
       newExecutors.add(new Executor(executor.getId(), executorHost,
-        executorPort, true));
+        executorPort, true, null));
     }
 
     if (newExecutors.isEmpty()) {
@@ -1005,6 +1005,17 @@ public class ExecutorManager extends EventHandler implements
             ProjectWhitelist.WhitelistType.MemoryCheck);
         options.setMemoryCheck(memoryCheck);
 
+        Executor userSpecifiedExecutor =
+                getUserSpecifiedExecutor(exflow.getExecutionOptions(),
+                        exflow.getExecutionId());
+        /**
+         * Validating the executor group name provided by user. Ignoring the validation if user is
+         * passing a valid executor
+         */
+        if(userSpecifiedExecutor == null && isMultiExecutorMode()) {
+          validateExecutorPool(exflow);
+        }
+
         // The exflow id is set by the loader. So it's unavailable until after
         // this call.
         executorLoader.uploadExecutableFlow(exflow);
@@ -1037,6 +1048,23 @@ public class ExecutorManager extends EventHandler implements
       return message;
     }
   }
+
+  /**
+   * Helper method to validate the executor group name provided by user
+   * @param exflow
+   * @throws ExecutorManagerException
+   */
+  private void validateExecutorPool(ExecutableFlow exflow) throws ExecutorManagerException {
+    Set<String> activePools = executorLoader.fetchDistinctExecutorPools();
+    String poolName = exflow.getExecutionOptions().getExecutorPool();
+
+    if (poolName != null && !activePools.contains(poolName)) {
+      throw new ExecutorManagerException(String.format("Executor group [%s] is not valid. Following are the valid " +
+                      "executor groups %s",
+              exflow.getExecutionOptions().getExecutorPool(),activePools));
+    }
+  }
+
 
   private void cleanOldExecutionLogs(long millis) {
     long beforeDeleteLogsTimestamp = System.currentTimeMillis();
@@ -1884,50 +1912,12 @@ public class ExecutorManager extends EventHandler implements
       }
     }
 
-    /* Helper method to fetch  overriding Executor, if a valid user has specifed otherwise return null */
-    private Executor getUserSpecifiedExecutor(ExecutionOptions options,
-      int executionId) {
-      Executor executor = null;
-      if (options != null
-        && options.getFlowParameters() != null
-        && options.getFlowParameters().containsKey(
-          ExecutionOptions.USE_EXECUTOR)) {
-        try {
-          int executorId =
-            Integer.valueOf(options.getFlowParameters().get(
-              ExecutionOptions.USE_EXECUTOR));
-          executor = fetchExecutor(executorId);
-
-          if (executor == null) {
-            logger
-              .warn(String
-                .format(
-                  "User specified executor id: %d for execution id: %d is not active, Looking up db.",
-                  executorId, executionId));
-            executor = executorLoader.fetchExecutor(executorId);
-            if (executor == null) {
-              logger
-                .warn(String
-                  .format(
-                    "User specified executor id: %d for execution id: %d is missing from db. Defaulting to availableExecutors",
-                    executorId, executionId));
-            }
-          }
-        } catch (ExecutorManagerException ex) {
-          logger.error("Failed to fetch user specified executor for exec_id = "
-            + executionId, ex);
-        }
-      }
-      return executor;
-    }
-
     /* Choose Executor for exflow among the available executors */
     private Executor selectExecutor(ExecutableFlow exflow,
       Set<Executor> availableExecutors) {
       Executor choosenExecutor =
         getUserSpecifiedExecutor(exflow.getExecutionOptions(),
           exflow.getExecutionId());
-
       // If no executor was specified by admin
       if (choosenExecutor == null) {
         logger.info("Using dispatcher for execution id :"
@@ -1969,5 +1959,42 @@ public class ExecutorManager extends EventHandler implements
       // schedule can starve all others
       queuedFlows.enqueue(exflow, reference);
     }
+  }
+
+  /* Helper method to fetch  overriding Executor, if a valid user has specifed otherwise return null */
+  private Executor getUserSpecifiedExecutor(ExecutionOptions options,
+                                            int executionId) {
+    Executor executor = null;
+    if (options != null
+            && options.getFlowParameters() != null
+            && options.getFlowParameters().containsKey(
+            ExecutionOptions.USE_EXECUTOR)) {
+      try {
+        int executorId =
+                Integer.valueOf(options.getFlowParameters().get(
+                        ExecutionOptions.USE_EXECUTOR));
+        executor = fetchExecutor(executorId);
+
+        if (executor == null) {
+          logger
+                  .warn(String
+                          .format(
+                                  "User specified executor id: %d for execution id: %d is not active, Looking up db.",
+                                  executorId, executionId));
+          executor = executorLoader.fetchExecutor(executorId);
+          if (executor == null) {
+            logger
+                    .warn(String
+                            .format(
+                                    "User specified executor id: %d for execution id: %d is missing from db. Defaulting to availableExecutors",
+                                    executorId, executionId));
+          }
+        }
+      } catch (ExecutorManagerException ex) {
+        logger.error("Failed to fetch user specified executor for exec_id = "
+                + executionId, ex);
+      }
+    }
+    return executor;
   }
 }

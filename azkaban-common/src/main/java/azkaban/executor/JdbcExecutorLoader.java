@@ -25,13 +25,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
@@ -818,6 +812,19 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
     }
   }
 
+  @Override
+  public Set<String> fetchDistinctExecutorPools() throws ExecutorManagerException {
+    QueryRunner runner = createQueryRunner();
+    FetchExecutorPoolHandler executorPoolHandler = new FetchExecutorPoolHandler();
+    try {
+      Set<String> groups = runner.query(FetchExecutorPoolHandler.FETCH_DISTINCT_EXECUTOR_POOLS,
+              executorPoolHandler);
+      return groups;
+    } catch (Exception e) {
+      throw new ExecutorManagerException("Error fetching executor groups");
+    }
+  }
+
   /**
    *
    * {@inheritDoc}
@@ -842,7 +849,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   /**
    * {@inheritDoc}
    *
-   * @see azkaban.executor.ExecutorLoader#fetchExecutor(java.lang.String, int)
+   * @see ExecutorLoader#fetchExecutor(String, int)
    */
   @Override
   public Executor fetchExecutor(String host, int port)
@@ -918,10 +925,10 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   /**
    * {@inheritDoc}
    *
-   * @see azkaban.executor.ExecutorLoader#addExecutor(java.lang.String, int)
+   * @see ExecutorLoader#addExecutor(String, int, String)
    */
   @Override
-  public Executor addExecutor(String host, int port)
+  public Executor addExecutor(String host, int port, String pool)
     throws ExecutorManagerException {
     // verify, if executor already exists
     Executor executor = fetchExecutor(host, port);
@@ -930,19 +937,19 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
         "Executor %s:%d already exist", host, port));
     }
     // add new executor
-    addExecutorHelper(host, port);
+    addExecutorHelper(host, port, pool);
     // fetch newly added executor
     executor = fetchExecutor(host, port);
 
     return executor;
   }
 
-  private void addExecutorHelper(String host, int port)
+  private void addExecutorHelper(String host, int port, String pool)
     throws ExecutorManagerException {
-    final String INSERT = "INSERT INTO executors (host, port) values (?,?)";
+    final String INSERT = "INSERT INTO executors (host, port, pool) values (?,?,?)";
     QueryRunner runner = createQueryRunner();
     try {
-      runner.update(INSERT, host, port);
+      runner.update(INSERT, host, port, pool);
     } catch (SQLException e) {
       throw new ExecutorManagerException(String.format("Error adding %s:%d ",
         host, port), e);
@@ -1394,7 +1401,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
 
             ExecutableFlow exFlow =
                 ExecutableFlow.createExecutableFlowFromObject(flowObj);
-            Executor executor = new Executor(executorId, host, port, executorStatus);
+            Executor executor = new Executor(executorId, host, port, executorStatus, null);
             ExecutionReference ref = new ExecutionReference(id, executor);
             ref.setUpdateTime(updateTime);
 
@@ -1518,15 +1525,15 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   private static class FetchExecutorHandler implements
     ResultSetHandler<List<Executor>> {
     private static String FETCH_ALL_EXECUTORS =
-      "SELECT id, host, port, active FROM executors";
+      "SELECT id, host, port, active , pool FROM executors";
     private static String FETCH_ACTIVE_EXECUTORS =
-      "SELECT id, host, port, active FROM executors where active=true";
+      "SELECT id, host, port, active, pool FROM executors where active=true";
     private static String FETCH_EXECUTOR_BY_ID =
-      "SELECT id, host, port, active FROM executors where id=?";
+      "SELECT id, host, port, active, pool FROM executors where id=?";
     private static String FETCH_EXECUTOR_BY_HOST_PORT =
-      "SELECT id, host, port, active FROM executors where host=? AND port=?";
+      "SELECT id, host, port, active, pool FROM executors where host=? AND port=?";
     private static String FETCH_EXECUTION_EXECUTOR =
-      "SELECT ex.id, ex.host, ex.port, ex.active FROM "
+      "SELECT ex.id, ex.host, ex.port, ex.active, ex.pool FROM "
         + " executors ex INNER JOIN execution_flows ef "
         + "on ex.id = ef.executor_id  where exec_id=?";
 
@@ -1542,11 +1549,34 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
         String host = rs.getString(2);
         int port = rs.getInt(3);
         boolean active = rs.getBoolean(4);
-        Executor executor = new Executor(id, host, port, active);
+        String pool = rs.getString(5);
+        Executor executor = new Executor(id, host, port, active, pool);
         executors.add(executor);
       } while (rs.next());
 
       return executors;
+    }
+  }
+
+  /**
+   * JDBC ResuultSetHandler for executor_groups
+   */
+  private static class FetchExecutorPoolHandler implements
+          ResultSetHandler<Set<String >> {
+    private static String FETCH_DISTINCT_EXECUTOR_POOLS =
+            "SELECT distinct(pool) from executors where active=true";
+    @Override
+    public Set<String> handle(ResultSet rs) throws SQLException {
+      if(!rs.next()) {
+        return Collections.<String> emptySet();
+      }
+      Set<String> groups = new HashSet<>();
+      do {
+        String grp = rs.getString(1);
+        groups.add(grp);
+      } while (rs.next());
+
+      return groups;
     }
   }
 

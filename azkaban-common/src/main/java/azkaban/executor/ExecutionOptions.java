@@ -16,15 +16,16 @@
 
 package azkaban.executor;
 
+import azkaban.constants.ServerProperties;
+import azkaban.executor.mail.DefaultMailCreator;
+import azkaban.utils.TypedMapWrapper;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import azkaban.executor.mail.DefaultMailCreator;
-import azkaban.utils.TypedMapWrapper;
 
 /**
  * Execution options for submitted flows and scheduled flows
@@ -53,11 +54,13 @@ public class ExecutionOptions {
   private static final String SUCCESS_EMAILS_OVERRIDE = "successEmailsOverride";
   private static final String MAIL_CREATOR = "mailCreator";
   private static final String MEMORY_CHECK = "memoryCheck";
+  private static final String EXECUTOR_POOL = "executorPool";
 
   private boolean notifyOnFirstFailure = true;
   private boolean notifyOnLastFailure = false;
   private boolean failureEmailsOverride = false;
   private boolean successEmailsOverride = false;
+  private String executorPool = ServerProperties.DEFAULT_EXECUTOR_POOL_NAME;
   private ArrayList<String> failureEmails = new ArrayList<String>();
   private ArrayList<String> successEmails = new ArrayList<String>();
 
@@ -103,6 +106,14 @@ public class ExecutionOptions {
 
   public void setFailureEmailsOverridden(boolean override) {
     this.failureEmailsOverride = override;
+  }
+
+  public String getExecutorPool() {
+    return executorPool;
+  }
+
+  public void setExecutorPool(String executorPool) {
+    this.executorPool = executorPool;
   }
 
   public List<String> getFailureEmails() {
@@ -211,6 +222,7 @@ public class ExecutionOptions {
     flowOptionObj.put(SUCCESS_EMAILS_OVERRIDE, successEmailsOverride);
     flowOptionObj.put(MAIL_CREATOR, mailCreator);
     flowOptionObj.put(MEMORY_CHECK, memoryCheck);
+    flowOptionObj.put(EXECUTOR_POOL, executorPool);
     return flowOptionObj;
   }
 
@@ -268,6 +280,7 @@ public class ExecutionOptions {
         false));
 
     options.setMemoryCheck(wrapper.getBool(MEMORY_CHECK, true));
+    options.setExecutorPool(wrapper.getString(EXECUTOR_POOL,null));
 
     return options;
   }

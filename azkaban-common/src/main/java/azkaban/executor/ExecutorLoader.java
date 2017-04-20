@@ -19,6 +19,7 @@ package azkaban.executor;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import azkaban.executor.ExecutorLogEvent.EventType;
 import azkaban.utils.FileIOUtils.LogData;
@@ -59,7 +60,16 @@ public interface ExecutorLoader {
    * @return List<Executor>
    * @throws ExecutorManagerException
    */
-  List<Executor> fetchAllExecutors() throws ExecutorManagerException;
+  public List<Executor> fetchAllExecutors() throws ExecutorManagerException;
+
+  /**
+  * Fetch all distinct executorPools for executors table
+  * Returns an empty list if no group is specified
+  *
+  * @return
+  * @throws ExecutorManagerException
+  */
+  public Set<String> fetchDistinctExecutorPools() throws ExecutorManagerException;
 
   /**
    * <pre>
@@ -107,14 +117,14 @@ public interface ExecutorLoader {
    * create an executor and insert in executors table.
    * Note:-
    * 1. throws an Exception in case of a SQL issue
-   * 2. throws an Exception if a executor with (host, port) already exist
+   * 2. throws an Exception if a executor with (host, port, pool) already exist
    * 3. return null when no executor is found with the given executorId
    * </pre>
    *
    * @return Executor
    * @throws ExecutorManagerException
    */
-  Executor addExecutor(String host, int port)
+  Executor addExecutor(String host, int port, String pool)
     throws ExecutorManagerException;
 
   /**

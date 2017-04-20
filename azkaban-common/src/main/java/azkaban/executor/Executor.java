@@ -17,6 +17,7 @@
 package azkaban.executor;
 
 import java.util.Date;
+
 import azkaban.utils.Utils;
 
 /**
@@ -29,32 +30,32 @@ public class Executor implements Comparable<Executor> {
   private final String host;
   private final int port;
   private boolean isActive;
+  private final String pool;
   // cached copy of the latest statistics from  the executor.
   private ExecutorInfo cachedExecutorStats;
   private Date lastStatsUpdatedTime;
 
   /**
-   * <pre>
-   * Construct an Executor Object
-   * Note: port should be a within unsigned 2 byte
-   * integer range
-   * </pre>
-   *
-   * @param executor_id
-   * @param executor_host
-   * @param executor_port
+   * constructs an executor object with a groupName
+   * @param id
+   * @param host
+   * @param port
+   * @param isActive
+   * @param pool
    */
-  public Executor(int id, String host, int port, boolean isActive) {
+  public Executor(int id, String host, int port, boolean isActive, String pool) {
     if (!Utils.isValidPort(port)) {
       throw new IllegalArgumentException(String.format(
-        "Invalid port number %d for host %s, executor_id %d", port, host, id));
+              "Invalid port number %d for host %s, executor_id %d", port, host, id));
     }
 
     this.id = id;
     this.host = host;
     this.port = port;
     this.isActive = isActive;
+    this.pool = pool;
   }
+
 
   @Override
   public int hashCode() {
@@ -111,6 +112,10 @@ public class Executor implements Comparable<Executor> {
 
   public int getId() {
     return id;
+  }
+
+  public String getPool() {
+    return pool;
   }
 
   public ExecutorInfo getExecutorInfo() {

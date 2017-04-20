@@ -16,17 +16,15 @@
 
 package azkaban.executor;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import azkaban.constants.ServerProperties;
 import azkaban.executor.ExecutorLogEvent.EventType;
 import azkaban.utils.FileIOUtils.LogData;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
+
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MockExecutorLoader implements ExecutorLoader {
 
@@ -291,12 +289,12 @@ public class MockExecutorLoader implements ExecutorLoader {
   }
 
   @Override
-  public Executor addExecutor(String host, int port)
+  public Executor addExecutor(String host, int port, String pool)
     throws ExecutorManagerException {
     Executor executor = null;
     if (fetchExecutor(host, port) == null) {
       executorIdCounter++;
-      executor = new Executor(executorIdCounter, host, port, true);
+      executor = new Executor(executorIdCounter, host, port, true, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
       executors.add(executor);
     }
     return executor;
@@ -344,6 +342,11 @@ public class MockExecutorLoader implements ExecutorLoader {
   @Override
   public List<Executor> fetchAllExecutors() throws ExecutorManagerException {
     return executors;
+  }
+
+  @Override
+  public Set<String> fetchDistinctExecutorPools() throws ExecutorManagerException {
+    return executors.stream().map(executor -> executor.getPool()).collect(Collectors.toSet());
   }
 
   @Override

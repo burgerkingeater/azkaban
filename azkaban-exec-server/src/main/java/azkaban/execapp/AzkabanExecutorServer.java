@@ -70,7 +70,6 @@ import azkaban.project.JdbcProjectLoader;
 import azkaban.project.ProjectLoader;
 import azkaban.server.AzkabanServer;
 import azkaban.utils.Props;
-import azkaban.utils.StdOutErrRedirect;
 import azkaban.utils.SystemMemoryInfo;
 import azkaban.utils.Utils;
 import azkaban.metrics.MetricsManager;
@@ -130,7 +129,6 @@ public class AzkabanExecutorServer {
       logger.error(e);
       Utils.croak(e.getMessage(), 1);
     }
-
     insertExecutorEntryIntoDB();
     dumpPortToFile();
 
@@ -192,9 +190,10 @@ public class AzkabanExecutorServer {
       final String host = requireNonNull(getHost());
       final int port = getPort();
       checkState(port != -1);
+      final String poolName = props.getString(ServerProperties.EXECUTOR_POOL_NAME, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
       final Executor executor = executionLoader.fetchExecutor(host, port);
       if (executor == null) {
-        executionLoader.addExecutor(host, port);
+        executionLoader.addExecutor(host, port, poolName);
       }
       // If executor already exists, ignore it
     } catch (ExecutorManagerException e) {
@@ -339,7 +338,7 @@ public class AzkabanExecutorServer {
    */
   public static void main(String[] args) throws Exception {
     // Redirect all std out and err messages into log4j
-    StdOutErrRedirect.redirectOutAndErrToLog();
+    //StdOutErrRedirect.redirectOutAndErrToLog();
 
     logger.info("Starting Jetty Azkaban Executor...");
     Props props = AzkabanServer.loadProps(args);

@@ -1,0 +1,1 @@
+Alter table executors add column pool varchar(64) DEFAULT 'default_pool';

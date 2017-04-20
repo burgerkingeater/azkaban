@@ -16,14 +16,14 @@
 
 package azkaban.executor.selector;
 
+import azkaban.executor.ExecutableFlow;
+import azkaban.executor.Executor;
+import azkaban.executor.ExecutorInfo;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import azkaban.executor.ExecutableFlow;
-import azkaban.executor.Executor;
-import azkaban.executor.ExecutorInfo;
 
 /**
  * De-normalized version of the candidateFilter, which also contains the implementation of the factor filters.
@@ -44,6 +44,7 @@ public final class ExecutorFilter extends CandidateFilter<Executor, ExecutableFl
   private static final String STATICREMAININGFLOWSIZE_FILTER_NAME = "StaticRemainingFlowSize";
   private static final String MINIMUMFREEMEMORY_FILTER_NAME = "MinimumFreeMemory";
   private static final String CPUSTATUS_FILTER_NAME = "CpuStatus";
+  private static final String EXECUTOR_POOLING_FILTER_NAME = "ExecutorPool";
 
   /**<pre>
    * static initializer of the class.
@@ -56,6 +57,7 @@ public final class ExecutorFilter extends CandidateFilter<Executor, ExecutableFl
     filterRepository.put(STATICREMAININGFLOWSIZE_FILTER_NAME, getStaticRemainingFlowSizeFilter());
     filterRepository.put(MINIMUMFREEMEMORY_FILTER_NAME, getMinimumReservedMemoryFilter());
     filterRepository.put(CPUSTATUS_FILTER_NAME, getCpuStatusFilter());
+    filterRepository.put(EXECUTOR_POOLING_FILTER_NAME, getExecutorPoolFilter());
   }
 
   /**
@@ -171,6 +173,45 @@ public final class ExecutorFilter extends CandidateFilter<Executor, ExecutableFl
         }
         return stats.getCpuUsage() < MAX_CPU_CURRENT_USAGE ;
        }
+    });
+  }
+
+
+  private static FactorFilter<Executor, ExecutableFlow> getExecutorPoolFilter() {
+    return FactorFilter.create(EXECUTOR_POOLING_FILTER_NAME, new FactorFilter.Filter<Executor, ExecutableFlow>() {
+      @Override
+      public boolean filterTarget(Executor filteringTarget, ExecutableFlow referencingObject) {
+        if (filteringTarget == null) {
+          logger.debug(String.format("%s : filtering out the target as it is null.", EXECUTOR_POOLING_FILTER_NAME));
+          return false;
+        }
+        String pool = filteringTarget.getPool();
+        if (pool == null) {
+          logger.debug(String.format("%s : Not filtering out %s as it's pool is not specified. Falling back " +
+                          "to old selection",
+                  EXECUTOR_POOLING_FILTER_NAME,
+                  filteringTarget.toString()));
+          return true;
+        }
+
+        if (referencingObject.getExecutionOptions() == null) {
+          logger.debug(String.format("%s : filtering not required for  %s as user hasn't specified any " +
+                          "execution options",
+                  EXECUTOR_POOLING_FILTER_NAME,
+                  filteringTarget.toString()));
+          return true;
+        }
+        if (referencingObject.getExecutionOptions() != null &&
+                referencingObject.getExecutionOptions().getExecutorPool() == null) {
+          logger.debug(String.format("%s : filtering not required for  %s as user hasn't specified any pool",
+                  EXECUTOR_POOLING_FILTER_NAME,
+                  filteringTarget.toString()));
+          return true;
+        }
+
+        // Actual filtering based on equality of groupName specified by user and group accessed from db
+        return pool.equals(referencingObject.getExecutionOptions().getExecutorPool());
+      }
     });
   }
 }
