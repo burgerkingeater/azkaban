@@ -91,6 +91,12 @@ public class Constants {
     public static final String AZKABAN_STORAGE_TYPE = "azkaban.storage.type";
     public static final String AZKABAN_STORAGE_LOCAL_BASEDIR = "azkaban.storage.local.basedir";
     public static final String AZKABAN_STORAGE_HDFS_BASEURI = "azkaban.storage.hdfs.baseuri";
+
+    //The property is used to get the pool name of executor specified by user in azkaban.properties file of ExecutorServer
+    public static final String EXECUTOR_POOL_NAME = "executor.poolname";
+
+    // The value will be used when user is not specifying #EXECUTOR_POOL_NAME in properties file
+    public static final String DEFAULT_EXECUTOR_POOL_NAME = "default_pool";
   }
 
   public static class FlowProperties {

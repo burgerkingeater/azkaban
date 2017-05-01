@@ -25,7 +25,7 @@ import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
-import azkaban.constants.ServerProperties;
+import azkaban.Constants;
 import org.apache.commons.lang.StringUtils;
 
 import azkaban.executor.ExecutionOptions;
@@ -60,7 +60,7 @@ public class HttpRequestUtils {
       execOptions.setFailureEmailsOverridden(override);
     }
     if (hasParam(req,"executorPool")) {
-      String executorPool = getParam(req,"executorPool", ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+      String executorPool = getParam(req,"executorPool", Constants.ConfigurationKeys.DEFAULT_EXECUTOR_POOL_NAME);
       execOptions.setExecutorPool(executorPool);
     }
     if (hasParam(req, "successEmailsOverride")) {

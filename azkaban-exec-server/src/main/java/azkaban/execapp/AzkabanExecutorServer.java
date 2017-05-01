@@ -190,7 +190,7 @@ public class AzkabanExecutorServer {
       final String host = requireNonNull(getHost());
       final int port = getPort();
       checkState(port != -1);
-      final String poolName = props.getString(ServerProperties.EXECUTOR_POOL_NAME, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+      final String poolName = props.getString(Constants.ConfigurationKeys.EXECUTOR_POOL_NAME, Constants.ConfigurationKeys.DEFAULT_EXECUTOR_POOL_NAME);
       final Executor executor = executionLoader.fetchExecutor(host, port);
       if (executor == null) {
         executionLoader.addExecutor(host, port, poolName);

@@ -207,7 +207,7 @@ public class ExecutorManager extends EventHandler implements
       Executor executor =
         executorLoader.fetchExecutor(executorHost, executorPort);
       if (executor == null) {
-        executor = executorLoader.addExecutor(executorHost, executorPort, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+        executor = executorLoader.addExecutor(executorHost, executorPort, Constants.ConfigurationKeys.DEFAULT_EXECUTOR_POOL_NAME);
       } else if (!executor.isActive()) {
         executor.setActive(true);
         executorLoader.updateExecutor(executor);

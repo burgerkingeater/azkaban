@@ -16,7 +16,7 @@
 
 package azkaban.executor;
 
-import azkaban.constants.ServerProperties;
+import azkaban.Constants;
 import azkaban.executor.ExecutorLogEvent.EventType;
 import azkaban.utils.FileIOUtils.LogData;
 import azkaban.utils.Pair;
@@ -294,7 +294,7 @@ public class MockExecutorLoader implements ExecutorLoader {
     Executor executor = null;
     if (fetchExecutor(host, port) == null) {
       executorIdCounter++;
-      executor = new Executor(executorIdCounter, host, port, true, ServerProperties.DEFAULT_EXECUTOR_POOL_NAME);
+      executor = new Executor(executorIdCounter, host, port, true, Constants.ConfigurationKeys.DEFAULT_EXECUTOR_POOL_NAME);
       executors.add(executor);
     }
     return executor;
