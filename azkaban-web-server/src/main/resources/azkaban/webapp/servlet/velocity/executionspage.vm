@@ -29,8 +29,8 @@
       var timezone = "${timezone}";
       var errorMessage = null;
       var successMessage = null;
-      
-      
+
+
       $(document).ready(function () {
         var jobTable = $("#executingJobs");
         jobTable.tablesorter();
@@ -78,6 +78,7 @@
                 <th class="elapse">Elapsed</th>
                 <th class="status">Status</th>
                 <th class="action">Action</th>
+                <th class="action">Executor Pool</th>
               </tr>
             </thead>
             <tbody>
@@ -93,7 +94,7 @@
                 </td>
                 <td>
                    #if (${flow.getSecond()})
-                       ${flow.getSecond().getId()}											
+                       ${flow.getSecond().getId()}
                    #else
                        -
                    #end
