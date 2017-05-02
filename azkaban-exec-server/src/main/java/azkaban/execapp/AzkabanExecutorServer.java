@@ -17,6 +17,7 @@
 package azkaban.execapp;
 
 import azkaban.AzkabanCommonModule;
+import azkaban.utils.StdOutErrRedirect;
 import com.google.common.base.Throwables;
 
 import com.google.inject.Guice;
@@ -338,7 +339,7 @@ public class AzkabanExecutorServer {
    */
   public static void main(String[] args) throws Exception {
     // Redirect all std out and err messages into log4j
-    //StdOutErrRedirect.redirectOutAndErrToLog();
+    StdOutErrRedirect.redirectOutAndErrToLog();
 
     logger.info("Starting Jetty Azkaban Executor...");
     Props props = AzkabanServer.loadProps(args);

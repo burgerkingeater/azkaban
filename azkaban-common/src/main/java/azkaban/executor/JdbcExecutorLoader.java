@@ -900,7 +900,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   /**
    * {@inheritDoc}
    *
-   * @see azkaban.executor.ExecutorLoader#updateExecutor(int)
+   * @see azkaban.executor.ExecutorLoader#updateExecutor(Executor)
    */
   @Override
   public void updateExecutor(Executor executor) throws ExecutorManagerException {
@@ -1355,7 +1355,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
     // Select running and executor assigned flows
     private static String FETCH_ACTIVE_EXECUTABLE_FLOW =
       "SELECT ex.exec_id exec_id, ex.enc_type enc_type, ex.flow_data flow_data, et.host host, "
-        + "et.port port, ax.update_time axUpdateTime, et.id executorId, et.active executorStatus"
+        + "et.port port, ax.update_time axUpdateTime, et.id executorId, et.active executorStatus ,et.pool as pool"
         + " FROM execution_flows ex"
         + " INNER JOIN "
         + " active_executing_flows ax ON ex.exec_id = ax.exec_id"
@@ -1381,7 +1381,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
         long updateTime = rs.getLong(6);
         int executorId = rs.getInt(7);
         boolean executorStatus = rs.getBoolean(8);
-
+        String pool = rs.getString(9);
         if (data == null) {
           execFlows.put(id, null);
         } else {
@@ -1401,7 +1401,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
 
             ExecutableFlow exFlow =
                 ExecutableFlow.createExecutableFlowFromObject(flowObj);
-            Executor executor = new Executor(executorId, host, port, executorStatus, null);
+            Executor executor = new Executor(executorId, host, port, executorStatus, pool);
             ExecutionReference ref = new ExecutionReference(id, executor);
             ref.setUpdateTime(updateTime);
 

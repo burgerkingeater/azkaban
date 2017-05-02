@@ -136,7 +136,7 @@ public interface ExecutorLoader {
    * 3. return null when no executor is found with the given executorId
    * </pre>
    *
-   * @param executorId
+   * @param executor
    * @throws ExecutorManagerException
    */
   void updateExecutor(Executor executor) throws ExecutorManagerException;
@@ -181,7 +181,6 @@ public interface ExecutorLoader {
    *
    * @param executor
    * @param num
-   * @param skip
    * @return List<ExecutorLogEvent>
    * @throws ExecutorManagerException
    */
@@ -202,8 +201,7 @@ public interface ExecutorLoader {
    * throws an Exception in case of a SQL issue
    * </pre>
    *
-   * @param executorId
-   * @param execId
+   * @param executionId
    * @throws ExecutorManagerException
    */
   void unassignExecutor(int executionId) throws ExecutorManagerException;

@@ -212,8 +212,7 @@ public class ExecutorManager extends EventHandler implements
         executor.setActive(true);
         executorLoader.updateExecutor(executor);
       }
-      newExecutors.add(new Executor(executor.getId(), executorHost,
-        executorPort, true, null));
+      newExecutors.add(executor);
     }
 
     if (newExecutors.isEmpty()) {
