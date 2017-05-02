@@ -280,7 +280,7 @@ public class ExecutionOptions {
         false));
 
     options.setMemoryCheck(wrapper.getBool(MEMORY_CHECK, true));
-    options.setExecutorPool(wrapper.getString(EXECUTOR_POOL,null));
+    options.setExecutorPool(wrapper.getString(EXECUTOR_POOL, Constants.ConfigurationKeys.DEFAULT_EXECUTOR_POOL_NAME));
 
     return options;
   }
