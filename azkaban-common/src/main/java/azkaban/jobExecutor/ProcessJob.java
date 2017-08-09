@@ -271,8 +271,8 @@ public class ProcessJob extends AbstractProcessJob {
         this.process = builder.build();
       }
       try {
-          this.process.run();
-          this.success = true;
+        this.process.run();
+        this.success = true;
       } catch (final Throwable e) {
         for (final File file : propFiles) {
           if (file != null && file.exists()) {
