@@ -14,28 +14,22 @@
  * the License.
  */
 
-package azkaban.flowtrigger;
+package azkaban.test;
 
-public interface DependencyCheck {
+import azkaban.flowtrigger.DependencyInstanceCallback;
+import azkaban.flowtrigger.DependencyInstanceContext;
 
+public class TestDependencyInstanceContext implements DependencyInstanceContext {
 
-  /**
-   * Non-blocking run of dependency check
-   *
-   * @return context of the running dependency.
-   */
-  DependencyInstanceContext run(DependencyInstanceConfig config,
-      DependencyInstanceCallback callback);
+  private final DependencyInstanceCallback callback;
 
-  /**
-   * Shutdown the dependency plugin. Clean up resource if needed.
-   */
-  void shutdown();
+  public TestDependencyInstanceContext(final DependencyInstanceCallback callback) {
+    this.callback = callback;
+  }
 
-  /**
-   * Initialize the dependency plugin.
-   *
-   * @param config dependency plugin config.
-   */
-  void init(DependencyPluginConfig config);
+  @Override
+  public void kill() {
+    System.out.println("Killing TestDependencyInstanceContext");
+    this.callback.onKilled(this);
+  }
 }

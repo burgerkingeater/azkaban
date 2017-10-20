@@ -16,26 +16,16 @@
 
 package azkaban.flowtrigger;
 
-public interface DependencyCheck {
+import javax.inject.Singleton;
 
+@Singleton
+public class DependencyProcessor {
 
-  /**
-   * Non-blocking run of dependency check
-   *
-   * @return context of the running dependency.
-   */
-  DependencyInstanceContext run(DependencyInstanceConfig config,
-      DependencyInstanceCallback callback);
-
-  /**
-   * Shutdown the dependency plugin. Clean up resource if needed.
-   */
-  void shutdown();
-
-  /**
-   * Initialize the dependency plugin.
-   *
-   * @param config dependency plugin config.
-   */
-  void init(DependencyPluginConfig config);
+  public void processStatusUpdate(final DependencyInstance dep, final Status status) {
+    dep.updateStatus(status);
+    if (Status.isDone(dep.getStatus())) {
+      dep.updateEndTime(System.currentTimeMillis());
+    }
+    //update db, will do it in a separate threadpool
+  }
 }

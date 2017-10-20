@@ -22,4 +22,6 @@ package azkaban.flowtrigger;
  */
 public interface DependencyInstanceContext {
 
+  void kill();
+
 }

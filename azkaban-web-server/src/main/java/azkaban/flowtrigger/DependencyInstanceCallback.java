@@ -21,10 +21,10 @@ public interface DependencyInstanceCallback {
   /**
    * action to invoke when dependency check instance is successfully finished.
    */
-  void onSuccess(DependencyInstanceContext dependencyInstance);
+  void onSuccess(DependencyInstanceContext depContext);
 
   /**
    * action to invoke when dependency check instance is successfully killed.
    */
-  void onKilled(DependencyInstanceContext dependencyInstance);
+  void onKilled(DependencyInstanceContext depContext);
 }

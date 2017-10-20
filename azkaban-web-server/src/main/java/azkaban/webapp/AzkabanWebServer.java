@@ -24,11 +24,19 @@ import azkaban.Constants;
 import azkaban.Constants.ConfigurationKeys;
 import azkaban.database.AzkabanDatabaseSetup;
 import azkaban.executor.ExecutorManager;
+import azkaban.flowtrigger.FlowDependencyService;
+import azkaban.flowtrigger.FlowTriggerPluginManager;
+import azkaban.flowtrigger.quartz.FlowTriggerQuartzJob;
+import azkaban.flowtrigger.quartz.FlowTriggerQuartzService;
 import azkaban.jmx.JmxExecutorManager;
 import azkaban.jmx.JmxJettyServer;
 import azkaban.jmx.JmxTriggerManager;
 import azkaban.metrics.MetricsManager;
+import azkaban.project.CronSchedule;
+import azkaban.project.FlowTrigger;
+import azkaban.project.FlowTriggerDependency;
 import azkaban.project.ProjectManager;
+import azkaban.scheduler.QuartzJobDescription;
 import azkaban.scheduler.QuartzScheduler;
 import azkaban.scheduler.ScheduleManager;
 import azkaban.server.AzkabanServer;
@@ -77,7 +85,9 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -524,6 +534,26 @@ public class AzkabanWebServer extends AzkabanServer {
 
     if (this.props.getBoolean(ConfigurationKeys.ENABLE_QUARTZ, false)) {
       this.quartzScheduler.start();
+      //setup
+      final FlowTriggerPluginManager pluginManager = new FlowTriggerPluginManager();
+      final FlowDependencyService flowDepService = new FlowDependencyService(null, null, null);
+
+      //test FlowTrigger
+      final List<FlowTriggerDependency> dependencies = new ArrayList<>();
+      dependencies.add(new FlowTriggerDependency("dep1", "test", new HashMap<>()));
+      final FlowTrigger flowTrigger = new FlowTrigger(new CronSchedule("* * * * * ?"), dependencies,
+          Duration.ofSeconds(5));
+
+      final FlowTriggerQuartzService flowTriggerService = new FlowTriggerQuartzService(
+          flowTrigger.getDependencies(),
+          flowTrigger.getMaxWaitDuration(), flowDepService);
+
+      final Map<String, FlowTriggerQuartzService> contextMap = new HashMap<>();
+      //contextMap.put(FlowTriggerQuartzJob.DELEGATE_CLASS_NAME, flowTriggerService);
+
+      this.quartzScheduler
+          .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription<>
+              (FlowTriggerQuartzJob.class, "FlowTriggerQuartzJob", contextMap));
     }
 
     try {

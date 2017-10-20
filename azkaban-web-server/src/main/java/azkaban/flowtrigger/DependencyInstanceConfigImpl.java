@@ -16,26 +16,26 @@
 
 package azkaban.flowtrigger;
 
-public interface DependencyCheck {
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
+public class DependencyInstanceConfigImpl implements DependencyInstanceConfig {
 
-  /**
-   * Non-blocking run of dependency check
-   *
-   * @return context of the running dependency.
-   */
-  DependencyInstanceContext run(DependencyInstanceConfig config,
-      DependencyInstanceCallback callback);
+  private final Map<String, String> props;
 
-  /**
-   * Shutdown the dependency plugin. Clean up resource if needed.
-   */
-  void shutdown();
+  public DependencyInstanceConfigImpl(final Map<String, String> props) {
+    this.props = ImmutableMap.copyOf(props);
+  }
 
-  /**
-   * Initialize the dependency plugin.
-   *
-   * @param config dependency plugin config.
-   */
-  void init(DependencyPluginConfig config);
+  @Override
+  public String toString() {
+    return "DependencyInstanceConfigImpl{" +
+        "props=" + this.props +
+        '}';
+  }
+
+  @Override
+  public String get(final String key) {
+    return this.props.get(key);
+  }
 }

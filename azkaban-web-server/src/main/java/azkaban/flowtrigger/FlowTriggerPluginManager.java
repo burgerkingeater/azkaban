@@ -16,26 +16,20 @@
 
 package azkaban.flowtrigger;
 
-public interface DependencyCheck {
+import azkaban.test.TestDependencyCheck;
+import javax.inject.Singleton;
 
+@Singleton
+public class FlowTriggerPluginManager {
 
   /**
-   * Non-blocking run of dependency check
+   * return or create a dependency check based on type
    *
-   * @return context of the running dependency.
+   * @return if the dependencyCheck of the same type already exists, return the check,
+   * otherwise create a new one and return.
    */
-  DependencyInstanceContext run(DependencyInstanceConfig config,
-      DependencyInstanceCallback callback);
+  public DependencyCheck getDependencyCheck(final String type) {
+    return new TestDependencyCheck();
+  }
 
-  /**
-   * Shutdown the dependency plugin. Clean up resource if needed.
-   */
-  void shutdown();
-
-  /**
-   * Initialize the dependency plugin.
-   *
-   * @param config dependency plugin config.
-   */
-  void init(DependencyPluginConfig config);
 }
