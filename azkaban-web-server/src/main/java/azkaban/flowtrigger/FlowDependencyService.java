@@ -16,6 +16,7 @@
 
 package azkaban.flowtrigger;
 
+import azkaban.project.CronSchedule;
 import azkaban.project.FlowTrigger;
 import azkaban.project.FlowTriggerDependency;
 import azkaban.test.TestDependencyCheck;
@@ -52,6 +53,17 @@ public class FlowDependencyService {
   private final TriggerProcessor triggerProcessor;
   private final DependencyProcessor dependencyProcessor;
 
+  public FlowDependencyService() {
+    final ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
+        .setNameFormat("FlowTrigger-service").build();
+    this.executorService = Executors.newSingleThreadExecutor(namedThreadFactory);
+    this.timeoutService = Executors.newSingleThreadScheduledExecutor(namedThreadFactory);
+    this.runningTriggers = new ArrayList<>();
+    this.triggerPluginManager = null;
+    this.triggerProcessor = null;
+    this.dependencyProcessor = null;
+  }
+
   public FlowDependencyService(final FlowTriggerPluginManager pluginManager, final TriggerProcessor
       triggerProcessor, final DependencyProcessor dependencyProcessor) {
     // Give the thread a name to make debugging easier.
@@ -70,9 +82,19 @@ public class FlowDependencyService {
         (), new TriggerProcessor(), new DependencyProcessor());
     final DependencyInstanceConfig depInstConfig = new DependencyInstanceConfigImpl(
         new HashMap<>());
+
+    final CronSchedule validSchedule = new CronSchedule("* * * * ? *");
+    final List<FlowTriggerDependency> validDependencyList = new ArrayList<>();
+    validDependencyList.add(new FlowTriggerDependency("a", "a", new HashMap<>()));
+    final Duration validDuration = Duration.ofSeconds(5);
+
+    final FlowTrigger flowTrigger = new FlowTrigger(validSchedule, validDependencyList,
+        validDuration);
+
     //service.start("test", depInstConfig, Duration.ofSeconds(2));
-    System.out.println("sleeping...");
-    Thread.sleep(5 * 1000);
+    service.start(flowTrigger);
+    //logger.info("sleeping...");
+    Thread.sleep(10 * 1000);
     //System.out.println(service.runningTriggerContainer);
   }
 
@@ -114,12 +136,23 @@ public class FlowDependencyService {
     logger.info(String.format("Starting the flow trigger %s with execId %s", flowTrigger, execId));
     this.executorService.submit(() -> {
       final TriggerInstance triggerInst = createTriggerInstance(flowTrigger);
-      this.triggerProcessor.processNewInstance(triggerInst);
+      //todo chengren311: it's possible web server restarts before the db update, then
+      // new instance will not be recoverable from db. We can update DB first before updating
+      // memory(like write-ahead logging), but this would be very inefficient in the context of
+      // single threading.
+      this.triggerProcessor.processStatusUpdate(triggerInst);
       this.runningTriggers.add(triggerInst);
       scheduleKill(execId, flowTrigger.getMaxWaitDuration());
     });
   }
 
+  private void updateStatus(final DependencyInstance depInst, final Status status) {
+    depInst.updateStatus(status);
+    if (Status.isDone(depInst.getStatus())) {
+      depInst.updateEndTime(System.currentTimeMillis());
+    }
+    this.dependencyProcessor.processStatusUpdate(depInst);
+  }
 
   private TriggerInstance findTriggerInstByExecId(final String execId) {
     return null;
@@ -128,15 +161,13 @@ public class FlowDependencyService {
   public void kill(final String execId, final boolean killedByTimeout) {
     this.executorService.submit(() -> {
       final TriggerInstance triggerInst = this.findTriggerInstByExecId(execId);
-      this.triggerProcessor.processStatusUpdate(triggerInst, Status.KILLING);
-      /*
       for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
         if (depInst.getStatus() == Status.RUNNING) {
-          this.depInst.setTimeoutKilling(killedByTimeout);
-          depInst.updateStatus(Status.KILLING);
+          depInst.setTimeoutKilling(killedByTimeout);
+          updateStatus(depInst, Status.KILLING);
           depInst.getContext().kill();
         }
-      }*/
+      }
     });
   }
 
@@ -157,10 +188,9 @@ public class FlowDependencyService {
           logger.warn(String.format("OnSuccess of %s is ignored", depInst));
           return;
         }
-        this.dependencyProcessor.processStatusUpdate(depInst, Status.SUCCEEDED);
+        updateStatus(depInst, Status.SUCCEEDED);
         if (depInst.getTriggerInstance().getStatus() == Status.SUCCEEDED) {
-          this.triggerProcessor
-              .processStatusUpdate(depInst.getTriggerInstance(), Status.SUCCEEDED);
+          this.triggerProcessor.processStatusUpdate(depInst.getTriggerInstance());
           this.runningTriggers.remove(depInst.getTriggerInstance());
         }
       }
@@ -177,11 +207,10 @@ public class FlowDependencyService {
         }
 
         final Status finalStatus = depInst.isTimeoutKilling() ? Status.TIMEOUT : Status.KILLED;
-        this.dependencyProcessor.processStatusUpdate(depInst, finalStatus);
+        updateStatus(depInst, finalStatus);
 
         if (depInst.getTriggerInstance().getStatus() == finalStatus) {
-          this.triggerProcessor
-              .processStatusUpdate(depInst.getTriggerInstance(), finalStatus);
+          this.triggerProcessor.processStatusUpdate(depInst.getTriggerInstance());
           this.runningTriggers.remove(depInst.getTriggerInstance());
         }
       }

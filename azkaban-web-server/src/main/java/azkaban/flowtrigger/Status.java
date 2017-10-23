@@ -20,12 +20,12 @@ package azkaban.flowtrigger;
  * Represents status for trigger/dependency
  */
 public enum Status {
-  RUNNING, // a trigger is running if at least one dependency is running and the rest are succeeded
+  RUNNING, // a trigger is running if at least one dependency is running and the rest, if any, are
+  // succeeded
   SUCCEEDED, // a trigger is succeeded if all of its dependencies succeed
-  TIMEOUT, // a trigger is timeout if all of its dependencies time out
-  KILLED, // a trigger is killed if all of its dependencies are killed
-  KILLING; //a trigger is in killing when any but not all of its dependencies is in
-  // timeout/killed/killing state
+  TIMEOUT, // a trigger is timeout at least one times out and rest, if any, are succeeded
+  KILLED, // a trigger is killed at least one is killed and rest, if any, are succeeded
+  KILLING; // otherwise, a trigger is killing state
 
   public static boolean isDone(final Status status) {
     return status.equals(TIMEOUT) || status.equals(KILLED) || status.equals(SUCCEEDED);

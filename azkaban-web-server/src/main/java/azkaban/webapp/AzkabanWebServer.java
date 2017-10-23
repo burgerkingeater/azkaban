@@ -548,12 +548,12 @@ public class AzkabanWebServer extends AzkabanServer {
           flowTrigger.getDependencies(),
           flowTrigger.getMaxWaitDuration(), flowDepService);
 
-      final Map<String, FlowTriggerQuartzService> contextMap = new HashMap<>();
+      //final Map<String, FlowTriggerQuartzService> contextMap = new HashMap<>();
       //contextMap.put(FlowTriggerQuartzJob.DELEGATE_CLASS_NAME, flowTriggerService);
 
       this.quartzScheduler
           .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription<>
-              (FlowTriggerQuartzJob.class, "FlowTriggerQuartzJob", contextMap));
+              (FlowTriggerQuartzJob.class, "FlowTriggerQuartzJob"));
     }
 
     try {

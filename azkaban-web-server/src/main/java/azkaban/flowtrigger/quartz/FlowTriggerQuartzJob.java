@@ -18,18 +18,19 @@ package azkaban.flowtrigger.quartz;
 
 import azkaban.flowtrigger.FlowDependencyService;
 import azkaban.scheduler.AbstractQuartzJob;
+import javax.inject.Inject;
 import org.quartz.JobExecutionContext;
 
 
 public class FlowTriggerQuartzJob extends AbstractQuartzJob {
 
   public static final String DELEGATE_CLASS_NAME = "FlowTriggerQuartzJob";
-  private FlowDependencyService depService;
+  private final FlowDependencyService depService;
 
-  /*
+  @Inject
   public FlowTriggerQuartzJob(final FlowDependencyService depService) {
     this.depService = depService;
-  }*/
+  }
 
   @Override
   public void execute(final JobExecutionContext context) {

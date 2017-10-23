@@ -16,61 +16,49 @@
 
 package azkaban.flowtrigger;
 
-import com.google.common.base.Preconditions;
 import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class TriggerProcessor {
 
-  private final DependencyProcessor depProcessor;
-
-  public TriggerProcessor(final DependencyProcessor depProcessor) {
-    this.depProcessor = depProcessor;
-  }
+  private static final Logger logger = LoggerFactory.getLogger(TriggerProcessor.class);
 
   private void processSucceed(final TriggerInstance triggerInst) {
-    Preconditions.checkArgument(triggerInst.getStatus() == Status.SUCCEEDED);
+    logger.debug("process succeed for " + triggerInst);
     // email and trigger a new flow
   }
 
   private void processKilled(final TriggerInstance triggerInst) {
-    Preconditions.checkArgument(triggerInst.getStatus() == Status.KILLED);
+    logger.debug("process killed for " + triggerInst);
     // email
-  }
-
-  private void processKilling(final TriggerInstance triggerInst) {
-    Preconditions.checkArgument(triggerInst.getStatus() == Status.KILLING);
-    for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-      if (depInst.getStatus() == Status.RUNNING) {
-        this.depProcessor.processStatusUpdate(depInst, Status.KILLING);
-      }
-    }
   }
 
   private void processTimeout(final TriggerInstance triggerInst) {
-    Preconditions.checkArgument(triggerInst.getStatus() == Status.TIMEOUT);
+    logger.debug("process timeout for " + triggerInst);
     // email
   }
 
-  public void processNewInstance(final TriggerInstance triggerInst) {
+  private void processNewInstance(final TriggerInstance triggerInst) {
+    logger.debug("process new instance for " + triggerInst);
     for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
       //insert depinst to db
     }
   }
 
-  public void processStatusUpdate(final TriggerInstance triggerInst, final Status status) {
-    switch (status) {
+  public void processStatusUpdate(final TriggerInstance updatedTriggerInst) {
+    switch (updatedTriggerInst.getStatus()) {
+      case RUNNING:
+        processNewInstance(updatedTriggerInst);
       case SUCCEEDED:
-        processSucceed(triggerInst);
-        break;
-      case KILLING:
-        processKilling(triggerInst);
+        processSucceed(updatedTriggerInst);
         break;
       case KILLED:
-        processKilled(triggerInst);
+        processKilled(updatedTriggerInst);
         break;
       case TIMEOUT:
-        processTimeout(triggerInst);
+        processTimeout(updatedTriggerInst);
         break;
       default:
         break;

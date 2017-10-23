@@ -17,7 +17,9 @@
 package azkaban.flowtrigger;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TriggerInstance {
 
@@ -41,10 +43,46 @@ public class TriggerInstance {
     return this.execId;
   }
 
+  private boolean isRunning(final Map<Status, Integer> statusCount) {
+    // 1. all dependencies are running or 2. at least one is running and rest are succeeded
+    return (statusCount.containsKey(Status.RUNNING) && statusCount.size() == 1) ||
+        (statusCount.containsKey(Status.RUNNING) && statusCount.containsKey(Status.SUCCEEDED) &&
+            statusCount.size() == 2);
+  }
+
+  private boolean isSucceed(final Map<Status, Integer> statusCount) {
+    return statusCount.containsKey(Status.SUCCEEDED) && statusCount.size() == 1;
+  }
+
+  private boolean isTimeout(final Map<Status, Integer> statusCount) {
+    return (statusCount.containsKey(Status.TIMEOUT) && statusCount.size() == 1) || (statusCount
+        .containsKey(Status.TIMEOUT) && statusCount.containsKey(Status.SUCCEEDED) && statusCount
+        .size() == 2);
+  }
+
+  private boolean isKilled(final Map<Status, Integer> statusCount) {
+    return (statusCount.containsKey(Status.KILLED) && statusCount.size() == 1) || (statusCount
+        .containsKey(Status.KILLED) && statusCount.containsKey(Status.SUCCEEDED) && statusCount
+        .size() == 2);
+  }
+
   public Status getStatus() {
-    final long startTime = -1;
-    final long endTime = Long.MIN_VALUE;
-    return null;
+    final Map<Status, Integer> statusCount = new HashMap<>();
+    for (final DependencyInstance depInst : this.depInstances) {
+      final Integer count = statusCount.get(depInst.getStatus());
+      statusCount.put(depInst.getStatus(), count == null ? 1 : count + 1);
+    }
+    if (isRunning(statusCount)) {
+      return Status.RUNNING;
+    } else if (isSucceed(statusCount)) {
+      return Status.SUCCEEDED;
+    } else if (isTimeout(statusCount)) {
+      return Status.TIMEOUT;
+    } else if (isKilled(statusCount)) {
+      return Status.KILLED;
+    } else {
+      return Status.KILLING;
+    }
   }
 
   public long getStartTime() {

@@ -21,11 +21,8 @@ import javax.inject.Singleton;
 @Singleton
 public class DependencyProcessor {
 
-  public void processStatusUpdate(final DependencyInstance dep, final Status status) {
-    dep.updateStatus(status);
-    if (Status.isDone(dep.getStatus())) {
-      dep.updateEndTime(System.currentTimeMillis());
-    }
+  public void processStatusUpdate(final DependencyInstance dep) {
+
     //update db, will do it in a separate threadpool
   }
 }
