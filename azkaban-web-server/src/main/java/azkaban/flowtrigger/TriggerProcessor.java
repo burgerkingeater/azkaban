@@ -16,6 +16,15 @@
 
 package azkaban.flowtrigger;
 
+import azkaban.executor.ExecutableFlow;
+import azkaban.executor.ExecutorManager;
+import azkaban.executor.ExecutorManagerException;
+import azkaban.flow.Flow;
+import azkaban.flow.FlowUtils;
+import azkaban.project.Project;
+import azkaban.project.ProjectManager;
+import com.google.common.base.Preconditions;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +33,29 @@ import org.slf4j.LoggerFactory;
 public class TriggerProcessor {
 
   private static final Logger logger = LoggerFactory.getLogger(TriggerProcessor.class);
+  private final ProjectManager projectManager;
+  private final ExecutorManager executorManager;
+
+  @Inject
+  public TriggerProcessor(final ProjectManager projectManager,
+      final ExecutorManager executorManager) {
+    Preconditions.checkNotNull(projectManager);
+    Preconditions.checkNotNull(executorManager);
+    this.projectManager = projectManager;
+    this.executorManager = executorManager;
+  }
 
   private void processSucceed(final TriggerInstance triggerInst) {
     logger.debug("process succeed for " + triggerInst);
     // email and trigger a new flow
+    final Project project = FlowUtils.getProject(this.projectManager, triggerInst.getProjectId());
+    final Flow flow = FlowUtils.getFlow(project, triggerInst.getFlowName());
+    final ExecutableFlow executableFlow = FlowUtils.createExecutableFlow(project, flow);
+    try {
+      this.executorManager.submitExecutableFlow(executableFlow, triggerInst.getSubmitUser());
+    } catch (final ExecutorManagerException ex) {
+      logger.error(ex.getMessage());
+    }
   }
 
   private void processKilled(final TriggerInstance triggerInst) {

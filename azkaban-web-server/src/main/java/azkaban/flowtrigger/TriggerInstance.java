@@ -25,14 +25,21 @@ public class TriggerInstance {
 
   private final List<DependencyInstance> depInstances;
   private final String execId;
+  private final int projectId;
+  private final String flowName;
+  private final String submitUser;
 
-  public TriggerInstance(final String execId) {
+  public TriggerInstance(final String execId, final int projectId, final String flowName, final
+  String submitUser) {
     this.depInstances = new ArrayList<>();
     this.execId = execId;
+    this.projectId = projectId;
+    this.flowName = flowName;
+    this.submitUser = submitUser;
   }
 
   public static void main(final String[] args) {
-    final TriggerInstance ti = new TriggerInstance("1");
+    final TriggerInstance ti = new TriggerInstance("1", -1, null, null);
     final DependencyInstance di1 = new DependencyInstance(null, null);
     di1.updateStatus(Status.KILLED);
     ti.addDependencyInstance(di1);
@@ -50,6 +57,18 @@ public class TriggerInstance {
     ti.addDependencyInstance(di4);
 
     System.out.println(ti.getStatus());
+  }
+
+  public int getProjectId() {
+    return this.projectId;
+  }
+
+  public String getFlowName() {
+    return this.flowName;
+  }
+
+  public String getSubmitUser() {
+    return this.submitUser;
   }
 
   public void addDependencyInstance(final DependencyInstance depInst) {
