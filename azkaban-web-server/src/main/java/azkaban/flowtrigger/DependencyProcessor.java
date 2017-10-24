@@ -17,12 +17,16 @@
 package azkaban.flowtrigger;
 
 import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class DependencyProcessor {
 
-  public void processStatusUpdate(final DependencyInstance dep) {
+  private static final Logger logger = LoggerFactory.getLogger(DependencyProcessor.class);
 
+  public void processStatusUpdate(final DependencyInstance dep) {
     //update db, will do it in a separate threadpool
+    logger.debug("process status update for " + dep);
   }
 }

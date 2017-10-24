@@ -31,6 +31,27 @@ public class TriggerInstance {
     this.execId = execId;
   }
 
+  public static void main(final String[] args) {
+    final TriggerInstance ti = new TriggerInstance("1");
+    final DependencyInstance di1 = new DependencyInstance(null, null);
+    di1.updateStatus(Status.KILLED);
+    ti.addDependencyInstance(di1);
+
+    final DependencyInstance di2 = new DependencyInstance(null, null);
+    di2.updateStatus(Status.KILLED);
+    ti.addDependencyInstance(di2);
+
+    final DependencyInstance di3 = new DependencyInstance(null, null);
+    di3.updateStatus(Status.KILLED);
+    ti.addDependencyInstance(di3);
+
+    final DependencyInstance di4 = new DependencyInstance(null, null);
+    di4.updateStatus(Status.KILLED);
+    ti.addDependencyInstance(di4);
+
+    System.out.println(ti.getStatus());
+  }
+
   public void addDependencyInstance(final DependencyInstance depInst) {
     this.depInstances.add(depInst);
   }
@@ -86,10 +107,10 @@ public class TriggerInstance {
   }
 
   public long getStartTime() {
-    return -1;
+    throw new UnsupportedOperationException("not yet implemented");
   }
 
   public long getEndTime() {
-    return -1;
+    throw new UnsupportedOperationException("not yet implemented");
   }
 }

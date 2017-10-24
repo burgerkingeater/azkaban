@@ -34,13 +34,16 @@ public class FlowTrigger {
   private final List<FlowTriggerDependency> dependencies;
   private final CronSchedule schedule;
   private final Duration maxWaitDuration;
+  private final String projectName;
+  private final String flowId;
 
   /**
    * @throws IllegalArgumentException if any of the argument is null or there is duplicate
    * dependency name or duplicate dependency type and params
    */
   public FlowTrigger(final CronSchedule schedule,
-      final List<FlowTriggerDependency> dependencies, final Duration maxWaitDuration) {
+      final List<FlowTriggerDependency> dependencies, final Duration maxWaitDuration, final String
+      projectName, final String flowId) {
     Preconditions.checkArgument(schedule != null);
     Preconditions.checkArgument(dependencies != null);
     Preconditions.checkArgument(maxWaitDuration != null);
@@ -49,6 +52,16 @@ public class FlowTrigger {
     this.schedule = schedule;
     this.dependencies = Collections.unmodifiableList(dependencies);
     this.maxWaitDuration = maxWaitDuration;
+    this.projectName = projectName;
+    this.flowId = flowId;
+  }
+
+  public String getProjectName() {
+    return projectName;
+  }
+
+  public String getFlowId() {
+    return flowId;
   }
 
   /**

@@ -51,6 +51,7 @@ public class TriggerProcessor {
     switch (updatedTriggerInst.getStatus()) {
       case RUNNING:
         processNewInstance(updatedTriggerInst);
+        break;
       case SUCCEEDED:
         processSucceed(updatedTriggerInst);
         break;

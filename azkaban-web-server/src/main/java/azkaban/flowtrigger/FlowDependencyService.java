@@ -16,9 +16,11 @@
 
 package azkaban.flowtrigger;
 
+import azkaban.executor.ExecutorManager;
 import azkaban.project.CronSchedule;
 import azkaban.project.FlowTrigger;
 import azkaban.project.FlowTriggerDependency;
+import azkaban.project.ProjectManager;
 import azkaban.test.TestDependencyCheck;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.time.Duration;
@@ -52,6 +54,8 @@ public class FlowDependencyService {
   private final FlowTriggerPluginManager triggerPluginManager;
   private final TriggerProcessor triggerProcessor;
   private final DependencyProcessor dependencyProcessor;
+  private final ProjectManager projectManager;
+  private final ExecutorManager executorManager;
 
   public FlowDependencyService() {
     final ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
@@ -65,7 +69,8 @@ public class FlowDependencyService {
   }
 
   public FlowDependencyService(final FlowTriggerPluginManager pluginManager, final TriggerProcessor
-      triggerProcessor, final DependencyProcessor dependencyProcessor) {
+      triggerProcessor, final DependencyProcessor dependencyProcessor, final ProjectManager
+      projectManager, final ExecutorManager executorManager) {
     // Give the thread a name to make debugging easier.
     final ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
         .setNameFormat("FlowTrigger-service").build();
@@ -75,21 +80,23 @@ public class FlowDependencyService {
     this.triggerPluginManager = pluginManager;
     this.triggerProcessor = triggerProcessor;
     this.dependencyProcessor = dependencyProcessor;
+    this.projectManager = projectManager;
+    this.executorManager = executorManager;
   }
 
   public static void main(final String[] args) throws InterruptedException {
     final FlowDependencyService service = new FlowDependencyService(new FlowTriggerPluginManager
-        (), new TriggerProcessor(), new DependencyProcessor());
+        (), new TriggerProcessor(), new DependencyProcessor(), null, null);
     final DependencyInstanceConfig depInstConfig = new DependencyInstanceConfigImpl(
         new HashMap<>());
 
     final CronSchedule validSchedule = new CronSchedule("* * * * ? *");
     final List<FlowTriggerDependency> validDependencyList = new ArrayList<>();
     validDependencyList.add(new FlowTriggerDependency("a", "a", new HashMap<>()));
-    final Duration validDuration = Duration.ofSeconds(5);
+    final Duration validDuration = Duration.ofSeconds(2);
 
     final FlowTrigger flowTrigger = new FlowTrigger(validSchedule, validDependencyList,
-        validDuration);
+        validDuration, null, null);
 
     //service.start("test", depInstConfig, Duration.ofSeconds(2));
     service.start(flowTrigger);
@@ -100,10 +107,6 @@ public class FlowDependencyService {
 
   private DependencyCheck getDepCheck(final DependencyInstanceConfig config) {
     return new TestDependencyCheck();
-  }
-
-  private Duration getMaxDuration(final DependencyInstanceConfig config) {
-    return Duration.ofSeconds(2);
   }
 
   private TriggerInstance createTriggerInstance(final FlowTrigger flowTrigger) {
@@ -132,8 +135,7 @@ public class FlowDependencyService {
   }
 
   public void start(final FlowTrigger flowTrigger) {
-    final String execId = getExecId();
-    logger.info(String.format("Starting the flow trigger %s with execId %s", flowTrigger, execId));
+    logger.info(String.format("Starting the flow trigger %s", flowTrigger));
     this.executorService.submit(() -> {
       final TriggerInstance triggerInst = createTriggerInstance(flowTrigger);
       //todo chengren311: it's possible web server restarts before the db update, then
@@ -142,7 +144,7 @@ public class FlowDependencyService {
       // single threading.
       this.triggerProcessor.processStatusUpdate(triggerInst);
       this.runningTriggers.add(triggerInst);
-      scheduleKill(execId, flowTrigger.getMaxWaitDuration());
+      scheduleKill(triggerInst.getExecId(), flowTrigger.getMaxWaitDuration());
     });
   }
 
@@ -155,33 +157,42 @@ public class FlowDependencyService {
   }
 
   private TriggerInstance findTriggerInstByExecId(final String execId) {
-    return null;
+    return this.runningTriggers.stream()
+        .filter(triggerInst -> triggerInst.getExecId().equals(execId)).findFirst().orElse(null);
   }
 
   public void kill(final String execId, final boolean killedByTimeout) {
     this.executorService.submit(() -> {
       final TriggerInstance triggerInst = this.findTriggerInstByExecId(execId);
-      for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-        if (depInst.getStatus() == Status.RUNNING) {
-          depInst.setTimeoutKilling(killedByTimeout);
-          updateStatus(depInst, Status.KILLING);
-          depInst.getContext().kill();
+      if (triggerInst != null) {
+        for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
+          if (depInst.getStatus() == Status.RUNNING) {
+            depInst.setTimeoutKilling(killedByTimeout);
+            updateStatus(depInst, Status.KILLING);
+            depInst.getContext().kill();
+          }
         }
+      } else {
+        logger.warn(String.format("unable to find trigger instance with exec id %s", execId));
       }
     });
   }
 
   private DependencyInstance findDependencyInstanceByContext(
       final DependencyInstanceContext context) {
-    return null;
-  }
-
-  private DependencyInstance findTriggerInstanceByContext(final DependencyInstanceContext context) {
+    for (final TriggerInstance triggerInst : this.runningTriggers) {
+      for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
+        if (depInst.getContext() == context) {
+          return depInst;
+        }
+      }
+    }
     return null;
   }
 
   public void markDependencySuccess(final DependencyInstanceContext context) {
     this.executorService.submit(() -> {
+      logger.warn(String.format("marking trigger instance with context %s as success", context));
       final DependencyInstance depInst = findDependencyInstanceByContext(context);
       if (depInst != null) {
         if (Status.isDone(depInst.getStatus())) {
@@ -193,12 +204,15 @@ public class FlowDependencyService {
           this.triggerProcessor.processStatusUpdate(depInst.getTriggerInstance());
           this.runningTriggers.remove(depInst.getTriggerInstance());
         }
+      } else {
+        logger.warn(String.format("unable to find trigger instance with context %s", context));
       }
     });
   }
 
   public void markDependencyKilledOrTimeout(final DependencyInstanceContext context) {
     this.executorService.submit(() -> {
+      logger.warn(String.format("killing/timing out trigger instance with context %s", context));
       final DependencyInstance depInst = findDependencyInstanceByContext(context);
       if (depInst != null) {
         if (depInst.getStatus() != Status.KILLING) {
@@ -213,6 +227,8 @@ public class FlowDependencyService {
           this.triggerProcessor.processStatusUpdate(depInst.getTriggerInstance());
           this.runningTriggers.remove(depInst.getTriggerInstance());
         }
+      } else {
+        logger.warn(String.format("unable to find trigger instance with context %s", context));
       }
     });
   }
@@ -243,5 +259,4 @@ public class FlowDependencyService {
       Thread.currentThread().interrupt();
     }
   }
-
 }

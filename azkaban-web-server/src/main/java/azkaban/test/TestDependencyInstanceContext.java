@@ -25,6 +25,7 @@ public class TestDependencyInstanceContext implements DependencyInstanceContext 
 
   public TestDependencyInstanceContext(final DependencyInstanceCallback callback) {
     this.callback = callback;
+    this.callback.onSuccess(this);
   }
 
   @Override
