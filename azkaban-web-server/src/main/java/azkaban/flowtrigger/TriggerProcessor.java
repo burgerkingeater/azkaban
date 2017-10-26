@@ -24,6 +24,8 @@ import azkaban.flow.FlowUtils;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import com.google.common.base.Preconditions;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
@@ -33,8 +35,10 @@ import org.slf4j.LoggerFactory;
 public class TriggerProcessor {
 
   private static final Logger logger = LoggerFactory.getLogger(TriggerProcessor.class);
+  private static final int THREAD_POOL_SIZE = 8;
   private final ProjectManager projectManager;
   private final ExecutorManager executorManager;
+  private final ExecutorService executorService;
 
   @Inject
   public TriggerProcessor(final ProjectManager projectManager,
@@ -43,19 +47,26 @@ public class TriggerProcessor {
     Preconditions.checkNotNull(executorManager);
     this.projectManager = projectManager;
     this.executorManager = executorManager;
+    this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+  }
+
+  private void executeFlow(final int projectId, final String flowName, final String submitUser) {
+    final Project project = FlowUtils.getProject(this.projectManager, projectId);
+    final Flow flow = FlowUtils.getFlow(project, flowName);
+    final ExecutableFlow executableFlow = FlowUtils.createExecutableFlow(project, flow);
+    try {
+      this.executorManager.submitExecutableFlow(executableFlow, submitUser);
+    } catch (final ExecutorManagerException ex) {
+      logger.error(ex.getMessage());
+    }
   }
 
   private void processSucceed(final TriggerInstance triggerInst) {
     logger.debug("process succeed for " + triggerInst);
     // email and trigger a new flow
-    final Project project = FlowUtils.getProject(this.projectManager, triggerInst.getProjectId());
-    final Flow flow = FlowUtils.getFlow(project, triggerInst.getFlowName());
-    final ExecutableFlow executableFlow = FlowUtils.createExecutableFlow(project, flow);
-    try {
-      this.executorManager.submitExecutableFlow(executableFlow, triggerInst.getSubmitUser());
-    } catch (final ExecutorManagerException ex) {
-      logger.error(ex.getMessage());
-    }
+    this.executorService
+        .submit(() -> executeFlow(triggerInst.getProjectId(), triggerInst.getFlowName(),
+            triggerInst.getFlowName()));
   }
 
   private void processKilled(final TriggerInstance triggerInst) {

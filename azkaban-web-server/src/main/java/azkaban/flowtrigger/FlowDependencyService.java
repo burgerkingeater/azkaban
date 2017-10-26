@@ -21,7 +21,6 @@ import azkaban.project.CronSchedule;
 import azkaban.project.FlowTrigger;
 import azkaban.project.FlowTriggerDependency;
 import azkaban.project.ProjectManager;
-import azkaban.test.TestDependencyCheck;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -66,6 +65,8 @@ public class FlowDependencyService {
     this.triggerPluginManager = null;
     this.triggerProcessor = null;
     this.dependencyProcessor = null;
+    this.projectManager = null;
+    this.executorManager = null;
   }
 
   public FlowDependencyService(final FlowTriggerPluginManager pluginManager, final TriggerProcessor
@@ -86,7 +87,7 @@ public class FlowDependencyService {
 
   public static void main(final String[] args) throws InterruptedException {
     final FlowDependencyService service = new FlowDependencyService(new FlowTriggerPluginManager
-        (), new TriggerProcessor(), new DependencyProcessor(), null, null);
+        (), new TriggerProcessor(null, null), new DependencyProcessor(), null, null);
     final DependencyInstanceConfig depInstConfig = new DependencyInstanceConfigImpl(
         new HashMap<>());
 
@@ -96,22 +97,21 @@ public class FlowDependencyService {
     final Duration validDuration = Duration.ofSeconds(2);
 
     final FlowTrigger flowTrigger = new FlowTrigger(validSchedule, validDependencyList,
-        validDuration, null, null);
+        validDuration, -1, "hi");
+    final String submitUser = "test";
 
     //service.start("test", depInstConfig, Duration.ofSeconds(2));
-    service.start(flowTrigger);
+    service.start(flowTrigger, submitUser);
     //logger.info("sleeping...");
     Thread.sleep(10 * 1000);
     //System.out.println(service.runningTriggerContainer);
   }
 
-  private DependencyCheck getDepCheck(final DependencyInstanceConfig config) {
-    return new TestDependencyCheck();
-  }
-
-  private TriggerInstance createTriggerInstance(final FlowTrigger flowTrigger) {
+  private TriggerInstance createTriggerInstance(final FlowTrigger flowTrigger,
+      final String submitUser) {
     final String execId = getExecId();
-    final TriggerInstance triggerInstance = new TriggerInstance(execId);
+    final TriggerInstance triggerInstance = new TriggerInstance(execId, flowTrigger.getProjectId
+        (), flowTrigger.getFlowId(), submitUser);
     for (final FlowTriggerDependency dep : flowTrigger.getDependencies()) {
       final DependencyCheck dependencyCheck = this.triggerPluginManager
           .getDependencyCheck(dep.getType());
@@ -134,10 +134,10 @@ public class FlowDependencyService {
     }, duration.toMillis(), TimeUnit.MILLISECONDS);
   }
 
-  public void start(final FlowTrigger flowTrigger) {
+  public void start(final FlowTrigger flowTrigger, final String submitUser) {
     logger.info(String.format("Starting the flow trigger %s", flowTrigger));
     this.executorService.submit(() -> {
-      final TriggerInstance triggerInst = createTriggerInstance(flowTrigger);
+      final TriggerInstance triggerInst = createTriggerInstance(flowTrigger, submitUser);
       //todo chengren311: it's possible web server restarts before the db update, then
       // new instance will not be recoverable from db. We can update DB first before updating
       // memory(like write-ahead logging), but this would be very inefficient in the context of

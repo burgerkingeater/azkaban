@@ -17,9 +17,11 @@
 package azkaban.flowtrigger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TriggerInstance {
 
@@ -38,25 +40,33 @@ public class TriggerInstance {
     this.submitUser = submitUser;
   }
 
-  public static void main(final String[] args) {
+  public static void main(final String[] args) throws InterruptedException {
     final TriggerInstance ti = new TriggerInstance("1", -1, null, null);
+    /*
     final DependencyInstance di1 = new DependencyInstance(null, null);
     di1.updateStatus(Status.KILLED);
+    System.out.println(di1.getStartTime());
     ti.addDependencyInstance(di1);
 
     final DependencyInstance di2 = new DependencyInstance(null, null);
     di2.updateStatus(Status.KILLED);
+    System.out.println(di2.getStartTime());
     ti.addDependencyInstance(di2);
 
+    Thread.sleep(10 * 1000);
     final DependencyInstance di3 = new DependencyInstance(null, null);
     di3.updateStatus(Status.KILLED);
+    System.out.println(di3.getStartTime());
     ti.addDependencyInstance(di3);
 
     final DependencyInstance di4 = new DependencyInstance(null, null);
     di4.updateStatus(Status.KILLED);
-    ti.addDependencyInstance(di4);
+    System.out.println(di4.getStartTime());
+    ti.addDependencyInstance(di4);*/
 
     System.out.println(ti.getStatus());
+    System.out.println(ti.getStartTime());
+    System.out.println(ti.getEndTime());
   }
 
   public int getProjectId() {
@@ -126,10 +136,14 @@ public class TriggerInstance {
   }
 
   public long getStartTime() {
-    throw new UnsupportedOperationException("not yet implemented");
+    final List<Long> startTimeList = this.depInstances.stream()
+        .map(DependencyInstance::getStartTime).collect(Collectors.toList());
+    return startTimeList.isEmpty() ? -1 : Collections.min(startTimeList);
   }
 
   public long getEndTime() {
-    throw new UnsupportedOperationException("not yet implemented");
+    final List<Long> endTimeList = this.depInstances.stream()
+        .map(DependencyInstance::getEndTime).collect(Collectors.toList());
+    return endTimeList.isEmpty() ? -1 : Collections.max(endTimeList);
   }
 }

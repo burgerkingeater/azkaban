@@ -536,13 +536,14 @@ public class AzkabanWebServer extends AzkabanServer {
       this.quartzScheduler.start();
       //setup
       final FlowTriggerPluginManager pluginManager = new FlowTriggerPluginManager();
-      final FlowDependencyService flowDepService = new FlowDependencyService(null, null, null);
+      final FlowDependencyService flowDepService = new FlowDependencyService(null, null, null,
+          null, null);
 
       //test FlowTrigger
       final List<FlowTriggerDependency> dependencies = new ArrayList<>();
       dependencies.add(new FlowTriggerDependency("dep1", "test", new HashMap<>()));
       final FlowTrigger flowTrigger = new FlowTrigger(new CronSchedule("* * * * * ?"), dependencies,
-          Duration.ofSeconds(5));
+          Duration.ofSeconds(5), 1, "1");
 
       final FlowTriggerQuartzService flowTriggerService = new FlowTriggerQuartzService(
           flowTrigger.getDependencies(),

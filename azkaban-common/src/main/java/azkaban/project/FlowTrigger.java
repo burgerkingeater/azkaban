@@ -34,16 +34,20 @@ public class FlowTrigger {
   private final List<FlowTriggerDependency> dependencies;
   private final CronSchedule schedule;
   private final Duration maxWaitDuration;
-  private final String projectName;
+  //project id and flow id of the flow to be triggered
+  private final int projectId;
   private final String flowId;
+  //who to notify when trigger fails for any reason(manually killed, time out, improper trigger
+  // config ...)
+  private List<String> failureRecipients;
 
   /**
    * @throws IllegalArgumentException if any of the argument is null or there is duplicate
    * dependency name or duplicate dependency type and params
    */
   public FlowTrigger(final CronSchedule schedule,
-      final List<FlowTriggerDependency> dependencies, final Duration maxWaitDuration, final String
-      projectName, final String flowId) {
+      final List<FlowTriggerDependency> dependencies, final Duration maxWaitDuration, final int
+      projectId, final String flowId) {
     Preconditions.checkArgument(schedule != null);
     Preconditions.checkArgument(dependencies != null);
     Preconditions.checkArgument(maxWaitDuration != null);
@@ -52,16 +56,16 @@ public class FlowTrigger {
     this.schedule = schedule;
     this.dependencies = Collections.unmodifiableList(dependencies);
     this.maxWaitDuration = maxWaitDuration;
-    this.projectName = projectName;
+    this.projectId = projectId;
     this.flowId = flowId;
   }
 
-  public String getProjectName() {
-    return projectName;
+  public int getProjectId() {
+    return this.projectId;
   }
 
   public String getFlowId() {
-    return flowId;
+    return this.flowId;
   }
 
   /**

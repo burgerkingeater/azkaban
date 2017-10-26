@@ -14,23 +14,28 @@
  * the License.
  */
 
-package azkaban.flowtrigger;
+package azkaban.flowtrigger.database;
 
-import azkaban.test.TestDependencyCheck;
-import javax.inject.Singleton;
+import azkaban.db.DatabaseOperator;
+import azkaban.flowtrigger.DependencyInstance;
+import javax.inject.Inject;
 
-@Singleton
-public class FlowTriggerPluginManager {
+public class DependencyLoaderImpl implements DependencyLoader {
 
-  /**
-   * return or create a dependency check based on type
-   *
-   * @return if the dependencyCheck of the same type already exists, return the check,
-   * otherwise create a new one and return.
-   */
+  private final DatabaseOperator dbOperator;
 
-  public DependencyCheck getDependencyCheck(final String type) {
-    return new TestDependencyCheck();
+  @Inject
+  public DependencyLoaderImpl(final DatabaseOperator databaseOperator) {
+    this.dbOperator = databaseOperator;
   }
 
+  @Override
+  public void createDependency(final DependencyInstance depInst) {
+    
+  }
+
+  @Override
+  public void updateDependency(final DependencyInstance depInst) {
+
+  }
 }
