@@ -21,9 +21,11 @@ import azkaban.executor.ExecutorManager;
 import azkaban.executor.ExecutorManagerException;
 import azkaban.flow.Flow;
 import azkaban.flow.FlowUtils;
+import azkaban.flowtrigger.database.DependencyLoader;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
@@ -39,15 +41,17 @@ public class TriggerProcessor {
   private final ProjectManager projectManager;
   private final ExecutorManager executorManager;
   private final ExecutorService executorService;
+  private final DependencyLoader dependencyLoader;
 
   @Inject
   public TriggerProcessor(final ProjectManager projectManager,
-      final ExecutorManager executorManager) {
+      final ExecutorManager executorManager, final DependencyLoader dependencyLoader) {
     Preconditions.checkNotNull(projectManager);
     Preconditions.checkNotNull(executorManager);
     this.projectManager = projectManager;
     this.executorManager = executorManager;
     this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+    this.dependencyLoader = dependencyLoader;
   }
 
   private void executeFlow(final int projectId, final String flowName, final String submitUser) {
@@ -57,8 +61,12 @@ public class TriggerProcessor {
     try {
       this.executorManager.submitExecutableFlow(executableFlow, submitUser);
     } catch (final ExecutorManagerException ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage()); //todo chengren311: should we swallow the exception?
     }
+  }
+
+  private void persistDependencies(final List<DependencyInstance> depInstList) {
+    this.dependencyLoader.createDependencies(depInstList);
   }
 
   private void processSucceed(final TriggerInstance triggerInst) {
@@ -81,9 +89,8 @@ public class TriggerProcessor {
 
   private void processNewInstance(final TriggerInstance triggerInst) {
     logger.debug("process new instance for " + triggerInst);
-    for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-      //insert depinst to db
-    }
+    this.executorService
+        .submit(() -> persistDependencies(triggerInst.getDepInstances()));
   }
 
   public void processStatusUpdate(final TriggerInstance updatedTriggerInst) {

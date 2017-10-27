@@ -18,24 +18,32 @@ package azkaban.flowtrigger.database;
 
 import azkaban.db.DatabaseOperator;
 import azkaban.flowtrigger.DependencyInstance;
+import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-public class DependencyLoaderImpl implements DependencyLoader {
+@Singleton
+public class JdbcDependencyLoaderImpl implements DependencyLoader {
 
+  private static final String INSERT_DEPENDENCY = "INSERT INTO DEPEN()"
   private final DatabaseOperator dbOperator;
 
   @Inject
-  public DependencyLoaderImpl(final DatabaseOperator databaseOperator) {
+  public JdbcDependencyLoaderImpl(final DatabaseOperator databaseOperator) {
     this.dbOperator = databaseOperator;
   }
 
   @Override
-  public void createDependency(final DependencyInstance depInst) {
-    
+  public void createDependencies(final List<DependencyInstance> depInstList) {
+
   }
 
   @Override
   public void updateDependency(final DependencyInstance depInst) {
+
+  }
+
+  public static class Dependency  ResultHandler {
 
   }
 }
