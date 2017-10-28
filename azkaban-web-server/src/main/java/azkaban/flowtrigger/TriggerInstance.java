@@ -18,6 +18,7 @@ package azkaban.flowtrigger;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,27 +43,28 @@ public class TriggerInstance {
 
   public static void main(final String[] args) throws InterruptedException {
     final TriggerInstance ti = new TriggerInstance("1", -1, null, null);
-    /*
-    final DependencyInstance di1 = new DependencyInstance(null, null);
+
+    final DependencyInstance di1 = new DependencyInstance(null, null, null);
     di1.updateStatus(Status.KILLED);
     System.out.println(di1.getStartTime());
     ti.addDependencyInstance(di1);
 
-    final DependencyInstance di2 = new DependencyInstance(null, null);
+    final DependencyInstance di2 = new DependencyInstance(null, null, null);
     di2.updateStatus(Status.KILLED);
     System.out.println(di2.getStartTime());
     ti.addDependencyInstance(di2);
 
     Thread.sleep(10 * 1000);
-    final DependencyInstance di3 = new DependencyInstance(null, null);
+    final DependencyInstance di3 = new DependencyInstance(null, null, null);
     di3.updateStatus(Status.KILLED);
     System.out.println(di3.getStartTime());
     ti.addDependencyInstance(di3);
 
-    final DependencyInstance di4 = new DependencyInstance(null, null);
+    final DependencyInstance di4 = new DependencyInstance(null, null, null);
     di4.updateStatus(Status.KILLED);
+    di4.updateEndTime(new Date());
     System.out.println(di4.getStartTime());
-    ti.addDependencyInstance(di4);*/
+    ti.addDependencyInstance(di4);
 
     System.out.println(ti.getStatus());
     System.out.println(ti.getStartTime());
@@ -135,15 +137,16 @@ public class TriggerInstance {
     }
   }
 
-  public long getStartTime() {
-    final List<Long> startTimeList = this.depInstances.stream()
+  public Date getStartTime() {
+    final List<Date> startTimeList = this.depInstances.stream()
         .map(DependencyInstance::getStartTime).collect(Collectors.toList());
-    return startTimeList.isEmpty() ? -1 : Collections.min(startTimeList);
+    return startTimeList.isEmpty() ? null : Collections.min(startTimeList);
   }
 
-  public long getEndTime() {
-    final List<Long> endTimeList = this.depInstances.stream()
-        .map(DependencyInstance::getEndTime).collect(Collectors.toList());
-    return endTimeList.isEmpty() ? -1 : Collections.max(endTimeList);
+  public Date getEndTime() {
+    final List<Date> endTimeList = this.depInstances.stream()
+        .map(DependencyInstance::getEndTime).filter(endTime -> endTime != null)
+        .collect(Collectors.toList());
+    return endTimeList.isEmpty() ? null : Collections.max(endTimeList);
   }
 }

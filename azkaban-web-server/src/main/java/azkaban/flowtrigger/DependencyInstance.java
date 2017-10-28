@@ -16,20 +16,25 @@
 
 package azkaban.flowtrigger;
 
+import java.util.Date;
+
 public class DependencyInstance {
 
   private final DependencyInstanceContext context;
-  private final long startTime;
+  private final Date startTime;
   private final TriggerInstance triggerInstance;
-  private volatile long endTime;
+  // dependency name as defined by user
+  private final String depName;
+  private volatile Date endTime;
   private volatile Status status;
   private boolean timeoutKilling;
 
-  public DependencyInstance(final DependencyInstanceContext context,
+  public DependencyInstance(final String depName, final DependencyInstanceContext context,
       final TriggerInstance triggerInst) {
     this.status = Status.RUNNING;
-    this.startTime = System.currentTimeMillis();
-    this.endTime = -1;
+    this.depName = depName;
+    this.startTime = new Date();
+    this.endTime = null;
     this.context = context;
     this.timeoutKilling = false;
     this.triggerInstance = triggerInst;
@@ -39,14 +44,17 @@ public class DependencyInstance {
     return this.triggerInstance;
   }
 
-  public long getStartTime() {
+  public Date getStartTime() {
     return this.startTime;
   }
 
-  public long getEndTime() {
+  public Date getEndTime() {
     return this.endTime;
   }
 
+  public String getDepName() {
+    return this.depName;
+  }
 
   public boolean isTimeoutKilling() {
     return this.timeoutKilling;
@@ -60,7 +68,7 @@ public class DependencyInstance {
     return this.triggerInstance.getExecId();
   }
 
-  public void updateEndTime(final long endTime) {
+  public void updateEndTime(final Date endTime) {
     this.endTime = endTime;
   }
 

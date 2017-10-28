@@ -24,6 +24,7 @@ import azkaban.project.ProjectManager;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -87,7 +88,7 @@ public class FlowDependencyService {
 
   public static void main(final String[] args) throws InterruptedException {
     final FlowDependencyService service = new FlowDependencyService(new FlowTriggerPluginManager
-        (), new TriggerProcessor(null, null), new DependencyProcessor(), null, null);
+        (), new TriggerProcessor(null, null, null), new DependencyProcessor(), null, null);
     final DependencyInstanceConfig depInstConfig = new DependencyInstanceConfigImpl(
         new HashMap<>());
 
@@ -117,7 +118,7 @@ public class FlowDependencyService {
           .getDependencyCheck(dep.getType());
       final DependencyInstanceCallback callback = new DependencyInstanceCallbackImpl(this);
       final DependencyInstanceConfig config = new DependencyInstanceConfigImpl(dep.getProps());
-      final DependencyInstance depInst = new DependencyInstance(
+      final DependencyInstance depInst = new DependencyInstance(dep.getName(),
           dependencyCheck.run(config, callback), triggerInstance);
       triggerInstance.addDependencyInstance(depInst);
     }
@@ -151,7 +152,7 @@ public class FlowDependencyService {
   private void updateStatus(final DependencyInstance depInst, final Status status) {
     depInst.updateStatus(status);
     if (Status.isDone(depInst.getStatus())) {
-      depInst.updateEndTime(System.currentTimeMillis());
+      depInst.updateEndTime(new Date());
     }
     this.dependencyProcessor.processStatusUpdate(depInst);
   }
