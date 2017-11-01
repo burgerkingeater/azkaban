@@ -20,15 +20,16 @@ import java.util.Date;
 
 public class DependencyInstance {
 
-  private final DependencyInstanceContext context;
   private final Date startTime;
   private final TriggerInstance triggerInstance;
   // dependency name as defined by user
   private final String depName;
+  private DependencyInstanceContext context;
   private volatile Date endTime;
   private volatile Status status;
   private boolean timeoutKilling;
 
+  //todo chengren311: use builder pattern to construct the object
   public DependencyInstance(final String depName, final DependencyInstanceContext context,
       final TriggerInstance triggerInst) {
     this.status = Status.RUNNING;
@@ -36,6 +37,18 @@ public class DependencyInstance {
     this.startTime = new Date();
     this.endTime = null;
     this.context = context;
+    this.timeoutKilling = false;
+    this.triggerInstance = triggerInst;
+  }
+
+  public DependencyInstance(final String depName, final Date startTime, final Date endTime,
+      final Status status, final boolean timeoutKilling, final TriggerInstance triggerInst) {
+    this.depName = depName;
+    this.timeoutKilling = timeoutKilling;
+    this.status = status;
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.context = null;
     this.timeoutKilling = false;
     this.triggerInstance = triggerInst;
   }
@@ -64,10 +77,6 @@ public class DependencyInstance {
     this.timeoutKilling = timeoutKilling;
   }
 
-  public String getExecId() {
-    return this.triggerInstance.getExecId();
-  }
-
   public void updateEndTime(final Date endTime) {
     this.endTime = endTime;
   }
@@ -80,7 +89,12 @@ public class DependencyInstance {
     return this.context;
   }
 
+  public void setContext(DependencyInstanceContext context) {
+    this.context = context;
+  }
+
   public Status getStatus() {
     return this.status;
   }
+
 }

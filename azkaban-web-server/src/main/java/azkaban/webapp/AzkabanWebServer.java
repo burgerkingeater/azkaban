@@ -24,10 +24,8 @@ import azkaban.Constants;
 import azkaban.Constants.ConfigurationKeys;
 import azkaban.database.AzkabanDatabaseSetup;
 import azkaban.executor.ExecutorManager;
-import azkaban.flowtrigger.FlowDependencyService;
 import azkaban.flowtrigger.FlowTriggerPluginManager;
 import azkaban.flowtrigger.quartz.FlowTriggerQuartzJob;
-import azkaban.flowtrigger.quartz.FlowTriggerQuartzService;
 import azkaban.jmx.JmxExecutorManager;
 import azkaban.jmx.JmxJettyServer;
 import azkaban.jmx.JmxTriggerManager;
@@ -536,25 +534,23 @@ public class AzkabanWebServer extends AzkabanServer {
       this.quartzScheduler.start();
       //setup
       final FlowTriggerPluginManager pluginManager = new FlowTriggerPluginManager();
-      final FlowDependencyService flowDepService = new FlowDependencyService(null, null, null,
-          null, null);
 
       //test FlowTrigger
       final List<FlowTriggerDependency> dependencies = new ArrayList<>();
-      dependencies.add(new FlowTriggerDependency("dep1", "test", new HashMap<>()));
-      final FlowTrigger flowTrigger = new FlowTrigger(new CronSchedule("* * * * * ?"), dependencies,
-          Duration.ofSeconds(5), 1, "1");
+      dependencies.add(new FlowTriggerDependency("dep1", "test1", new HashMap<>()));
+      dependencies.add(new FlowTriggerDependency("dep2", "test2", new HashMap<>()));
+      final FlowTrigger flowTrigger = new FlowTrigger(new CronSchedule("* * * * * ?"),
+          dependencies,
+          Duration.ofSeconds(5), 17, "SLAtest");
 
-      final FlowTriggerQuartzService flowTriggerService = new FlowTriggerQuartzService(
-          flowTrigger.getDependencies(),
-          flowTrigger.getMaxWaitDuration(), flowDepService);
-
-      //final Map<String, FlowTriggerQuartzService> contextMap = new HashMap<>();
-      //contextMap.put(FlowTriggerQuartzJob.DELEGATE_CLASS_NAME, flowTriggerService);
+      final Map<String, Object> contextMap = new HashMap<>();
+      contextMap.put("submitUser", "test");
+      contextMap.put("flowTrigger", flowTrigger);
 
       this.quartzScheduler
-          .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription<>
-              (FlowTriggerQuartzJob.class, "FlowTriggerQuartzJob"));
+          .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription
+              (FlowTriggerQuartzJob.class, "FlowTriggerQuartzJob", contextMap));
+
     }
 
     try {

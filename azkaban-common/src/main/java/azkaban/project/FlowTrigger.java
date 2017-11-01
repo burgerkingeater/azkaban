@@ -17,6 +17,7 @@
 package azkaban.project;
 
 import com.google.common.base.Preconditions;
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
@@ -29,13 +30,14 @@ import java.util.Set;
  * It couldn't be changed once gets constructed.
  * It will be used to create running trigger instance.
  */
-public class FlowTrigger {
+public class FlowTrigger implements Serializable {
 
   private final List<FlowTriggerDependency> dependencies;
   private final CronSchedule schedule;
   private final Duration maxWaitDuration;
   //project id and flow id of the flow to be triggered
   private final int projectId;
+  private final int projectVersion;
   private final String flowId;
   //who to notify when trigger fails for any reason(manually killed, time out, improper trigger
   // config ...)
@@ -47,7 +49,7 @@ public class FlowTrigger {
    */
   public FlowTrigger(final CronSchedule schedule,
       final List<FlowTriggerDependency> dependencies, final Duration maxWaitDuration, final int
-      projectId, final String flowId) {
+      projectId, final int projectVersion, final String flowId) {
     Preconditions.checkArgument(schedule != null);
     Preconditions.checkArgument(dependencies != null);
     Preconditions.checkArgument(maxWaitDuration != null);
@@ -58,10 +60,15 @@ public class FlowTrigger {
     this.maxWaitDuration = maxWaitDuration;
     this.projectId = projectId;
     this.flowId = flowId;
+    this.projectVersion = projectVersion;
   }
 
   public int getProjectId() {
     return this.projectId;
+  }
+
+  public int getProjectVersion() {
+    return this.projectVersion;
   }
 
   public String getFlowId() {

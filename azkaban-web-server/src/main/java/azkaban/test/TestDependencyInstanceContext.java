@@ -18,13 +18,22 @@ package azkaban.test;
 
 import azkaban.flowtrigger.DependencyInstanceCallback;
 import azkaban.flowtrigger.DependencyInstanceContext;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class TestDependencyInstanceContext implements DependencyInstanceContext {
 
+  private static final ScheduledExecutorService scheduleSerivce = Executors
+      .newScheduledThreadPool(1);
   private final DependencyInstanceCallback callback;
 
   public TestDependencyInstanceContext(final DependencyInstanceCallback callback) {
     this.callback = callback;
+    scheduleSerivce.schedule(this::onSucccess, 3, TimeUnit.SECONDS);
+  }
+
+  private void onSucccess() {
     this.callback.onSuccess(this);
   }
 

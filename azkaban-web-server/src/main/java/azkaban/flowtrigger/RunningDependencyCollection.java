@@ -41,7 +41,7 @@ public class RunningDependencyCollection implements Serializable {
 
   public DependencyInstance get(final String execId) {
     for (final DependencyInstance dependencyInstance : this.runningDependencies) {
-      if (dependencyInstance.getExecId() == execId) {
+      if (dependencyInstance.getTriggerInstance().getId() == execId) {
         return dependencyInstance;
       }
     }

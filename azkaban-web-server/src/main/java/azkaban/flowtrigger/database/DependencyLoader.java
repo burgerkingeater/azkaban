@@ -17,11 +17,16 @@
 package azkaban.flowtrigger.database;
 
 import azkaban.flowtrigger.DependencyInstance;
+import azkaban.flowtrigger.TriggerInstance;
 import java.util.List;
 
 public interface DependencyLoader {
 
   void createDependencies(List<DependencyInstance> depInstList);
 
-  void updateDependency(DependencyInstance depInst);
+  void updateDependencyStatus(DependencyInstance depInst);
+
+  void updateDependencyStatusAndEndTime(DependencyInstance depInst);
+
+  List<TriggerInstance> loadUnfinishedTriggerInstances();
 }

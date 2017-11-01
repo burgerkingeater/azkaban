@@ -17,6 +17,7 @@
 package azkaban.project;
 
 import com.google.common.base.Preconditions;
+import java.io.Serializable;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -24,7 +25,7 @@ import org.apache.commons.lang.StringUtils;
  * It couldn't be changed once gets constructed.
  * It will be used to schedule a trigger.
  */
-public class CronSchedule {
+public class CronSchedule implements Serializable {
 
   private final String cronExpression;
 

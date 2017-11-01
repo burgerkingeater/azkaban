@@ -16,6 +16,7 @@
 
 package azkaban.flowtrigger;
 
+import azkaban.project.FlowTrigger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -27,22 +28,26 @@ import java.util.stream.Collectors;
 public class TriggerInstance {
 
   private final List<DependencyInstance> depInstances;
-  private final String execId;
+  private final String id;
+
+  /*
   private final int projectId;
-  private final String flowName;
+  private final int projectVersion;
+  private final String flowName;*/
+
+  private final FlowTrigger flowTrigger;
+
   private final String submitUser;
 
-  public TriggerInstance(final String execId, final int projectId, final String flowName, final
-  String submitUser) {
+  public TriggerInstance(final String id, final FlowTrigger flowTrigger, final String submitUser) {
     this.depInstances = new ArrayList<>();
-    this.execId = execId;
-    this.projectId = projectId;
-    this.flowName = flowName;
+    this.id = id;
+    this.flowTrigger = flowTrigger;
     this.submitUser = submitUser;
   }
 
   public static void main(final String[] args) throws InterruptedException {
-    final TriggerInstance ti = new TriggerInstance("1", -1, null, null);
+    final TriggerInstance ti = new TriggerInstance("1", -1, 1, null, null);
 
     final DependencyInstance di1 = new DependencyInstance(null, null, null);
     di1.updateStatus(Status.KILLED);
@@ -71,14 +76,6 @@ public class TriggerInstance {
     System.out.println(ti.getEndTime());
   }
 
-  public int getProjectId() {
-    return this.projectId;
-  }
-
-  public String getFlowName() {
-    return this.flowName;
-  }
-
   public String getSubmitUser() {
     return this.submitUser;
   }
@@ -91,8 +88,8 @@ public class TriggerInstance {
     return this.depInstances;
   }
 
-  public String getExecId() {
-    return this.execId;
+  public String getId() {
+    return this.id;
   }
 
   private boolean isRunning(final Map<Status, Integer> statusCount) {

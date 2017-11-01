@@ -17,16 +17,18 @@
 
 package azkaban.webapp;
 
+import azkaban.flowtrigger.database.DependencyLoader;
+import azkaban.flowtrigger.database.JdbcDependencyLoaderImpl;
 import azkaban.scheduler.ScheduleLoader;
 import azkaban.scheduler.TriggerBasedScheduleLoader;
 import azkaban.user.UserManager;
 import azkaban.user.XmlUserManager;
 import azkaban.utils.Props;
 import com.google.inject.AbstractModule;
-import javax.inject.Inject;
 import com.google.inject.Provides;
-import javax.inject.Singleton;
 import java.lang.reflect.Constructor;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.apache.log4j.Logger;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.log.Log4JLogChute;
@@ -49,6 +51,7 @@ public class AzkabanWebServerModule extends AbstractModule {
   protected void configure() {
     bind(Server.class).toProvider(WebServerProvider.class);
     bind(ScheduleLoader.class).to(TriggerBasedScheduleLoader.class);
+    bind(DependencyLoader.class).to(JdbcDependencyLoaderImpl.class);
   }
 
   @Inject

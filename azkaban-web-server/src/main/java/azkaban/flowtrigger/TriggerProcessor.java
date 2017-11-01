@@ -18,7 +18,6 @@ package azkaban.flowtrigger;
 
 import azkaban.executor.ExecutableFlow;
 import azkaban.executor.ExecutorManager;
-import azkaban.executor.ExecutorManagerException;
 import azkaban.flow.Flow;
 import azkaban.flow.FlowUtils;
 import azkaban.flowtrigger.database.DependencyLoader;
@@ -55,13 +54,14 @@ public class TriggerProcessor {
   }
 
   private void executeFlow(final int projectId, final String flowName, final String submitUser) {
-    final Project project = FlowUtils.getProject(this.projectManager, projectId);
-    final Flow flow = FlowUtils.getFlow(project, flowName);
-    final ExecutableFlow executableFlow = FlowUtils.createExecutableFlow(project, flow);
     try {
+      final Project project = FlowUtils.getProject(this.projectManager, projectId);
+      final Flow flow = FlowUtils.getFlow(project, flowName);
+      final ExecutableFlow executableFlow = FlowUtils.createExecutableFlow(project, flow);
       this.executorManager.submitExecutableFlow(executableFlow, submitUser);
-    } catch (final ExecutorManagerException ex) {
-      logger.error(ex.getMessage()); //todo chengren311: should we swallow the exception?
+    } catch (final Exception ex) {
+      logger.error(ex.getMessage()); //todo chengren311: should we swallow the exception or
+      // notify user
     }
   }
 
@@ -74,7 +74,7 @@ public class TriggerProcessor {
     // email and trigger a new flow
     this.executorService
         .submit(() -> executeFlow(triggerInst.getProjectId(), triggerInst.getFlowName(),
-            triggerInst.getFlowName()));
+            triggerInst.getSubmitUser()));
   }
 
   private void processKilled(final TriggerInstance triggerInst) {
