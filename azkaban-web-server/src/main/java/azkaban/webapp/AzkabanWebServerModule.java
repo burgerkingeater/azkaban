@@ -17,8 +17,8 @@
 
 package azkaban.webapp;
 
-import azkaban.flowtrigger.database.DependencyLoader;
-import azkaban.flowtrigger.database.JdbcDependencyLoaderImpl;
+import azkaban.flowtrigger.database.FlowTriggerLoader;
+import azkaban.flowtrigger.database.JdbcFlowTriggerLoaderImpl;
 import azkaban.scheduler.ScheduleLoader;
 import azkaban.scheduler.TriggerBasedScheduleLoader;
 import azkaban.user.UserManager;
@@ -51,7 +51,7 @@ public class AzkabanWebServerModule extends AbstractModule {
   protected void configure() {
     bind(Server.class).toProvider(WebServerProvider.class);
     bind(ScheduleLoader.class).to(TriggerBasedScheduleLoader.class);
-    bind(DependencyLoader.class).to(JdbcDependencyLoaderImpl.class);
+    bind(FlowTriggerLoader.class).to(JdbcFlowTriggerLoaderImpl.class);
   }
 
   @Inject

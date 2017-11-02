@@ -17,8 +17,11 @@
 package azkaban.project;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +35,7 @@ import java.util.Set;
  */
 public class FlowTrigger implements Serializable {
 
-  private final List<FlowTriggerDependency> dependencies;
+  private final Map<String, FlowTriggerDependency> dependencies;
   private final CronSchedule schedule;
   private final Duration maxWaitDuration;
   //project id and flow id of the flow to be triggered
@@ -41,7 +44,7 @@ public class FlowTrigger implements Serializable {
   private final String flowId;
   //who to notify when trigger fails for any reason(manually killed, time out, improper trigger
   // config ...)
-  private List<String> failureRecipients;
+  private final List<String> failureRecipients;
 
   /**
    * @throws IllegalArgumentException if any of the argument is null or there is duplicate
@@ -49,18 +52,23 @@ public class FlowTrigger implements Serializable {
    */
   public FlowTrigger(final CronSchedule schedule,
       final List<FlowTriggerDependency> dependencies, final Duration maxWaitDuration, final int
-      projectId, final int projectVersion, final String flowId) {
-    Preconditions.checkArgument(schedule != null);
-    Preconditions.checkArgument(dependencies != null);
-    Preconditions.checkArgument(maxWaitDuration != null);
-    Preconditions.checkArgument(!maxWaitDuration.isNegative());
+      projectId, final int projectVersion, final String flowId,
+      final List<String> failureRecipients) {
+    Preconditions.checkNotNull(schedule);
+    Preconditions.checkNotNull(dependencies);
+    Preconditions.checkNotNull(maxWaitDuration);
+    Preconditions.checkNotNull(flowId);
+    Preconditions.checkArgument(maxWaitDuration.toMinutes() >= 1);
     validateDependencies(dependencies);
     this.schedule = schedule;
-    this.dependencies = Collections.unmodifiableList(dependencies);
+    final ImmutableMap.Builder builder = new Builder();
+    dependencies.forEach(dep -> builder.put(dep.getName(), dep));
+    this.dependencies = builder.build();
     this.maxWaitDuration = maxWaitDuration;
     this.projectId = projectId;
     this.flowId = flowId;
     this.projectVersion = projectVersion;
+    this.failureRecipients = Collections.unmodifiableList(failureRecipients);
   }
 
   public int getProjectId() {
@@ -87,6 +95,19 @@ public class FlowTrigger implements Serializable {
     }
   }
 
+  @Override
+  public String toString() {
+    return "FlowTrigger{" +
+        "dependencies=" + this.dependencies +
+        ", schedule=" + this.schedule +
+        ", maxWaitDuration=" + this.maxWaitDuration +
+        ", projectId=" + this.projectId +
+        ", projectVersion=" + this.projectVersion +
+        ", flowId='" + this.flowId + '\'' +
+        ", failureRecipients=" + this.failureRecipients +
+        '}';
+  }
+
   /**
    * check uniqueness of dependency type and params
    */
@@ -107,17 +128,13 @@ public class FlowTrigger implements Serializable {
     validateDepDefinitionUniqueness(dependencies);
   }
 
-  @Override
-  public String toString() {
-    return "FlowTrigger{" +
-        "dependencies=" + this.dependencies +
-        ", schedule=" + this.schedule +
-        ", maxWaitDuration=" + this.maxWaitDuration +
-        '}';
+
+  public FlowTriggerDependency getDependencyByName(final String name) {
+    return this.dependencies.get(name);
   }
 
-  public List<FlowTriggerDependency> getDependencies() {
-    return this.dependencies;
+  public Collection<FlowTriggerDependency> getDependencies() {
+    return this.dependencies.values();
   }
 
   public Duration getMaxWaitDuration() {

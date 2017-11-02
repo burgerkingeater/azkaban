@@ -16,7 +16,7 @@
 
 package azkaban.flowtrigger;
 
-import azkaban.flowtrigger.database.DependencyLoader;
+import azkaban.flowtrigger.database.FlowTriggerLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
@@ -29,11 +29,11 @@ public class DependencyProcessor {
 
   private static final Logger logger = LoggerFactory.getLogger(DependencyProcessor.class);
   private static final int THREAD_POOL_SIZE = 8;
-  private final DependencyLoader dependencyLoader;
+  private final FlowTriggerLoader dependencyLoader;
   private final ExecutorService executorService;
 
   @Inject
-  public DependencyProcessor(final DependencyLoader depLoader) {
+  public DependencyProcessor(final FlowTriggerLoader depLoader) {
     this.dependencyLoader = depLoader;
     this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
   }

@@ -25,14 +25,13 @@ import azkaban.Constants.ConfigurationKeys;
 import azkaban.database.AzkabanDatabaseSetup;
 import azkaban.executor.ExecutorManager;
 import azkaban.flowtrigger.FlowTriggerPluginManager;
+import azkaban.flowtrigger.FlowTriggerUtil;
 import azkaban.flowtrigger.quartz.FlowTriggerQuartzJob;
 import azkaban.jmx.JmxExecutorManager;
 import azkaban.jmx.JmxJettyServer;
 import azkaban.jmx.JmxTriggerManager;
 import azkaban.metrics.MetricsManager;
-import azkaban.project.CronSchedule;
 import azkaban.project.FlowTrigger;
-import azkaban.project.FlowTriggerDependency;
 import azkaban.project.ProjectManager;
 import azkaban.scheduler.QuartzJobDescription;
 import azkaban.scheduler.QuartzScheduler;
@@ -83,7 +82,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -536,13 +534,7 @@ public class AzkabanWebServer extends AzkabanServer {
       final FlowTriggerPluginManager pluginManager = new FlowTriggerPluginManager();
 
       //test FlowTrigger
-      final List<FlowTriggerDependency> dependencies = new ArrayList<>();
-      dependencies.add(new FlowTriggerDependency("dep1", "test1", new HashMap<>()));
-      dependencies.add(new FlowTriggerDependency("dep2", "test2", new HashMap<>()));
-      final FlowTrigger flowTrigger = new FlowTrigger(new CronSchedule("* * * * * ?"),
-          dependencies,
-          Duration.ofSeconds(5), 17, "SLAtest");
-
+      final FlowTrigger flowTrigger = FlowTriggerUtil.createRealFlowTrigger();
       final Map<String, Object> contextMap = new HashMap<>();
       contextMap.put("submitUser", "test");
       contextMap.put("flowTrigger", flowTrigger);

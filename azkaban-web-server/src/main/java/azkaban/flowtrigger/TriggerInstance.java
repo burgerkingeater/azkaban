@@ -16,7 +16,9 @@
 
 package azkaban.flowtrigger;
 
+import azkaban.Constants;
 import azkaban.project.FlowTrigger;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -38,16 +40,21 @@ public class TriggerInstance {
   private final FlowTrigger flowTrigger;
 
   private final String submitUser;
+  private volatile int flowExecId; // associated flow execution id
 
+  //todo chengren311: convert it to builder
   public TriggerInstance(final String id, final FlowTrigger flowTrigger, final String submitUser) {
+    Preconditions.checkNotNull(flowTrigger);
     this.depInstances = new ArrayList<>();
     this.id = id;
     this.flowTrigger = flowTrigger;
     this.submitUser = submitUser;
+    this.flowExecId = Constants.DEFAULT_EXEC_ID;
   }
 
   public static void main(final String[] args) throws InterruptedException {
-    final TriggerInstance ti = new TriggerInstance("1", -1, 1, null, null);
+    final TriggerInstance ti = new TriggerInstance("1", FlowTriggerUtil.createFlowTrigger(),
+        "chren");
 
     final DependencyInstance di1 = new DependencyInstance(null, null, null);
     di1.updateStatus(Status.KILLED);
@@ -74,6 +81,18 @@ public class TriggerInstance {
     System.out.println(ti.getStatus());
     System.out.println(ti.getStartTime());
     System.out.println(ti.getEndTime());
+  }
+
+  public int getFlowExecId() {
+    return this.flowExecId;
+  }
+
+  public void setFlowExecId(final int flowExecId) {
+    this.flowExecId = flowExecId;
+  }
+
+  public final FlowTrigger getFlowTrigger() {
+    return this.flowTrigger;
   }
 
   public String getSubmitUser() {
@@ -116,6 +135,10 @@ public class TriggerInstance {
   }
 
   public Status getStatus() {
+    // no-dependency trigger is always considered as success
+    if (this.depInstances.isEmpty()) {
+      return Status.SUCCEEDED;
+    }
     final Map<Status, Integer> statusCount = new HashMap<>();
     for (final DependencyInstance depInst : this.depInstances) {
       final Integer count = statusCount.get(depInst.getStatus());

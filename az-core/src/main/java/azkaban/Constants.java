@@ -79,6 +79,8 @@ public class Constants {
   // One Schedule's default End Time: 01/01/2050, 00:00:00, UTC
   public static final long DEFAULT_SCHEDULE_END_EPOCH_TIME = 2524608000000L;
 
+  public static final int DEFAULT_EXEC_ID = -1;
+
   public static class ConfigurationKeys {
 
     // Configures Azkaban Flow Version in project YAML file

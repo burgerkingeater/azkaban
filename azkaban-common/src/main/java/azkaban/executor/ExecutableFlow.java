@@ -15,6 +15,7 @@
  */
 package azkaban.executor;
 
+import azkaban.Constants;
 import azkaban.flow.Flow;
 import azkaban.project.Project;
 import azkaban.sla.SlaOption;
@@ -46,7 +47,7 @@ public class ExecutableFlow extends ExecutableFlowBase {
   public static final String SLAOPTIONS_PARAM = "slaOptions";
   public static final String AZKABANFLOWVERSION_PARAM = "azkabanFlowVersion";
   private final HashSet<String> proxyUsers = new HashSet<>();
-  private int executionId = -1;
+  private int executionId = Constants.DEFAULT_EXEC_ID;
   private int scheduleId = -1;
   private int projectId;
   private String projectName;

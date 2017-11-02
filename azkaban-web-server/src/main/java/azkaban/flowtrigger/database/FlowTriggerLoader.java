@@ -18,15 +18,20 @@ package azkaban.flowtrigger.database;
 
 import azkaban.flowtrigger.DependencyInstance;
 import azkaban.flowtrigger.TriggerInstance;
-import java.util.List;
+import azkaban.project.FlowTrigger;
 
-public interface DependencyLoader {
+public interface FlowTriggerLoader {
 
-  void createDependencies(List<DependencyInstance> depInstList);
+  void uploadTriggerInstance(TriggerInstance triggerInstance);
 
   void updateDependencyStatus(DependencyInstance depInst);
 
   void updateDependencyStatusAndEndTime(DependencyInstance depInst);
 
-  List<TriggerInstance> loadUnfinishedTriggerInstances();
+  void uploadFlowTrigger(FlowTrigger flowTrigger);
+
+  //Collection<TriggerInstance> loadUnfinishedTriggerInstances();
+
+  void updateAssociatedFlowExecId(TriggerInstance triggerInst);
+
 }

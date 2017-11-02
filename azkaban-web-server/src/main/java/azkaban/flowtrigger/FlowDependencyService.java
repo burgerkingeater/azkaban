@@ -17,7 +17,7 @@
 package azkaban.flowtrigger;
 
 import azkaban.executor.ExecutorManager;
-import azkaban.flowtrigger.database.DependencyLoader;
+import azkaban.flowtrigger.database.FlowTriggerLoader;
 import azkaban.project.CronSchedule;
 import azkaban.project.FlowTrigger;
 import azkaban.project.FlowTriggerDependency;
@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -53,11 +52,11 @@ public class FlowDependencyService {
   private static final Logger logger = LoggerFactory.getLogger(FlowDependencyService.class);
   private final ExecutorService executorService;
   private final List<TriggerInstance> runningTriggers;
-  private final Map<String, FlowTrigger> flowTriggerMap;
+  //private final Map<String, FlowTrigger> flowTriggerMap;
   private final ScheduledExecutorService timeoutService;
   private final FlowTriggerPluginManager triggerPluginManager;
   private final TriggerProcessor triggerProcessor;
-  private final DependencyLoader dependencyLoader;
+  private final FlowTriggerLoader dependencyLoader;
   private final DependencyProcessor dependencyProcessor;
   private final ProjectManager projectManager;
   private final ExecutorManager executorManager;
@@ -66,7 +65,7 @@ public class FlowDependencyService {
   public FlowDependencyService(final FlowTriggerPluginManager pluginManager, final TriggerProcessor
       triggerProcessor, final DependencyProcessor dependencyProcessor, final ProjectManager
       projectManager, final ExecutorManager executorManager,
-      final DependencyLoader dependencyLoader, final List<FlowTrigger> flowTriggerList) {
+      final FlowTriggerLoader dependencyLoader/*, final List<FlowTrigger> flowTriggerList*/) {
     // Give the thread a name to make debugging easier.
     final ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
         .setNameFormat("FlowTrigger-service").build();
@@ -80,16 +79,17 @@ public class FlowDependencyService {
     this.projectManager = projectManager;
     this.executorManager = executorManager;
     this.dependencyLoader = dependencyLoader;
+    /*
     this.flowTriggerMap = new HashMap<>();
     for (final FlowTrigger flowTrigger : flowTriggerList) {
       this.flowTriggerMap.put(generateFlowTriggerKey(flowTrigger), flowTrigger);
-    }
+    }*/
   }
 
   public static void main(final String[] args) throws InterruptedException {
     final FlowDependencyService service = new FlowDependencyService(new FlowTriggerPluginManager
         (), new TriggerProcessor(null, null, null), new DependencyProcessor(null),
-        null, null, null, new ArrayList<>());
+        null, null, null);
 
     final DependencyInstanceConfig depInstConfig = new DependencyInstanceConfigImpl(
         new HashMap<>());
@@ -99,8 +99,7 @@ public class FlowDependencyService {
     validDependencyList.add(new FlowTriggerDependency("a", "a", new HashMap<>()));
     final Duration validDuration = Duration.ofSeconds(2);
 
-    final FlowTrigger flowTrigger = new FlowTrigger(validSchedule, validDependencyList,
-        validDuration, -1, 1, "hi");
+    final FlowTrigger flowTrigger = FlowTriggerUtil.createFlowTrigger();
     final String submitUser = "test";
 
     //service.start("test", depInstConfig, Duration.ofSeconds(2));
@@ -123,14 +122,12 @@ public class FlowDependencyService {
     return dependencyCheck.run(config, callback);
   }
 
-
   private TriggerInstance createTriggerInstance(final FlowTrigger flowTrigger,
       final String submitUser) {
     final String execId = generateId();
     logger.info(String.format("Starting the flow trigger %s[execId %s] by %s", flowTrigger, execId,
         submitUser));
-    final TriggerInstance triggerInstance = new TriggerInstance(execId, flowTrigger.getProjectId
-        (), flowTrigger.getProjectVersion(), flowTrigger.getFlowId(), submitUser);
+    final TriggerInstance triggerInstance = new TriggerInstance(execId, flowTrigger, submitUser);
     for (final FlowTriggerDependency dep : flowTrigger.getDependencies()) {
       final DependencyInstance depInst = new DependencyInstance(dep.getName(),
           createDepContext(dep), triggerInstance);
@@ -154,9 +151,13 @@ public class FlowDependencyService {
       final TriggerInstance triggerInst = createTriggerInstance(flowTrigger, submitUser);
       //todo chengren311: it's possible web server restarts before the db update, then
       // new instance will not be recoverable from db.
+
       this.triggerProcessor.processStatusUpdate(triggerInst);
-      this.runningTriggers.add(triggerInst);
-      scheduleKill(triggerInst.getId(), flowTrigger.getMaxWaitDuration());
+      // if trigger has no dependencies, then skip following steps and execute the flow immediately
+      if (!triggerInst.getDepInstances().isEmpty()) {
+        this.runningTriggers.add(triggerInst);
+        scheduleKill(triggerInst.getId(), flowTrigger.getMaxWaitDuration());
+      }
     });
   }
 
@@ -166,14 +167,22 @@ public class FlowDependencyService {
         .findFirst().orElse(null);
   }
 
+  /*
   public void resumeUnfinishedTriggerInstances() {
-    for (final TriggerInstance triggerInst : this.dependencyLoader
-        .loadUnfinishedTriggerInstances()) {
+    final List<TriggerInstance> unfinishedTriggerInsts = this.dependencyLoader
+        .loadUnfinishedTriggerInstances();
+
+    for (final TriggerInstance triggerInst : unfinishedTriggerInsts) {
       for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-        depInst.setContext(createDepContext());
+        depInst.setContext(createDepContext(triggerInst.getFlowTrigger().getDependencyByName
+            (depInst.getDepName())));
       }
     }
-  }
+
+    this.executorService.submit(() -> {
+      this.runningTriggers.addAll(unfinishedTriggerInsts);
+    });
+  }*/
 
   private void updateStatus(final DependencyInstance depInst, final Status status) {
     depInst.updateStatus(status);

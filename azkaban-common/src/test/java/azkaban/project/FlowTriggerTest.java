@@ -54,11 +54,11 @@ public class FlowTriggerTest {
     final Duration invalidDuration = Duration.ofMinutes(-1);
 
     assertThatThrownBy(() -> new FlowTrigger(validSchedule, invalidDependencyList, validDuration,
-        1, "1"))
+        1, 1, "1", new ArrayList<>()))
         .isInstanceOf(IllegalArgumentException.class);
 
     assertThatThrownBy(() -> new FlowTrigger(validSchedule, validDependencyList, invalidDuration,
-        -1, "1"))
+        -1, 1, "1", new ArrayList<>()))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -72,7 +72,7 @@ public class FlowTriggerTest {
     dependencyList.add(dep);
 
     assertThatThrownBy(() -> new FlowTrigger(schedule, dependencyList, Duration.ofMinutes(10),
-        1, "-1"))
+        1, 1, "-1", new ArrayList<>()))
         .isInstanceOf
             (IllegalArgumentException
                 .class)
@@ -90,7 +90,7 @@ public class FlowTriggerTest {
     dependencyList.add(dep2);
 
     assertThatThrownBy(() -> new FlowTrigger(schedule, dependencyList, Duration.ofMinutes(10),
-        1, "-1"))
+        1, 1, "-1", new ArrayList<>()))
         .isInstanceOf
             (IllegalArgumentException
                 .class)

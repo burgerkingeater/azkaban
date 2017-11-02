@@ -27,7 +27,7 @@ public class DependencyInstance {
   private DependencyInstanceContext context;
   private volatile Date endTime;
   private volatile Status status;
-  private boolean timeoutKilling;
+  private volatile boolean timeoutKilling;
 
   //todo chengren311: use builder pattern to construct the object
   public DependencyInstance(final String depName, final DependencyInstanceContext context,
@@ -89,7 +89,7 @@ public class DependencyInstance {
     return this.context;
   }
 
-  public void setContext(DependencyInstanceContext context) {
+  public void setContext(final DependencyInstanceContext context) {
     this.context = context;
   }
 
