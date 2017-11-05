@@ -25,6 +25,7 @@ import azkaban.Constants.ConfigurationKeys;
 import azkaban.database.AzkabanDatabaseSetup;
 import azkaban.executor.ExecutorManager;
 import azkaban.flowtrigger.FlowTriggerPluginManager;
+import azkaban.flowtrigger.FlowTriggerService;
 import azkaban.flowtrigger.FlowTriggerUtil;
 import azkaban.flowtrigger.quartz.FlowTriggerQuartzJob;
 import azkaban.jmx.JmxExecutorManager;
@@ -58,6 +59,7 @@ import azkaban.webapp.plugin.TriggerPlugin;
 import azkaban.webapp.plugin.ViewerPlugin;
 import azkaban.webapp.servlet.AbstractAzkabanServlet;
 import azkaban.webapp.servlet.ExecutorServlet;
+import azkaban.webapp.servlet.FlowTriggerServlet;
 import azkaban.webapp.servlet.HistoryServlet;
 import azkaban.webapp.servlet.IndexRedirectServlet;
 import azkaban.webapp.servlet.JMXHttpServlet;
@@ -148,6 +150,7 @@ public class AzkabanWebServer extends AzkabanServer {
   private final SessionCache sessionCache;
   private final List<ObjectName> registeredMBeans = new ArrayList<>();
   private final QuartzScheduler quartzScheduler;
+  private final FlowTriggerService flowTriggerService;
 
   private Map<String, TriggerPlugin> triggerPlugins;
   private MBeanServer mbeanServer;
@@ -164,7 +167,8 @@ public class AzkabanWebServer extends AzkabanServer {
       final ScheduleManager scheduleManager,
       final VelocityEngine velocityEngine,
       final QuartzScheduler quartzScheduler,
-      final StatusService statusService) {
+      final StatusService statusService,
+      final FlowTriggerService flowTriggerService) {
     this.props = requireNonNull(props, "props is null.");
     this.server = requireNonNull(server, "server is null.");
     this.executorManager = requireNonNull(executorManager, "executorManager is null.");
@@ -176,6 +180,7 @@ public class AzkabanWebServer extends AzkabanServer {
     this.scheduleManager = requireNonNull(scheduleManager, "scheduleManager is null.");
     this.velocityEngine = requireNonNull(velocityEngine, "velocityEngine is null.");
     this.quartzScheduler = requireNonNull(quartzScheduler, "quartzScheduler is null.");
+    this.flowTriggerService = requireNonNull(flowTriggerService, "flowTriggerService is null.");
     this.statusService = statusService;
 
     loadBuiltinCheckersAndActions();
@@ -497,6 +502,7 @@ public class AzkabanWebServer extends AzkabanServer {
     root.addServlet(new ServletHolder(new StatsServlet()), "/stats");
     root.addServlet(new ServletHolder(new StatusServlet(this.statusService)), "/status");
     root.addServlet(new ServletHolder(new NoteServlet()), "/notes");
+    root.addServlet(new ServletHolder(new FlowTriggerServlet()), "/flowtrigger");
 
     final ServletHolder restliHolder = new ServletHolder(new RestliServlet());
     restliHolder.setInitParameter("resourcePackages", "azkaban.restli");
@@ -645,6 +651,10 @@ public class AzkabanWebServer extends AzkabanServer {
 
   public TriggerManager getTriggerManager() {
     return this.triggerManager;
+  }
+
+  public FlowTriggerService getFlowTriggerService() {
+    return this.flowTriggerService;
   }
 
   /**

@@ -20,10 +20,10 @@ import com.google.common.base.Preconditions;
 
 public class DependencyInstanceCallbackImpl implements DependencyInstanceCallback {
 
-  private final FlowDependencyService service;
+  private final FlowTriggerService service;
 
   //todo chengren311: gucify it
-  public DependencyInstanceCallbackImpl(final FlowDependencyService service) {
+  public DependencyInstanceCallbackImpl(final FlowTriggerService service) {
     Preconditions.checkNotNull(service);
     this.service = service;
   }

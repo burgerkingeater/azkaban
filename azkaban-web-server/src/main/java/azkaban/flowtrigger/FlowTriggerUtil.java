@@ -45,9 +45,8 @@ public class FlowTriggerUtil {
     final FlowTriggerDependency dep2 = new FlowTriggerDependency("dep2", "test2", new HashMap<>
         ());
     final List<FlowTriggerDependency> depList = new ArrayList<>();
-    /*
     depList.add(dep1);
-    depList.add(dep2);*/
+    depList.add(dep2);
 
     return new FlowTrigger(new CronSchedule("* * * * * ?"), depList, Duration.ofMinutes(10),
         17, 1, "SLAtest", new ArrayList<>());

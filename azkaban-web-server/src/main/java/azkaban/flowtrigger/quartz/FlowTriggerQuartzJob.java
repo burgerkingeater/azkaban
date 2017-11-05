@@ -16,7 +16,7 @@
 
 package azkaban.flowtrigger.quartz;
 
-import azkaban.flowtrigger.FlowDependencyService;
+import azkaban.flowtrigger.FlowTriggerService;
 import azkaban.project.FlowTrigger;
 import azkaban.scheduler.AbstractQuartzJob;
 import javax.inject.Inject;
@@ -27,18 +27,18 @@ import org.quartz.JobExecutionContext;
 public class FlowTriggerQuartzJob extends AbstractQuartzJob {
 
   public static final String DELEGATE_CLASS_NAME = "FlowTriggerQuartzJob";
-  private final FlowDependencyService depService;
+  private final FlowTriggerService triggerService;
 
   @Inject
-  public FlowTriggerQuartzJob(final FlowDependencyService depService) {
-    this.depService = depService;
+  public FlowTriggerQuartzJob(final FlowTriggerService service) {
+    this.triggerService = service;
   }
 
   @Override
   public void execute(final JobExecutionContext context) {
     //System.out.println(context.toString());
     final JobDataMap data = context.getMergedJobDataMap();
-    this.depService.start((FlowTrigger) data.get("flowTrigger"), data.getString("submitUser"));
+    this.triggerService.start((FlowTrigger) data.get("flowTrigger"), data.getString("submitUser"));
 
     //this.depService = dependencyService;
     /*

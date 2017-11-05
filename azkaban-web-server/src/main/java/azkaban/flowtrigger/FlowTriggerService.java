@@ -29,8 +29,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -46,10 +48,10 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings("FutureReturnValueIgnored")
 @Singleton
-public class FlowDependencyService {
+public class FlowTriggerService {
 
   private static final long SHUTDOWN_WAIT_TIMEOUT = 60;
-  private static final Logger logger = LoggerFactory.getLogger(FlowDependencyService.class);
+  private static final Logger logger = LoggerFactory.getLogger(FlowTriggerService.class);
   private final ExecutorService executorService;
   private final List<TriggerInstance> runningTriggers;
   //private final Map<String, FlowTrigger> flowTriggerMap;
@@ -62,7 +64,7 @@ public class FlowDependencyService {
   private final ExecutorManager executorManager;
 
   @Inject
-  public FlowDependencyService(final FlowTriggerPluginManager pluginManager, final TriggerProcessor
+  public FlowTriggerService(final FlowTriggerPluginManager pluginManager, final TriggerProcessor
       triggerProcessor, final DependencyProcessor dependencyProcessor, final ProjectManager
       projectManager, final ExecutorManager executorManager,
       final FlowTriggerLoader dependencyLoader/*, final List<FlowTrigger> flowTriggerList*/) {
@@ -87,7 +89,7 @@ public class FlowDependencyService {
   }
 
   public static void main(final String[] args) throws InterruptedException {
-    final FlowDependencyService service = new FlowDependencyService(new FlowTriggerPluginManager
+    final FlowTriggerService service = new FlowTriggerService(new FlowTriggerPluginManager
         (), new TriggerProcessor(null, null, null), new DependencyProcessor(null),
         null, null, null);
 
@@ -144,6 +146,19 @@ public class FlowDependencyService {
     this.timeoutService.schedule(() -> {
       kill(execId, true);
     }, duration.toMillis(), TimeUnit.MILLISECONDS);
+  }
+
+  public List<TriggerInstance> getRunningTriggers() {
+    final Future future = this.executorService.submit(
+        (Callable) () -> FlowTriggerService.this.runningTriggers);
+
+    List<TriggerInstance> triggerInstanceList = new ArrayList<>();
+    try {
+      triggerInstanceList = (List<TriggerInstance>) future.get();
+    } catch (final Exception ex) {
+      logger.error("error in getting running triggers", ex);
+    }
+    return triggerInstanceList;
   }
 
   public void start(final FlowTrigger flowTrigger, final String submitUser) {
