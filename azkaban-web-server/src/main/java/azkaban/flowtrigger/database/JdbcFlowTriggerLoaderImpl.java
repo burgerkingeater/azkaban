@@ -74,6 +74,12 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
           + "dep_status = ?, endtime = ? WHERE trigger_instance_id = ? AND dep_name = ?;",
       DEPENDENCY_EXECUTION_TABLE);
 
+  //todo chengren311: avoid scanning the whole table
+  private static final String SELECT_ALL_EXECUTIONS =
+      String.format("SELECT %s FROM %s ",
+          org.apache.commons.lang.StringUtils.join(DEPENDENCY_EXECUTIONS_COLUMNS, ","),
+          DEPENDENCY_EXECUTION_TABLE);
+
   private static final String SELECT_ALL_UNFINISHED_EXECUTIONS =
       String
           .format(
@@ -114,7 +120,13 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     final QueryRunner queryRunner = new QueryRunner(dataSource);
     final DatabaseOperator databaseOperator = new DatabaseOperator(queryRunner);
     final FlowTriggerLoader depLoader = new JdbcFlowTriggerLoaderImpl(databaseOperator);
+    final List<FlowTrigger> flowTriggers = new ArrayList<>();
+    flowTriggers.add(FlowTriggerUtil.createRealFlowTrigger());
 
+    final Collection<TriggerInstance> triggerInstances = depLoader
+        .loadAllDependencyInstances(flowTriggers, 200);
+    System.out.println(triggerInstances);
+    /*
     final FlowTrigger flowTrigger = FlowTriggerUtil.createFlowTrigger();
     //depLoader.uploadFlowTrigger(flowTrigger);
     final TriggerInstance triggerInst = new TriggerInstance("1", flowTrigger, "chren");
@@ -132,7 +144,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     depInst.updateStatus(Status.SUCCEEDED);
     depInst.updateEndTime(new Date());
     triggerInst.setFlowExecId(123123);
-    depLoader.updateAssociatedFlowExecId(triggerInst);
+    depLoader.updateAssociatedFlowExecId(triggerInst);*/
   }
 
   @Override
@@ -207,6 +219,9 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
 
   @Override
   public void updateDependencyStatusAndEndTime(final DependencyInstance depInst) {
+    System.out.println("query:" + UPDATE_DEPENDENCY_STATUS_ENDTIME + depInst.getStatus().ordinal()
+        + ":" + depInst.getEndTime() + ":" + depInst.getTriggerInstance().getId() + ":" + depInst
+        .getDepName());
     executeUpdate(UPDATE_DEPENDENCY_STATUS_ENDTIME, depInst.getStatus().ordinal(),
         depInst.getEndTime(), depInst.getTriggerInstance().getId(), depInst.getDepName());
   }
@@ -223,17 +238,30 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     }
   }*/
 
+  @Override
+  public Collection<TriggerInstance> loadAllDependencyInstances(
+      final List<FlowTrigger> flowTriggers, final int limit) {
+    try {
+      return this.dbOperator.query(SELECT_ALL_EXECUTIONS, new TriggerInstanceHandler
+          (flowTriggers, limit));
+    } catch (final SQLException ex) {
+      throw new DependencyException("Query :" + SELECT_ALL_EXECUTIONS + " failed.", ex);
+    }
+  }
+
   private static class TriggerInstanceHandler implements
       ResultSetHandler<Collection<TriggerInstance>> {
 
     private final Map<String, FlowTrigger> flowTriggers;
+    private final int limit;
 
-    public TriggerInstanceHandler(final List<FlowTrigger> flowTriggers) {
+    public TriggerInstanceHandler(final List<FlowTrigger> flowTriggers, final int limit) {
       this.flowTriggers = new HashMap<>();
       for (final FlowTrigger flowTrigger : flowTriggers) {
         this.flowTriggers.put(generateFlowTriggerKey(flowTrigger.getProjectId(), flowTrigger
             .getProjectVersion(), flowTrigger.getFlowId()), flowTrigger);
       }
+      this.limit = limit;
     }
 
     private String generateFlowTriggerKey(final int projId, final int projVersion,
@@ -247,29 +275,46 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
       //todo chengren311: get submitUser from another table with projId, projectVersion
       final String submitUser = "test";
 
-      while (!rs.next()) {
+      while (rs.next()) {
         final String triggerInstId = rs.getString(1);
         final String depName = rs.getString(2);
-        final Date startTime = rs.getDate(3);
-        final Date endTime = rs.getDate(4);
+        final Date startTime = rs.getTimestamp(3);
+        final Date endTime = rs.getTimestamp(4);
         final Status status = Status.values()[rs.getInt(5)];
         final boolean timeoutKilling = rs.getBoolean(6);
         final int projId = rs.getInt(7);
         final int projVersion = rs.getInt(8);
         final String flowId = rs.getString(9);
+        final int flowExecId = rs.getInt(10);
 
         TriggerInstance triggerInst = triggerInstMap.get(triggerInstId);
         if (triggerInst == null) {
           triggerInst = new TriggerInstance(triggerInstId, this.flowTriggers.get(this
               .generateFlowTriggerKey(projId, projVersion, flowId)), submitUser);
+          triggerInst.setFlowExecId(flowExecId);
           triggerInstMap.put(triggerInstId, triggerInst);
-        } else {
-          final DependencyInstance depInst = new DependencyInstance(depName, startTime, endTime,
-              status, timeoutKilling, triggerInst);
-          triggerInst.addDependencyInstance(depInst);
         }
+
+        final DependencyInstance depInst = new DependencyInstance(depName, startTime, endTime,
+            status, timeoutKilling, triggerInst);
+        triggerInst.addDependencyInstance(depInst);
       }
-      return triggerInstMap.values();
+      final List<TriggerInstance> triggerInstances = new ArrayList<>(triggerInstMap.values());
+      Collections.sort(triggerInstances, (o1, o2) -> {
+        if (o1.getStartTime() == null && o2.getStartTime() == null) {
+          return 0;
+        } else if (o1.getStartTime() != null && o2.getStartTime() != null) {
+          if (o1.getStartTime().getTime() == o2.getStartTime().getTime()) {
+            return 0;
+          } else {
+            return o1.getStartTime().getTime() < o2.getStartTime().getTime() ? 1 : -1;
+          }
+        } else {
+          return o1.getStartTime() == null ? -1 : 1;
+        }
+      });
+
+      return triggerInstances.subList(0, Math.min(triggerInstances.size(), this.limit));
     }
   }
 }

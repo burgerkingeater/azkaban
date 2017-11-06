@@ -21,6 +21,7 @@
   #parse("azkaban/webapp/servlet/velocity/style.vm")
   #parse("azkaban/webapp/servlet/velocity/javascript.vm")
   <script type="text/javascript" src="${context}/js/azkaban/util/ajax.js"></script>
+  #
   <script type="text/javascript" src="${context}/js/azkaban/view/executions.js"></script>
   <script type="text/javascript" src="${context}/js/jquery/jquery.tablesorter.js"></script>
   <script type="text/javascript">
@@ -35,6 +36,35 @@
       jobTable.tablesorter();
     });
   </script>
+  <script>
+    $(function () {
+      $('tr.parent')
+      .css("cursor", "pointer")
+      .attr("title", "Click to expand/collapse")
+      .click(function () {
+        $(this).siblings('.child-' + this.id).toggle();
+      });
+      $('tr[class^=child-]').hide().children('tr');
+
+    });
+  </script>
+  <script type="text/javascript">
+    function killTrigger(id) {
+      var requestURL = document.location.href.replace("#currently-running", "");
+      var requestData = {"id": id, "ajax": "killRunningTrigger"};
+      var successHandler = function (data) {
+        console.log("kill clicked");
+        if (data.error) {
+          showDialog("Error", data.error);
+        }
+        else {
+          showDialog("Killed", "Trigger has been killed.");
+
+        }
+      };
+      ajaxCall(requestURL, requestData, successHandler);
+    }
+  </script>
 </head>
 <body>
 
@@ -45,7 +75,7 @@
 
 <div class="az-page-header">
   <div class="container-full">
-    <h1><a href="${context}/executor">Executing Flows</a></h1>
+    <h1><a href="${context}/executor">Executing Triggers</a></h1>
   </div>
 </div>
 
@@ -56,7 +86,7 @@
 ## Page Content
 
   <ul class="nav nav-tabs nav-sm" id="header-tabs">
-    <li id="currently-running-view-link"><a href="#currently-running">Currently Running</a></li>
+    <li id="currently-running-view-link"><a href="#currently-running">Trigger Executions</a></li>
     <li id="recently-finished-view-link"><a href="#recently-finished">Recently Finished</a></li>
   </ul>
 
@@ -75,16 +105,16 @@
           <th class="date">End time</th>
           <th class="status">Status</th>
           <th class="elapse">Elapsed</th>
-          <th class="flowExecId">Triggered Flow Execution</th>
+          <th class="flowExecId">Triggerred Flow Execution Id</th>
           <th class="config">Trigger Properties</th>
-          <th class="dependencies">Dependencies</th>
+          <th class="action">Action</th>
         </tr>
         </thead>
         <tbody>
 
-          #if ( !$null.isNull(${runningTriggers}))
-            #foreach ($trigger in $runningTriggers)
-            <tr>
+          #if ( !$null.isNull(${allTriggers}))
+            #foreach ($trigger in $allTriggers)
+            <tr class="parent" id=${trigger.getId()}>
               <td class="tb-name">
                 $velocityCount
               </td>
@@ -95,7 +125,7 @@
                   -
                 #end
               </td>
-            #*todo chengren311: keep result of  vmutils.getProjectName as a variable *#
+            #*todo chengren311: keep result of vmutils.getProjectName as a variable *#
               <td><a
                   href="${context}/manager?project=$vmutils.getProjectName(${trigger.getFlowTrigger().getProjectId()})&flow=${trigger.getFlowTrigger().getFlowId()}">${trigger.getFlowTrigger().getFlowId()}</a>
               </td>
@@ -103,9 +133,73 @@
                 <a href="${context}/manager?project=$vmutils.getProjectName(${trigger.getFlowTrigger().getProjectId()})">$vmutils.getProjectName(${trigger.getFlowTrigger().getProjectId()})</a>
               </td>
 
+              <td>${trigger.getSubmitUser()}</td>
+            #*todo chengren311: verify utils.formatDate will convert to user's timezone *#
+              <td>$utils.formatDate(${trigger.getStartTime().getTime()})</td>
+              #if (${trigger.getEndTime()})
+                <td>${trigger.getEndTime()}</td>
+              #else
+                <td>-</td>
+              #end
+              <td>${trigger.getStatus()}</td>
+              #if (${trigger.getStatus()} != "RUNNING" && ${trigger.getStatus()} != "KILLING")
+                <td>$utils.formatDuration(${trigger.getStartTime().getTime()}, ${trigger.getEndTime().getTime()})
+                </td>
+              #else
+                <td>$utils.formatDuration(${trigger.getStartTime().getTime()}, ${utils.currentTimestamp()})
+                </td>
+              #end
+              #if (${trigger.getFlowExecId()} != "-1")
+                <td><a
+                    href="${context}/executor?execid=${trigger.getFlowExecId()}">${trigger.getFlowExecId()}</a>
+                </td>
+              #else
+                <td>-</td>
+              #end
+              <td>-</td>
+              <td>
+                #if (${trigger.getStatus()} == "RUNNING")
+                  <button type="button" id="cancelbtn" class="btn btn-danger btn-sm"
+                          onclick="killTrigger('${trigger.getId()}')">Kill
+                  </button>
+                #else
+                  -
+                #end
+              </td>
+
+            <tr class="child-${trigger.getId()}">
+              <td>&nbsp;</td>
+              <td>Name</td>
+              <td>Start time</td>
+              <td>End time</td>
+              <td>Status</td>
+              <td>Elapsed time</td>
+            </tr>
+              #foreach ($dep in $trigger.getDepInstances())
+              <tr class="child-${trigger.getId()}">
+                <td>&nbsp;</td>
+                <td>${dep.getDepName()}</td>
+                <td>$utils.formatDate(${dep.getStartTime().getTime()})</td>
+                #if (${dep.getEndTime()})
+                  <td>${dep.getEndTime()}</td>
+                #else
+                  <td>-</td>
+                #end
+                <td>${dep.getStatus()}</td>
+                #if (${dep.getEndTime()})
+                  <td>$utils.formatDuration(${dep.getStartTime().getTime()}, ${dep.getEndTime().getTime()})
+                  </td>
+                #else
+                  <td>$utils.formatDuration(${dep.getStartTime().getTime()}, ${utils.currentTimestamp()})
+                  </td>
+                #end
+              </tr>
+              #end
+
             #*
             <td>
-              <a href="${context}/manager?project=$vmutils.getProjectName(${flow.getFirst().projectId})">$vmutils.getProjectName(${flow.getFirst().projectId})</a>
+              <a href="${context}/manager?project=$vmutils.getProjectName(${flow.getFirst().projectId})"
+            >$vmutils.getProjectName(${flow.getFirst().projectId})</a>
             </td>
             <td>${flow.getFirst().submitUser}</td>
             <td>${flow.getFirst().proxyUsers}</td>
@@ -118,9 +212,10 @@
             </td>
             <td>
               <button type="button" id="cancelbtn" class="btn btn-danger btn-sm"
-                      onclick="killFlow(${flow.getFirst().executionId})">Kill
+                              onclick="killFlow(${flow.getFirst().executionId})">Kill
               </button>
-            </td>*#
+            </td>
+            *#
             </tr>
             #end
           #else

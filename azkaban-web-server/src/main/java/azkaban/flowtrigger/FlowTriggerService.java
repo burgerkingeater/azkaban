@@ -25,8 +25,10 @@ import azkaban.project.ProjectManager;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -129,12 +131,11 @@ public class FlowTriggerService {
     final String execId = generateId();
     logger.info(String.format("Starting the flow trigger %s[execId %s] by %s", flowTrigger, execId,
         submitUser));
+
     final TriggerInstance triggerInstance = new TriggerInstance(execId, flowTrigger, submitUser);
-    for (final FlowTriggerDependency dep : flowTrigger.getDependencies()) {
-      final DependencyInstance depInst = new DependencyInstance(dep.getName(),
-          createDepContext(dep), triggerInstance);
-      triggerInstance.addDependencyInstance(depInst);
-    }
+    flowTrigger.getDependencies().stream()
+        .map(dep -> new DependencyInstance(dep.getName(), createDepContext(dep),
+            triggerInstance)).forEach(triggerInstance::addDependencyInstance);
     return triggerInstance;
   }
 
@@ -148,7 +149,7 @@ public class FlowTriggerService {
     }, duration.toMillis(), TimeUnit.MILLISECONDS);
   }
 
-  public List<TriggerInstance> getRunningTriggers() {
+  public Collection<TriggerInstance> getRunningTriggers() {
     final Future future = this.executorService.submit(
         (Callable) () -> FlowTriggerService.this.runningTriggers);
 
@@ -159,6 +160,12 @@ public class FlowTriggerService {
       logger.error("error in getting running triggers", ex);
     }
     return triggerInstanceList;
+  }
+
+  public Collection<TriggerInstance> getAllTriggerInstances() {
+    final List<FlowTrigger> flowTriggers = new ArrayList<>();
+    flowTriggers.add(FlowTriggerUtil.createRealFlowTrigger());
+    return this.dependencyLoader.loadAllDependencyInstances(flowTriggers, 200);
   }
 
   public void start(final FlowTrigger flowTrigger, final String submitUser) {
@@ -207,16 +214,25 @@ public class FlowTriggerService {
     this.dependencyProcessor.processStatusUpdate(depInst);
   }
 
-  private TriggerInstance findTriggerInstByExecId(final String execId) {
+  private TriggerInstance findTriggerInstById(final String triggerInstId) {
     return this.runningTriggers.stream()
-        .filter(triggerInst -> triggerInst.getId().equals(execId)).findFirst().orElse(null);
+        .filter(triggerInst -> triggerInst.getId().equals(triggerInstId)).findFirst().orElse(null);
   }
 
-  public void kill(final String execId, final boolean killedByTimeout) {
+  private void removeTriggerInstById(final String triggerInstId) {
+    for (final Iterator<TriggerInstance> it = this.runningTriggers.iterator(); it.hasNext(); ) {
+      if (triggerInstId.equals(it.next().getId())) {
+        it.remove();
+      }
+    }
+  }
+
+  //todo chengren311: how to signal killing failure to user when user tries to kill in UI or API
+  public void kill(final String triggerInstanceId, final boolean killedByTimeout) {
     this.executorService.submit(() -> {
-      logger.warn(String.format("killing trigger instance with execId %s", execId));
-      final TriggerInstance triggerInst = this.findTriggerInstByExecId(execId);
-      if (triggerInst != null) {
+      logger.warn(String.format("killing trigger instance with id %s", triggerInstanceId));
+      final TriggerInstance triggerInst = this.findTriggerInstById(triggerInstanceId);
+      if (triggerInst != null && triggerInst.getStatus() != Status.KILLING) {
         for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
           // kill only running dependencies, no need to kill a killed/successful dependency
           if (depInst.getStatus() == Status.RUNNING) {
@@ -226,8 +242,10 @@ public class FlowTriggerService {
           }
         }
       } else {
-        logger.warn(String.format("unable to kill a non-running trigger instance with execId %s",
-            execId));
+        final String status = triggerInst == null ? "non-running" : "killing";
+        logger.warn(String
+            .format("unable to kill a trigger instance in %s state with id %s", status,
+                triggerInstanceId));
       }
     });
   }
@@ -286,7 +304,7 @@ public class FlowTriggerService {
 
         if (depInst.getTriggerInstance().getStatus() == finalStatus) {
           this.triggerProcessor.processStatusUpdate(depInst.getTriggerInstance());
-          this.runningTriggers.remove(depInst.getTriggerInstance());
+          removeTriggerInstById(depInst.getTriggerInstance().getId());
         }
       } else {
         logger.warn(String.format("unable to find trigger instance with context %s", context));

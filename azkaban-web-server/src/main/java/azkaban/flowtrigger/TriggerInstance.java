@@ -164,9 +164,13 @@ public class TriggerInstance {
   }
 
   public Date getEndTime() {
-    final List<Date> endTimeList = this.depInstances.stream()
-        .map(DependencyInstance::getEndTime).filter(endTime -> endTime != null)
-        .collect(Collectors.toList());
-    return endTimeList.isEmpty() ? null : Collections.max(endTimeList);
+    if (Status.isDone(this.getStatus())) {
+      final List<Date> endTimeList = this.depInstances.stream()
+          .map(DependencyInstance::getEndTime).filter(endTime -> endTime != null)
+          .collect(Collectors.toList());
+      return endTimeList.isEmpty() ? null : Collections.max(endTimeList);
+    } else {
+      return null;
+    }
   }
 }

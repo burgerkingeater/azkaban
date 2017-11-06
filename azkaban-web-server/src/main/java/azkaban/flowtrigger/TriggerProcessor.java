@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 public class TriggerProcessor {
 
   private static final Logger logger = LoggerFactory.getLogger(TriggerProcessor.class);
-  private static final int THREAD_POOL_SIZE = 8;
+  private static final int THREAD_POOL_SIZE = 1;
   private final ProjectManager projectManager;
   private final ExecutorManager executorManager;
   private final ExecutorService executorService;

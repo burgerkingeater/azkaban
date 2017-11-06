@@ -21,9 +21,9 @@ import java.util.Date;
 public class DependencyInstance {
 
   private final Date startTime;
-  private final TriggerInstance triggerInstance;
   // dependency name as defined by user
   private final String depName;
+  private TriggerInstance triggerInstance;
   private DependencyInstanceContext context;
   private volatile Date endTime;
   private volatile Status status;
@@ -31,14 +31,14 @@ public class DependencyInstance {
 
   //todo chengren311: use builder pattern to construct the object
   public DependencyInstance(final String depName, final DependencyInstanceContext context,
-      final TriggerInstance triggerInst) {
+      final TriggerInstance triggerInstance) {
     this.status = Status.RUNNING;
+    this.triggerInstance = triggerInstance;
     this.depName = depName;
     this.startTime = new Date();
     this.endTime = null;
     this.context = context;
     this.timeoutKilling = false;
-    this.triggerInstance = triggerInst;
   }
 
   public DependencyInstance(final String depName, final Date startTime, final Date endTime,
@@ -55,6 +55,10 @@ public class DependencyInstance {
 
   public TriggerInstance getTriggerInstance() {
     return this.triggerInstance;
+  }
+
+  public void setTriggerInstance(final TriggerInstance triggerInstance) {
+    this.triggerInstance = triggerInstance;
   }
 
   public Date getStartTime() {

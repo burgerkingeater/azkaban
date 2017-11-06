@@ -108,6 +108,10 @@ public class WebUtils {
     return DateTimeFormat.forPattern(DATE_TIME_STRING).print(dt);
   }
 
+  public long currentTimestamp() {
+    return System.currentTimeMillis();
+  }
+
   public String formatDateTime(final long timestamp) {
     return formatDateTime(new DateTime(timestamp));
   }

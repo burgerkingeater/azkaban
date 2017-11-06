@@ -19,6 +19,8 @@ package azkaban.flowtrigger.database;
 import azkaban.flowtrigger.DependencyInstance;
 import azkaban.flowtrigger.TriggerInstance;
 import azkaban.project.FlowTrigger;
+import java.util.Collection;
+import java.util.List;
 
 public interface FlowTriggerLoader {
 
@@ -34,4 +36,6 @@ public interface FlowTriggerLoader {
 
   void updateAssociatedFlowExecId(TriggerInstance triggerInst);
 
+  Collection<TriggerInstance> loadAllDependencyInstances(final List<FlowTrigger> flowTriggers,
+      int limit);
 }

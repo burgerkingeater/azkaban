@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class DependencyProcessor {
 
   private static final Logger logger = LoggerFactory.getLogger(DependencyProcessor.class);
-  private static final int THREAD_POOL_SIZE = 8;
+  private static final int THREAD_POOL_SIZE = 1;
   private final FlowTriggerLoader dependencyLoader;
   private final ExecutorService executorService;
 
@@ -49,6 +49,8 @@ public class DependencyProcessor {
   public void processStatusUpdate(final DependencyInstance dep) {
     //update db, will do it in a separate threadpool
     logger.debug("process status update for " + dep);
+    System.out.println("process status update for " + dep.getTriggerInstance().getId());
+    System.out.println("process status update for " + dep.getTriggerInstance().getId());
     this.executorService
         .submit(() -> updateDepInst(dep));
 

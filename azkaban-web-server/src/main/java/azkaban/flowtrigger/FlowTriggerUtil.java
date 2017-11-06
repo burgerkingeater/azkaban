@@ -48,7 +48,7 @@ public class FlowTriggerUtil {
     depList.add(dep1);
     depList.add(dep2);
 
-    return new FlowTrigger(new CronSchedule("* * * * * ?"), depList, Duration.ofMinutes(10),
+    return new FlowTrigger(new CronSchedule("* * * * * ?"), depList, Duration.ofMinutes(1),
         17, 1, "SLAtest", new ArrayList<>());
   }
 }

@@ -25,6 +25,7 @@ import azkaban.server.session.Session;
 import azkaban.webapp.AzkabanWebServer;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,10 +68,12 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
         newPage(req, resp, session,
             "azkaban/webapp/servlet/velocity/runningflowtriggerspage.vm");
 
-    final List<TriggerInstance> triggerInstanceList = this.triggerService.getRunningTriggers();
+    //final List<TriggerInstance> triggerInstanceList = this.triggerService.getRunningTriggers();
+    final Collection<TriggerInstance> triggerInstanceList = this.triggerService
+        .getAllTriggerInstances();
 
     //page.add("runningTriggers", triggerInstanceList.isEmpty() ? null : triggerInstanceList);
-    page.add("runningTriggers", triggerInstanceList);
+    page.add("allTriggers", triggerInstanceList);
 
     page.add("vmutils", new ExecutorVMHelper());
     page.render();
@@ -84,6 +87,13 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
 
     if (ajaxName.equals("fetchRunningTriggers")) {
       ajaxFetchTriggerInstances(ret);
+    } else if (ajaxName.equals("killRunningTrigger")) {
+      if (hasParam(req, "id")) {
+        final String triggerInstanceId = getParam(req, "id");
+        ajaxKillTriggerInstance(triggerInstanceId);
+      } else {
+        ret.put("error", "please specify a valid running trigger instance id");
+      }
     }
 
     if (ret != null) {
@@ -91,9 +101,15 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
     }
   }
 
+  private void ajaxKillTriggerInstance(final String triggerInstanceId) {
+    this.triggerService.kill(triggerInstanceId, false);
+
+  }
+
   private void ajaxFetchTriggerInstances(final HashMap<String, Object> ret) throws
       ServletException {
-    final List<TriggerInstance> triggerInstanceList = this.triggerService.getRunningTriggers();
+    final Collection<TriggerInstance> triggerInstanceList = this.triggerService
+        .getRunningTriggers();
 
     final List<HashMap<String, Object>> output = new ArrayList<>();
     ret.put("items", output);

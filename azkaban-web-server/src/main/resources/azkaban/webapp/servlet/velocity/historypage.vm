@@ -113,7 +113,7 @@
                 <td>
                   <a href="${context}/manager?project=$vmutils.getProjectName(${flow.projectId})">$vmutils.getProjectName(${flow.projectId})</a>
                 </td>
-                <td>${flow.submitUser}</td>
+                <td>${triggerInstance.getSubmitUser()}</td>
                 <td>$utils.formatDate(${flow.startTime})</td>
                 <td>$utils.formatDate(${flow.endTime})</td>
                 <td>$utils.formatDuration(${flow.startTime}, ${flow.endTime})</td>
