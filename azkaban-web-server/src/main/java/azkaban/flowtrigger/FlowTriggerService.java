@@ -227,27 +227,29 @@ public class FlowTriggerService {
     }
   }
 
-  //todo chengren311: how to signal killing failure to user when user tries to kill in UI or API
   public void kill(final String triggerInstanceId, final boolean killedByTimeout) {
-    this.executorService.submit(() -> {
-      logger.warn(String.format("killing trigger instance with id %s", triggerInstanceId));
-      final TriggerInstance triggerInst = this.findTriggerInstById(triggerInstanceId);
-      if (triggerInst != null && triggerInst.getStatus() != Status.KILLING) {
-        for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-          // kill only running dependencies, no need to kill a killed/successful dependency
-          if (depInst.getStatus() == Status.RUNNING) {
-            depInst.setTimeoutKilling(killedByTimeout);
-            updateStatus(depInst, Status.KILLING);
-            depInst.getContext().kill();
+    this.executorService.submit(
+        () -> {
+          logger.warn(String.format("killing trigger instance with id %s", triggerInstanceId));
+          final TriggerInstance triggerInst = FlowTriggerService.this.findTriggerInstById
+              (triggerInstanceId);
+          if (triggerInst != null && triggerInst.getStatus() != Status.KILLING) {
+            for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
+              // kill only running dependencies, no need to kill a killed/successful dependency
+              if (depInst.getStatus() == Status.RUNNING) {
+                depInst.setTimeoutKilling(killedByTimeout);
+                updateStatus(depInst, Status.KILLING);
+                depInst.getContext().kill();
+              }
+            }
+          } else {
+            final String status = triggerInst == null ? "non-running" : "killing";
+            logger.warn(String
+                .format("unable to kill a trigger instance in %s state with id %s", status,
+                    triggerInstanceId));
           }
         }
-      } else {
-        final String status = triggerInst == null ? "non-running" : "killing";
-        logger.warn(String
-            .format("unable to kill a trigger instance in %s state with id %s", status,
-                triggerInstanceId));
-      }
-    });
+    );
   }
 
   private DependencyInstance findDependencyInstanceByContext(
