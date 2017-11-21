@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap.Builder;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,26 +37,28 @@ public class FlowTrigger implements Serializable {
   private final Map<String, FlowTriggerDependency> dependencies;
   private final CronSchedule schedule;
   private final Duration maxWaitDuration;
-  //project id and flow id of the flow to be triggered
-  private final int projectId;
-  private final int projectVersion;
-  private final String flowId;
   //who to notify when trigger fails for any reason(manually killed, time out, improper trigger
   // config ...)
-  private final List<String> failureRecipients;
+  //private final List<String> failureRecipients;
+
+  //project id and flow id of the flow to be triggered
+  private int projectId;
+  private int projectVersion;
+  private String flowId;
+  private int flowVersion;
+
 
   /**
    * @throws IllegalArgumentException if any of the argument is null or there is duplicate
    * dependency name or duplicate dependency type and params
    */
-  public FlowTrigger(final CronSchedule schedule,
-      final List<FlowTriggerDependency> dependencies, final Duration maxWaitDuration, final int
-      projectId, final int projectVersion, final String flowId,
-      final List<String> failureRecipients) {
+  public FlowTrigger(final CronSchedule schedule, final List<FlowTriggerDependency> dependencies,
+      final Duration maxWaitDuration, final int projectId, final int projectVersion,
+      final String flowId, final List<String> failureRecipients) {
     Preconditions.checkNotNull(schedule);
     Preconditions.checkNotNull(dependencies);
     Preconditions.checkNotNull(maxWaitDuration);
-    Preconditions.checkNotNull(flowId);
+    Preconditions.checkNotNull(this.flowId);
     Preconditions.checkArgument(maxWaitDuration.toMinutes() >= 1);
     validateDependencies(dependencies);
     this.schedule = schedule;
@@ -65,23 +66,61 @@ public class FlowTrigger implements Serializable {
     dependencies.forEach(dep -> builder.put(dep.getName(), dep));
     this.dependencies = builder.build();
     this.maxWaitDuration = maxWaitDuration;
-    this.projectId = projectId;
-    this.flowId = flowId;
-    this.projectVersion = projectVersion;
-    this.failureRecipients = Collections.unmodifiableList(failureRecipients);
+    //this.failureRecipients = Collections.unmodifiableList(this.failureRecipients);
+  }
+
+  /**
+   * @throws IllegalArgumentException if any of the argument is null or there is duplicate
+   * dependency name or duplicate dependency type and params
+   */
+  public FlowTrigger(final CronSchedule schedule, final List<FlowTriggerDependency> dependencies,
+      final Duration maxWaitDuration) {
+    Preconditions.checkNotNull(schedule);
+    Preconditions.checkNotNull(dependencies);
+    Preconditions.checkNotNull(maxWaitDuration);
+    Preconditions.checkNotNull(this.flowId);
+    Preconditions.checkArgument(maxWaitDuration.toMinutes() >= 1);
+    validateDependencies(dependencies);
+    this.schedule = schedule;
+    final ImmutableMap.Builder builder = new Builder();
+    dependencies.forEach(dep -> builder.put(dep.getName(), dep));
+    this.dependencies = builder.build();
+    this.maxWaitDuration = maxWaitDuration;
+    //this.failureRecipients = Collections.unmodifiableList(this.failureRecipients);
   }
 
   public int getProjectId() {
     return this.projectId;
   }
 
+  public void setProjectId(final int projectId) {
+    this.projectId = projectId;
+  }
+
   public int getProjectVersion() {
     return this.projectVersion;
+  }
+
+  public void setProjectVersion(final int projectVersion) {
+    this.projectVersion = projectVersion;
   }
 
   public String getFlowId() {
     return this.flowId;
   }
+
+  public void setFlowId(final String flowId) {
+    this.flowId = flowId;
+  }
+
+  public int getFlowVersion() {
+    return this.flowVersion;
+  }
+
+  public void setFlowVersion(final int flowVersion) {
+    this.flowVersion = flowVersion;
+  }
+
 
   /**
    * check uniqueness of dependency.name
@@ -104,7 +143,6 @@ public class FlowTrigger implements Serializable {
         ", projectId=" + this.projectId +
         ", projectVersion=" + this.projectVersion +
         ", flowId='" + this.flowId + '\'' +
-        ", failureRecipients=" + this.failureRecipients +
         '}';
   }
 
@@ -127,7 +165,6 @@ public class FlowTrigger implements Serializable {
     validateDepNameUniqueness(dependencies);
     validateDepDefinitionUniqueness(dependencies);
   }
-
 
   public FlowTriggerDependency getDependencyByName(final String name) {
     return this.dependencies.get(name);

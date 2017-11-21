@@ -51,4 +51,6 @@ public class FlowTriggerUtil {
     return new FlowTrigger(new CronSchedule("* * * * * ?"), depList, Duration.ofMinutes(1),
         17, 1, "SLAtest", new ArrayList<>());
   }
+
+
 }

@@ -24,18 +24,13 @@ import azkaban.Constants;
 import azkaban.Constants.ConfigurationKeys;
 import azkaban.database.AzkabanDatabaseSetup;
 import azkaban.executor.ExecutorManager;
-import azkaban.flowtrigger.FlowTriggerPluginManager;
 import azkaban.flowtrigger.FlowTriggerService;
-import azkaban.flowtrigger.FlowTriggerUtil;
-import azkaban.flowtrigger.quartz.FlowTriggerQuartzJob;
+import azkaban.flowtrigger.quartz.FlowTriggerScheduler;
 import azkaban.jmx.JmxExecutorManager;
 import azkaban.jmx.JmxJettyServer;
 import azkaban.jmx.JmxTriggerManager;
 import azkaban.metrics.MetricsManager;
-import azkaban.project.FlowTrigger;
 import azkaban.project.ProjectManager;
-import azkaban.scheduler.QuartzJobDescription;
-import azkaban.scheduler.QuartzScheduler;
 import azkaban.scheduler.ScheduleManager;
 import azkaban.server.AzkabanServer;
 import azkaban.server.session.SessionCache;
@@ -85,7 +80,6 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -149,9 +143,8 @@ public class AzkabanWebServer extends AzkabanServer {
   private final Props props;
   private final SessionCache sessionCache;
   private final List<ObjectName> registeredMBeans = new ArrayList<>();
-  private final QuartzScheduler quartzScheduler;
   private final FlowTriggerService flowTriggerService;
-
+  private final FlowTriggerScheduler scheduler;
   private Map<String, TriggerPlugin> triggerPlugins;
   private MBeanServer mbeanServer;
 
@@ -166,9 +159,9 @@ public class AzkabanWebServer extends AzkabanServer {
       final UserManager userManager,
       final ScheduleManager scheduleManager,
       final VelocityEngine velocityEngine,
-      final QuartzScheduler quartzScheduler,
       final StatusService statusService,
-      final FlowTriggerService flowTriggerService) {
+      final FlowTriggerService flowTriggerService,
+      final FlowTriggerScheduler scheduler) {
     this.props = requireNonNull(props, "props is null.");
     this.server = requireNonNull(server, "server is null.");
     this.executorManager = requireNonNull(executorManager, "executorManager is null.");
@@ -179,9 +172,9 @@ public class AzkabanWebServer extends AzkabanServer {
     this.userManager = requireNonNull(userManager, "userManager is null.");
     this.scheduleManager = requireNonNull(scheduleManager, "scheduleManager is null.");
     this.velocityEngine = requireNonNull(velocityEngine, "velocityEngine is null.");
-    this.quartzScheduler = requireNonNull(quartzScheduler, "quartzScheduler is null.");
     this.flowTriggerService = requireNonNull(flowTriggerService, "flowTriggerService is null.");
     this.statusService = statusService;
+    this.scheduler = requireNonNull(scheduler, "scheduler is null.");
 
     loadBuiltinCheckersAndActions();
 
@@ -242,8 +235,8 @@ public class AzkabanWebServer extends AzkabanServer {
       @Override
       public void run() {
         try {
-          if (webServer.quartzScheduler != null) {
-            webServer.quartzScheduler.shutdown();
+          if (webServer.scheduler != null) {
+            webServer.scheduler.shutdown();
           }
         } catch (final Exception e) {
           logger.error(("Exception while shutting down quartz scheduler."), e);
@@ -453,6 +446,10 @@ public class AzkabanWebServer extends AzkabanServer {
     ve.addProperty("jar.resource.loader.path", jarResourcePath);
   }
 
+  public FlowTriggerScheduler getScheduler() {
+    return this.scheduler;
+  }
+
   private void validateDatabaseVersion()
       throws IOException, SQLException {
     final boolean checkDB = this.props
@@ -535,20 +532,7 @@ public class AzkabanWebServer extends AzkabanServer {
     }
 
     if (this.props.getBoolean(ConfigurationKeys.ENABLE_QUARTZ, false)) {
-      this.quartzScheduler.start();
-      //setup
-      final FlowTriggerPluginManager pluginManager = new FlowTriggerPluginManager();
-
-      //test FlowTrigger
-      final FlowTrigger flowTrigger = FlowTriggerUtil.createRealFlowTrigger();
-      final Map<String, Object> contextMap = new HashMap<>();
-      contextMap.put("submitUser", "test");
-      contextMap.put("flowTrigger", flowTrigger);
-
-      this.quartzScheduler
-          .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription
-              (FlowTriggerQuartzJob.class, "FlowTriggerQuartzJob", contextMap));
-
+      this.scheduler.start();
     }
 
     try {
