@@ -16,25 +16,14 @@
 
 package azkaban.flowtrigger;
 
-import com.google.common.base.Preconditions;
+/**
+ * Defines the dependency instance runtime props.
+ */
+public interface DependencyInstanceRuntimeProps {
 
-public class DependencyInstanceCallbackImpl implements DependencyInstanceCallback {
-
-  private final FlowTriggerService service;
-
-  public DependencyInstanceCallbackImpl(final FlowTriggerService service) {
-    Preconditions.checkNotNull(service);
-    this.service = service;
-  }
-
-  @Override
-  public void onSuccess(final DependencyInstanceContext depContext) {
-    this.service.markDependencySuccess(depContext);
-  }
-
-  @Override
-  public void onKilled(final DependencyInstanceContext depContext) {
-    this.service.markDependencyKilledOrTimeout(depContext);
-  }
-
+  /**
+   * @return value for the property key,
+   * null if the key doesn't exist.
+   */
+  String get(final String key);
 }

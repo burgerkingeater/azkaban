@@ -17,6 +17,7 @@
 package azkaban.flowtrigger.quartz;
 
 import azkaban.flowtrigger.FlowTriggerService;
+import azkaban.project.FlowConfigID;
 import azkaban.project.FlowTrigger;
 import azkaban.scheduler.AbstractQuartzJob;
 import javax.inject.Inject;
@@ -36,9 +37,10 @@ public class FlowTriggerQuartzJob extends AbstractQuartzJob {
 
   @Override
   public void execute(final JobExecutionContext context) {
-    //System.out.println(context.toString());
+
     final JobDataMap data = context.getMergedJobDataMap();
-    this.triggerService.start((FlowTrigger) data.get("flowTrigger"), data.getString("submitUser"));
+    this.triggerService.start((FlowTrigger) data.get(FlowTrigger.class.getName()), (FlowConfigID)
+        data.get(FlowConfigID.class.getName()), data.getString("submitUser"));
 
     //this.depService = dependencyService;
     /*

@@ -16,41 +16,33 @@
 
 package azkaban.flowtrigger;
 
-import azkaban.project.CronSchedule;
-import azkaban.project.FlowTrigger;
-import azkaban.project.FlowTriggerDependency;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 public class FlowTriggerUtil {
 
-  public static FlowTrigger createFlowTrigger() {
-    final FlowTriggerDependency dep1 = new FlowTriggerDependency("dep1", "test1", new HashMap<>
-        ());
-    final FlowTriggerDependency dep2 = new FlowTriggerDependency("dep2", "test2", new HashMap<>
-        ());
-    final List<FlowTriggerDependency> depList = new ArrayList<>();
-    depList.add(dep1);
-    depList.add(dep2);
+//  public static FlowTrigger createFlowTrigger() {
+//    final FlowTriggerDependency dep1 = new FlowTriggerDependency("dep1", "test1", new HashMap<>
+//        ());
+//    final FlowTriggerDependency dep2 = new FlowTriggerDependency("dep2", "test2", new HashMap<>
+//        ());
+//    final List<FlowTriggerDependency> depList = new ArrayList<>();
+//    depList.add(dep1);
+//    depList.add(dep2);
+//
+//    return new FlowTrigger(new CronSchedule("* * * * * ?"), depList, Duration.ofMinutes(10),
+//        1, 1, "1", new ArrayList<>());
+//  }
 
-    return new FlowTrigger(new CronSchedule("* * * * * ?"), depList, Duration.ofMinutes(10),
-        1, 1, "1", new ArrayList<>());
-  }
-
-  public static FlowTrigger createRealFlowTrigger() {
-    final FlowTriggerDependency dep1 = new FlowTriggerDependency("dep1", "test1", new HashMap<>
-        ());
-    final FlowTriggerDependency dep2 = new FlowTriggerDependency("dep2", "test2", new HashMap<>
-        ());
-    final List<FlowTriggerDependency> depList = new ArrayList<>();
-    depList.add(dep1);
-    depList.add(dep2);
-
-    return new FlowTrigger(new CronSchedule("* * * * * ?"), depList, Duration.ofMinutes(1),
-        17, 1, "SLAtest", new ArrayList<>());
-  }
+//  public static FlowTrigger createRealFlowTrigger() {
+//    final FlowTriggerDependency dep1 = new FlowTriggerDependency("dep1", "test1", new HashMap<>
+//        ());
+//    final FlowTriggerDependency dep2 = new FlowTriggerDependency("dep2", "test2", new HashMap<>
+//        ());
+//    final List<FlowTriggerDependency> depList = new ArrayList<>();
+//    depList.add(dep1);
+//    depList.add(dep2);
+//
+//    return new FlowTrigger(new CronSchedule("* * * * * ?"), depList, Duration.ofMinutes(1),
+//        17, 1, "SLAtest", new ArrayList<>());
+//  }
 
 
 }

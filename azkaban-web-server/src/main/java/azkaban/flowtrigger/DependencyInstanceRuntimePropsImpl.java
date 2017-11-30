@@ -16,25 +16,26 @@
 
 package azkaban.flowtrigger;
 
-import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
-public class DependencyInstanceCallbackImpl implements DependencyInstanceCallback {
+public class DependencyInstanceRuntimePropsImpl implements DependencyInstanceRuntimeProps {
 
-  private final FlowTriggerService service;
+  private final Map<String, String> props;
 
-  public DependencyInstanceCallbackImpl(final FlowTriggerService service) {
-    Preconditions.checkNotNull(service);
-    this.service = service;
+  public DependencyInstanceRuntimePropsImpl(final Map<String, String> props) {
+    this.props = ImmutableMap.copyOf(props);
   }
 
   @Override
-  public void onSuccess(final DependencyInstanceContext depContext) {
-    this.service.markDependencySuccess(depContext);
+  public String toString() {
+    return "DependencyInstanceRuntimePropsImpl{" +
+        "props=" + this.props +
+        '}';
   }
 
   @Override
-  public void onKilled(final DependencyInstanceContext depContext) {
-    this.service.markDependencyKilledOrTimeout(depContext);
+  public String get(final String key) {
+    return this.props.get(key);
   }
-
 }

@@ -22,13 +22,16 @@ import azkaban.db.DatabaseOperator;
 import azkaban.db.SQLTransaction;
 import azkaban.flowtrigger.DependencyException;
 import azkaban.flowtrigger.DependencyInstance;
-import azkaban.flowtrigger.FlowTriggerUtil;
+import azkaban.flowtrigger.KillingCause;
 import azkaban.flowtrigger.Status;
 import azkaban.flowtrigger.TriggerInstance;
+import azkaban.project.FlowConfigID;
+import azkaban.project.FlowLoaderUtils;
 import azkaban.project.FlowTrigger;
+import azkaban.project.JdbcProjectImpl;
+import azkaban.project.ProjectLoader;
 import azkaban.utils.Props;
-import com.google.common.base.Charsets;
-import com.google.gson.Gson;
+import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -38,11 +41,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,24 +58,24 @@ import org.slf4j.LoggerFactory;
 public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
 
   private static final Logger logger = LoggerFactory.getLogger(JdbcFlowTriggerLoaderImpl.class);
+
   private static final String[] DEPENDENCY_EXECUTIONS_COLUMNS = {"trigger_instance_id", "dep_name",
-      "starttime", "endtime", "dep_status", "timeout_killing", "project_id", "project_version",
-      "flow_id", "flow_exec_id"};
+      "starttime", "endtime", "dep_status", "killing_cause", "project_id", "project_version",
+      "flow_id", "flow_version", "flow_exec_id"};
 
-  private static final String[] FLOW_TRIGGERS_COLUMNS = {"project_id", "project_version",
-      "flow_id", "trigger_blob"};
-
-  private static final String DEPENDENCY_EXECUTION_TABLE = "dependency_executions";
-
-  private static final String FLOW_TRIGGER_TABLE = "flow_triggers";
+  private static final String DEPENDENCY_EXECUTION_TABLE = "execution_dependencies";
 
   private static final String INSERT_DEPENDENCY = String.format("INSERT INTO %s(%s) VALUES(%s);"
-      + "", DEPENDENCY_EXECUTION_TABLE, org.apache.commons.lang.StringUtils.join
+      + "", DEPENDENCY_EXECUTION_TABLE, StringUtils.join
       (DEPENDENCY_EXECUTIONS_COLUMNS, ","), String.join(",", Collections.nCopies
       (DEPENDENCY_EXECUTIONS_COLUMNS.length, "?")));
 
   private static final String UPDATE_DEPENDENCY_STATUS = String.format("UPDATE %s SET dep_status "
       + "= ? WHERE trigger_instance_id = ? AND dep_name = ? ;", DEPENDENCY_EXECUTION_TABLE);
+
+  private static final String UPDATE_DEPENDENCY_STATUS_AND_KILLING_CAUSE = String.format
+      ("UPDATE %s SET dep_status = ?, killing_cause  = ? WHERE trigger_instance_id = ? AND "
+          + "dep_name = ? ;", DEPENDENCY_EXECUTION_TABLE);
 
   private static final String UPDATE_DEPENDENCY_STATUS_ENDTIME = String.format("UPDATE %s SET "
           + "dep_status = ?, endtime = ? WHERE trigger_instance_id = ? AND dep_name = ?;",
@@ -77,34 +84,43 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
   //todo chengren311: avoid scanning the whole table
   private static final String SELECT_ALL_EXECUTIONS =
       String.format("SELECT %s FROM %s ",
-          org.apache.commons.lang.StringUtils.join(DEPENDENCY_EXECUTIONS_COLUMNS, ","),
+          StringUtils.join(DEPENDENCY_EXECUTIONS_COLUMNS, ","),
           DEPENDENCY_EXECUTION_TABLE);
 
   private static final String SELECT_ALL_UNFINISHED_EXECUTIONS =
       String
           .format(
-              "SELECT %s FROM %s WHERE trigger_instance_id IN (SELECT trigger_instance_id FROM %s WHERE dep_status in "
-                  + "(%s))",
-              org.apache.commons.lang.StringUtils.join(DEPENDENCY_EXECUTIONS_COLUMNS, ","),
-              DEPENDENCY_EXECUTION_TABLE, DEPENDENCY_EXECUTION_TABLE,
-              Status.RUNNING.ordinal() + "," + Status.KILLING.ordinal());
+              "SELECT %s FROM %s WHERE trigger_instance_id in (SELECT trigger_instance_id FROM %s "
+                  + "WHERE "
+                  + "dep_status = %s or dep_status = %s)",
+              StringUtils.join(DEPENDENCY_EXECUTIONS_COLUMNS, ","),
+              DEPENDENCY_EXECUTION_TABLE,
+              DEPENDENCY_EXECUTION_TABLE,
+              Status.RUNNING.ordinal(), Status.KILLING.ordinal());
+
+  private static final String SELECT_RECENTLY_FINISHED =
+      "SELECT execution_dependencies.trigger_instance_id,dep_name,starttime,endtime,dep_status,"
+          + "killing_cause,project_id,project_version,flow_id,flow_version,flow_exec_id \n"
+          + "FROM execution_dependencies JOIN (\n"
+          + "SELECT trigger_instance_id FROM execution_dependencies WHERE trigger_instance_id not in (\n"
+          + "SELECT distinct(trigger_instance_id)  FROM execution_dependencies WHERE dep_status =  0 or dep_status = 4)\n"
+          + "GROUP BY trigger_instance_id\n"
+          + "ORDER BY  min(starttime) desc limit %s) temp on execution_dependencies"
+          + ".trigger_instance_id in (temp.trigger_instance_id);";
 
   private static final String UPDATE_DEPENDENCY_FLOW_EXEC_ID = String.format("UPDATE %s SET "
       + "flow_exec_id "
       + "= ? WHERE trigger_instance_id = ? AND dep_name = ? ;", DEPENDENCY_EXECUTION_TABLE);
 
-  private static final String SELECT_FLOW_TRIGGER = "";
-
-  private static final String INSERT_FLOW_TRIGGER = String.format("INSERT INTO %s(%s) VALUES(%s)",
-      FLOW_TRIGGER_TABLE, StringUtils.join(FLOW_TRIGGERS_COLUMNS, ","),
-      String.join(",", Collections.nCopies(FLOW_TRIGGERS_COLUMNS.length, "?")));
-
   private final DatabaseOperator dbOperator;
+  private final ProjectLoader projectLoader;
 
 
   @Inject
-  public JdbcFlowTriggerLoaderImpl(final DatabaseOperator databaseOperator) {
+  public JdbcFlowTriggerLoaderImpl(final DatabaseOperator databaseOperator,
+      final ProjectLoader projectLoader) {
     this.dbOperator = databaseOperator;
+    this.projectLoader = projectLoader;
   }
 
   public static void main(final String[] args) {
@@ -119,13 +135,22 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     final AzkabanDataSource dataSource = DataSourceUtils.getDataSource(props);
     final QueryRunner queryRunner = new QueryRunner(dataSource);
     final DatabaseOperator databaseOperator = new DatabaseOperator(queryRunner);
-    final FlowTriggerLoader depLoader = new JdbcFlowTriggerLoaderImpl(databaseOperator);
-    final List<FlowTrigger> flowTriggers = new ArrayList<>();
-    flowTriggers.add(FlowTriggerUtil.createRealFlowTrigger());
+    final ProjectLoader projectLoader = new JdbcProjectImpl(props, databaseOperator);
+    final JdbcFlowTriggerLoaderImpl depLoader = new JdbcFlowTriggerLoaderImpl(databaseOperator,
+        projectLoader);
 
-    final Collection<TriggerInstance> triggerInstances = depLoader
-        .loadAllDependencyInstances(flowTriggers, 200);
-    System.out.println(triggerInstances);
+    //final Collection<TriggerInstance> unfinished = depLoader.getUnfinishedTriggerInstances();
+    final List<FlowTrigger> flowTriggers = new ArrayList<>();
+    final Collection<TriggerInstance> triggerInstances = depLoader.getUnfinishedTriggerInstances();
+    depLoader.executeUpdate("UPDATE execution_dependencies SET dep_status = ? AND killing_cause  "
+            + "= ? WHERE trigger_instance_id = ? AND dep_name = ? ;", 4, 2,
+        "f1055f78-efaf-4e03-96d0-ba9e24ac9a5c", "other-name");
+    System.out.println();
+    //flowTriggers.add(FlowTriggerUtil.createRealFlowTrigger());
+
+//    final Collection<TriggerInstance> triggerInstances = depLoader
+//        .loadAllDependencyInstances(flowTriggers, 200);
+//    System.out.println(triggerInstances);
     /*
     final FlowTrigger flowTrigger = FlowTriggerUtil.createFlowTrigger();
     //depLoader.uploadFlowTrigger(flowTrigger);
@@ -147,21 +172,78 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     depLoader.updateAssociatedFlowExecId(triggerInst);*/
   }
 
-  @Override
-  public void uploadFlowTrigger(final FlowTrigger flowTrigger) {
-    final Gson gson = new Gson();
-    final String jsonStr = gson.toJson(flowTrigger);
-    final byte[] jsonBytes = jsonStr.getBytes(Charsets.UTF_8);
+//  @Override
+//  public void uploadFlowTrigger(final FlowTrigger flowTrigger) {
+//    final Gson gson = new Gson();
+//    final String jsonStr = gson.toJson(flowTrigger);
+//    final byte[] jsonBytes = jsonStr.getBytes(Charsets.UTF_8);
+//
+//    this.executeUpdate(INSERT_FLOW_TRIGGER, flowTrigger.getProjectId(), flowTrigger
+//        .getProjectVersion(), flowTrigger.getFlowId(), jsonBytes);
+//  }
 
-    this.executeUpdate(INSERT_FLOW_TRIGGER, flowTrigger.getProjectId(), flowTrigger
-        .getProjectVersion(), flowTrigger.getFlowId(), jsonBytes);
+
+  @Override
+  public Collection<TriggerInstance> getUnfinishedTriggerInstances() {
+    Collection<TriggerInstance> unfinished = Collections.EMPTY_LIST;
+    try {
+      unfinished = this.dbOperator
+          .query(SELECT_ALL_UNFINISHED_EXECUTIONS, new TriggerInstanceHandler());
+
+      // backfilling flow trigger for unfinished trigger instances
+
+      // dedup flow config id with a set to avoid downloading/parsing same flow file multiple times
+      final Set<FlowConfigID> flowConfigIDSet = unfinished.stream()
+          .map(TriggerInstance::getFlowConfigID).collect(Collectors.toSet());
+
+      final Map<FlowConfigID, FlowTrigger> flowTriggers = new HashMap<>();
+      for (final FlowConfigID flowConfigID : flowConfigIDSet) {
+        final File flowFile = this.projectLoader
+            .getUploadedFlowFile(flowConfigID.getProjectId(), flowConfigID.getProjectVersion(),
+                flowConfigID.getFlowVersion(), flowConfigID.getFlowId() + ".flow");
+        if (flowFile != null) {
+          final FlowTrigger flowTrigger = FlowLoaderUtils.getFlowTriggerFromYamlFile(flowFile);
+          if (flowTrigger != null) {
+            flowTriggers.put(flowConfigID, flowTrigger);
+          }
+        } else {
+          logger.error("Unable to find flow file for " + flowConfigID);
+        }
+      }
+
+      for (final TriggerInstance triggerInst : unfinished) {
+        triggerInst.setFlowTrigger(flowTriggers.get(triggerInst.getFlowConfigID()));
+      }
+
+    } catch (final SQLException ex) {
+      handleSQLException(ex);
+    }
+
+    return unfinished;
   }
 
- /*
-  @Override
-  public Collection<TriggerInstance> loadUnfinishedTriggerInstances() {
-    return null;
-  }*/
+  private void handleSQLException(final SQLException ex)
+      throws DependencyException {
+    final String error = "exception when accessing db!";
+    logger.error(error, ex);
+    throw new DependencyException(error, ex);
+  }
+
+  //generate where clause as such:
+  //( project_id = 4 AND project_version = 3 AND flow_id = 5 AND flow_version = 6 )
+  //OR ( project_id = 1 AND project_version = 2 AND flow_id = 3 AND flow_version = 4 )
+//  private String generateWhereClause(final Collection<TriggerInstance> triggerInstances) {
+//    final Set<String> criteriaSet = new HashSet<>();
+//    for (final TriggerInstance triggerInstance : triggerInstances) {
+//      final String criteria = String.format("(%s = %s AND %s = %s AND %s = %s AND %s = %s)",
+//          "project_id", triggerInstance.getFlowConfigID().getProjectId(), "project_version",
+//          triggerInstance.getFlowConfigID().getProjectVersion(), "flow_id", triggerInstance
+//              .getFlowConfigID().getFlowId(), "flow_version",
+//          triggerInstance.getFlowConfigID().getFlowVersion());
+//      criteriaSet.add(criteria);
+//    }
+//    return StringUtils.join(criteriaSet, " OR ");
+//  }
 
   @Override
   public void updateAssociatedFlowExecId(final TriggerInstance triggerInst) {
@@ -176,11 +258,12 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     executeTransaction(insertTrigger);
   }
 
+  //todo chengren311: change public back to private
   private void executeUpdate(final String query, final Object... params) {
     try {
       this.dbOperator.update(query, params);
     } catch (final SQLException ex) {
-      throw new DependencyException("Query :" + query + " failed.", ex);
+      handleSQLException(ex);
     }
   }
 
@@ -188,7 +271,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     try {
       this.dbOperator.transaction(tran);
     } catch (final SQLException ex) {
-      throw new DependencyException(tran + " failed.", ex);
+      handleSQLException(ex);
     }
   }
 
@@ -199,16 +282,24 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
         transOperator
             .update(INSERT_DEPENDENCY, triggerInst.getId(), depInst.getDepName(),
                 depInst.getStartTime(), depInst.getEndTime(), depInst.getStatus().ordinal(),
-                depInst.isTimeoutKilling(),
-                triggerInst.getFlowTrigger().getProjectId(),
-                triggerInst.getFlowTrigger().getProjectVersion(),
-                triggerInst.getFlowTrigger().getFlowId(),
+                depInst.getKillingCause().ordinal(),
+                triggerInst.getFlowConfigID().getProjectId(),
+                triggerInst.getFlowConfigID().getProjectVersion(),
+                triggerInst.getFlowConfigID().getFlowId(),
+                triggerInst.getFlowConfigID().getFlowVersion(),
                 triggerInst.getFlowExecId());
       }
       return null;
     };
 
     executeTransaction(insertTrigger);
+  }
+
+  @Override
+  public void updateDependencyStatusAndKillingCause(final DependencyInstance depInst) {
+    executeUpdate(UPDATE_DEPENDENCY_STATUS_AND_KILLING_CAUSE, depInst.getStatus().ordinal(),
+        depInst.getKillingCause().ordinal(), depInst.getTriggerInstance().getId(),
+        depInst.getDepName());
   }
 
   @Override
@@ -226,6 +317,17 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
         depInst.getEndTime(), depInst.getTriggerInstance().getId(), depInst.getDepName());
   }
 
+  @Override
+  public Collection<TriggerInstance> getRecentlyFinished(final int limit) {
+    final String query = String.format(SELECT_RECENTLY_FINISHED, limit);
+    try {
+      return this.dbOperator.query(query, new TriggerInstanceHandler());
+    } catch (final SQLException ex) {
+      handleSQLException(ex);
+    }
+    return Collections.emptyList();
+  }
+
   /*
   @Override
   public Collection<TriggerInstance> loadUnfinishedDependencyInstances(
@@ -238,30 +340,18 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     }
   }*/
 
-  @Override
-  public Collection<TriggerInstance> loadAllDependencyInstances(
-      final List<FlowTrigger> flowTriggers, final int limit) {
-    try {
-      return this.dbOperator.query(SELECT_ALL_EXECUTIONS, new TriggerInstanceHandler
-          (flowTriggers, limit));
-    } catch (final SQLException ex) {
-      throw new DependencyException("Query :" + SELECT_ALL_EXECUTIONS + " failed.", ex);
-    }
-  }
 
   private static class TriggerInstanceHandler implements
       ResultSetHandler<Collection<TriggerInstance>> {
 
-    private final Map<String, FlowTrigger> flowTriggers;
-    private final int limit;
+    //private final Map<String, FlowTrigger> flowTriggers;
 
-    public TriggerInstanceHandler(final List<FlowTrigger> flowTriggers, final int limit) {
-      this.flowTriggers = new HashMap<>();
-      for (final FlowTrigger flowTrigger : flowTriggers) {
-        this.flowTriggers.put(generateFlowTriggerKey(flowTrigger.getProjectId(), flowTrigger
-            .getProjectVersion(), flowTrigger.getFlowId()), flowTrigger);
-      }
-      this.limit = limit;
+    public TriggerInstanceHandler() {
+//      this.flowTriggers = new HashMap<>();
+//      for (final FlowTrigger flowTrigger : flowTriggers) {
+//        this.flowTriggers.put(generateFlowTriggerKey(flowTrigger.getProjectId(), flowTrigger
+//            .getProjectVersion(), flowTrigger.getFlowId()), flowTrigger);
+//      }
     }
 
     private String generateFlowTriggerKey(final int projId, final int projVersion,
@@ -271,7 +361,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
 
     @Override
     public Collection<TriggerInstance> handle(final ResultSet rs) throws SQLException {
-      final Map<String, TriggerInstance> triggerInstMap = new HashMap<>();
+      final Map<TriggerInstKey, List<DependencyInstance>> triggerInstMap = new HashMap<>();
       //todo chengren311: get submitUser from another table with projId, projectVersion
       final String submitUser = "test";
 
@@ -281,26 +371,37 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
         final Date startTime = rs.getTimestamp(3);
         final Date endTime = rs.getTimestamp(4);
         final Status status = Status.values()[rs.getInt(5)];
-        final boolean timeoutKilling = rs.getBoolean(6);
+        final KillingCause killingCause = KillingCause.values()[rs.getInt(6)];
         final int projId = rs.getInt(7);
         final int projVersion = rs.getInt(8);
         final String flowId = rs.getString(9);
-        final int flowExecId = rs.getInt(10);
+        final int flowVersion = rs.getInt(10);
+        final int flowExecId = rs.getInt(11);
 
-        TriggerInstance triggerInst = triggerInstMap.get(triggerInstId);
-        if (triggerInst == null) {
-          triggerInst = new TriggerInstance(triggerInstId, this.flowTriggers.get(this
-              .generateFlowTriggerKey(projId, projVersion, flowId)), submitUser);
-          triggerInst.setFlowExecId(flowExecId);
-          triggerInstMap.put(triggerInstId, triggerInst);
+        final TriggerInstKey key = new TriggerInstKey(triggerInstId, submitUser, projId,
+            projVersion, flowId, flowVersion, flowExecId);
+        List<DependencyInstance> dependencyInstanceList = triggerInstMap.get(key);
+        final DependencyInstance depInst = new DependencyInstance(depName, startTime, endTime,
+            null, status, killingCause);
+
+        if (dependencyInstanceList == null) {
+          dependencyInstanceList = new ArrayList<>();
+          triggerInstMap.put(key, dependencyInstanceList);
         }
 
-        final DependencyInstance depInst = new DependencyInstance(depName, startTime, endTime,
-            status, timeoutKilling, triggerInst);
-        triggerInst.addDependencyInstance(depInst);
+        dependencyInstanceList.add(depInst);
       }
-      final List<TriggerInstance> triggerInstances = new ArrayList<>(triggerInstMap.values());
-      Collections.sort(triggerInstances, (o1, o2) -> {
+
+      final List<TriggerInstance> res = new ArrayList<>();
+      for (final Map.Entry<TriggerInstKey, List<DependencyInstance>> entry : triggerInstMap
+          .entrySet()) {
+        res.add(new TriggerInstance(entry.getKey().triggerInstId, null, entry.getKey()
+            .flowConfigID, entry.getKey().submitUser, entry.getValue(), entry.getKey()
+            .flowExecId));
+      }
+
+      //sort on start time
+      Collections.sort(res, (o1, o2) -> {
         if (o1.getStartTime() == null && o2.getStartTime() == null) {
           return 0;
         } else if (o1.getStartTime() != null && o2.getStartTime() != null) {
@@ -314,7 +415,49 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
         }
       });
 
-      return triggerInstances.subList(0, Math.min(triggerInstances.size(), this.limit));
+      return res;
+    }
+
+    private static class TriggerInstKey {
+
+      String triggerInstId;
+      FlowConfigID flowConfigID;
+      String submitUser;
+      int flowExecId;
+
+      public TriggerInstKey(final String triggerInstId, final String submitUser, final int projId,
+          final int projVersion, final String flowId, final int flowVerion, final int flowExecId) {
+        this.triggerInstId = triggerInstId;
+        this.flowConfigID = new FlowConfigID(projId, projVersion, flowId, flowVerion);
+        this.submitUser = submitUser;
+        this.flowExecId = flowExecId;
+      }
+
+      @Override
+      public boolean equals(final Object o) {
+        if (this == o) {
+          return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
+
+        final TriggerInstKey that = (TriggerInstKey) o;
+
+        return new EqualsBuilder()
+            .append(this.triggerInstId, that.triggerInstId)
+            .append(this.flowConfigID, that.flowConfigID)
+            .isEquals();
+      }
+
+      @Override
+      public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(this.triggerInstId)
+            .append(this.flowConfigID)
+            .toHashCode();
+      }
     }
   }
 }

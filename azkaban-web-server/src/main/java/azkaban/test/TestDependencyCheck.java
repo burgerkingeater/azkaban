@@ -20,15 +20,17 @@ import azkaban.flowtrigger.DependencyCheck;
 import azkaban.flowtrigger.DependencyInstanceCallback;
 import azkaban.flowtrigger.DependencyInstanceConfig;
 import azkaban.flowtrigger.DependencyInstanceContext;
+import azkaban.flowtrigger.DependencyInstanceRuntimeProps;
 import azkaban.flowtrigger.DependencyPluginConfig;
 
 public class TestDependencyCheck implements DependencyCheck {
 
   @Override
-  public DependencyInstanceContext run(final DependencyInstanceConfig config, final
-  DependencyInstanceCallback callback) {
+  public DependencyInstanceContext run(final DependencyInstanceConfig config,
+      final DependencyInstanceRuntimeProps runtimeProps,
+      final DependencyInstanceCallback callback) {
     System.out.println("running TestDependencyCheck with config:" + config);
-    return new TestDependencyInstanceContext(callback);
+    return new TestDependencyInstanceContext(config, runtimeProps, callback);
   }
 
   @Override

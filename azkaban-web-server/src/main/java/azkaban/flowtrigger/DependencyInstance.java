@@ -27,31 +27,40 @@ public class DependencyInstance {
   private DependencyInstanceContext context;
   private volatile Date endTime;
   private volatile Status status;
-  private volatile boolean timeoutKilling;
+  private volatile KillingCause killingCause;
 
   //todo chengren311: use builder pattern to construct the object
-  public DependencyInstance(final String depName, final DependencyInstanceContext context,
-      final TriggerInstance triggerInstance) {
-    this.status = Status.RUNNING;
-    this.triggerInstance = triggerInstance;
-    this.depName = depName;
-    this.startTime = new Date();
-    this.endTime = null;
-    this.context = context;
-    this.timeoutKilling = false;
-  }
-
-  public DependencyInstance(final String depName, final Date startTime, final Date endTime,
-      final Status status, final boolean timeoutKilling, final TriggerInstance triggerInst) {
-    this.depName = depName;
-    this.timeoutKilling = timeoutKilling;
+  public DependencyInstance(final String depName, final Date startTime,
+      final Date endTime, final DependencyInstanceContext context, final Status status,
+      final KillingCause
+          killingCause) {
     this.status = status;
+    this.depName = depName;
     this.startTime = startTime;
     this.endTime = endTime;
-    this.context = null;
-    this.timeoutKilling = false;
-    this.triggerInstance = triggerInst;
+    this.context = context;
+    this.killingCause = killingCause;
   }
+
+  public KillingCause getKillingCause() {
+    return this.killingCause;
+  }
+
+  public void setKillingCause(final KillingCause killingCause) {
+    this.killingCause = killingCause;
+  }
+
+//  public DependencyInstance(final String depName, final Date startTime, final Date endTime,
+//      final Status status, final boolean timeoutKilling, final TriggerInstance triggerInst) {
+//    this.depName = depName;
+//    this.timeoutKilling = timeoutKilling;
+//    this.status = status;
+//    this.startTime = startTime;
+//    this.endTime = endTime;
+//    this.context = null;
+//    this.timeoutKilling = false;
+//    this.triggerInstance = triggerInst;
+//  }
 
   public TriggerInstance getTriggerInstance() {
     return this.triggerInstance;
@@ -59,6 +68,10 @@ public class DependencyInstance {
 
   public void setTriggerInstance(final TriggerInstance triggerInstance) {
     this.triggerInstance = triggerInstance;
+  }
+
+  public void setDependencyInstanceContext(final DependencyInstanceContext context) {
+    this.context = context;
   }
 
   public Date getStartTime() {
@@ -73,14 +86,6 @@ public class DependencyInstance {
     return this.depName;
   }
 
-  public boolean isTimeoutKilling() {
-    return this.timeoutKilling;
-  }
-
-  public void setTimeoutKilling(final boolean timeoutKilling) {
-    this.timeoutKilling = timeoutKilling;
-  }
-
   public void updateEndTime(final Date endTime) {
     this.endTime = endTime;
   }
@@ -91,10 +96,6 @@ public class DependencyInstance {
 
   public DependencyInstanceContext getContext() {
     return this.context;
-  }
-
-  public void setContext(final DependencyInstanceContext context) {
-    this.context = context;
   }
 
   public Status getStatus() {

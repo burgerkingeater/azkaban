@@ -78,6 +78,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.quartz.SchedulerException;
 
 public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
 
@@ -631,6 +632,14 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
       this.setErrorMessageInCookie(resp, e.getMessage());
       resp.sendRedirect(req.getRequestURI() + "?project=" + projectName);
       return;
+    } finally {
+      try {
+        //unschedule the project regardless
+        this.scheduler.unscheduleAll(project);
+      } catch (final SchedulerException e) {
+        this.setErrorMessageInCookie(resp, e.getMessage());
+        resp.sendRedirect(req.getRequestURI() + "?project=" + projectName);
+      }
     }
 
     this.setSuccessMessageInCookie(resp, "Project '" + projectName

@@ -18,9 +18,7 @@ package azkaban.flowtrigger.database;
 
 import azkaban.flowtrigger.DependencyInstance;
 import azkaban.flowtrigger.TriggerInstance;
-import azkaban.project.FlowTrigger;
 import java.util.Collection;
-import java.util.List;
 
 public interface FlowTriggerLoader {
 
@@ -30,12 +28,11 @@ public interface FlowTriggerLoader {
 
   void updateDependencyStatusAndEndTime(DependencyInstance depInst);
 
-  void uploadFlowTrigger(FlowTrigger flowTrigger);
-
-  //Collection<TriggerInstance> loadUnfinishedTriggerInstances();
+  Collection<TriggerInstance> getUnfinishedTriggerInstances();
 
   void updateAssociatedFlowExecId(TriggerInstance triggerInst);
 
-  Collection<TriggerInstance> loadAllDependencyInstances(final List<FlowTrigger> flowTriggers,
-      int limit);
+  Collection<TriggerInstance> getRecentlyFinished(int limit);
+
+  void updateDependencyStatusAndKillingCause(final DependencyInstance depInst);
 }

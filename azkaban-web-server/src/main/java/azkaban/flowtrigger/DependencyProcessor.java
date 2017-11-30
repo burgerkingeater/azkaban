@@ -17,8 +17,6 @@
 package azkaban.flowtrigger;
 
 import azkaban.flowtrigger.database.FlowTriggerLoader;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
@@ -30,17 +28,19 @@ public class DependencyProcessor {
   private static final Logger logger = LoggerFactory.getLogger(DependencyProcessor.class);
   private static final int THREAD_POOL_SIZE = 1;
   private final FlowTriggerLoader dependencyLoader;
-  private final ExecutorService executorService;
+  //private final ExecutorService executorService;
 
   @Inject
   public DependencyProcessor(final FlowTriggerLoader depLoader) {
     this.dependencyLoader = depLoader;
-    this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+    //this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
   }
 
   private void updateDepInst(final DependencyInstance depInst) {
     if (Status.isDone(depInst.getStatus())) {
       this.dependencyLoader.updateDependencyStatusAndEndTime(depInst);
+    } else if (depInst.getStatus() == Status.KILLING) {
+      this.dependencyLoader.updateDependencyStatusAndKillingCause(depInst);
     } else {
       this.dependencyLoader.updateDependencyStatus(depInst);
     }
@@ -51,9 +51,9 @@ public class DependencyProcessor {
     logger.debug("process status update for " + dep);
     System.out.println("process status update for " + dep.getTriggerInstance().getId());
     System.out.println("process status update for " + dep.getTriggerInstance().getId());
-    this.executorService
-        .submit(() -> updateDepInst(dep));
-
+    updateDepInst(dep);
+//    this.executorService
+//        .submit(() -> updateDepInst(dep));
   }
 
 }

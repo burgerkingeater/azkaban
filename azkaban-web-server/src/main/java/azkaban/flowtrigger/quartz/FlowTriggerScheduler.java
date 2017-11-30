@@ -19,6 +19,7 @@ package azkaban.flowtrigger.quartz;
 import static java.util.Objects.requireNonNull;
 
 import azkaban.flow.Flow;
+import azkaban.project.FlowConfigID;
 import azkaban.project.FlowLoaderUtils;
 import azkaban.project.FlowTrigger;
 import azkaban.project.Project;
@@ -49,33 +50,45 @@ public class FlowTriggerScheduler {
    */
   public void scheduleAll(final Project project, final String submitUser)
       throws SchedulerException {
-    //todo chengren311: unschedule old flows
-    //todo chengren311: check thread safety of register job
+    //todo chengren311: schedule on uploading via CRT
     for (final Flow flow : project.getFlows()) {
+      this.scheduler.unregisterJob(generateGroupName(flow));
+      final String flowFileName = flow.getId() + ".flow";
       final int latestFlowVersion = this.projectLoader
           .getLatestFlowVersion(flow.getProjectId(), flow
-              .getVersion(), flow.getId());
+              .getVersion(), flowFileName);
       if (latestFlowVersion > 0) {
         final File flowFile = this.projectLoader
             .getUploadedFlowFile(project.getId(), project.getVersion(),
-                latestFlowVersion, flow.getId());
+                latestFlowVersion, flowFileName);
         final FlowTrigger flowTrigger = FlowLoaderUtils.getFlowTriggerFromYamlFile(flowFile);
-        if (flowTrigger != null) {
-          flowTrigger.setProjectId(project.getId());
-          flowTrigger.setProjectVersion(project.getVersion());
-          flowTrigger.setFlowId(flow.getId());
-          flowTrigger.setFlowVersion(latestFlowVersion);
 
+        if (flowTrigger != null && flowTrigger.getSchedule() != null) {
+          final FlowConfigID flowConfigID = new FlowConfigID(project.getId(), project.getVersion(),
+              flow.getId(), latestFlowVersion);
           final Map<String, Object> contextMap = ImmutableMap.of("submitUser", submitUser,
-              "flowTrigger", flowTrigger);
+              FlowTrigger.class.getName(), flowTrigger, FlowConfigID.class.getName(), flowConfigID);
           this.scheduler
               .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription
-                  (FlowTriggerQuartzJob.class, "FlowTriggerQuartzJob", contextMap));
+                  (FlowTriggerQuartzJob.class, generateGroupName(flow), contextMap));
         }
       }
     }
   }
 
+
+  /**
+   * Unschedule all possible flows in a project
+   */
+  public void unscheduleAll(final Project project) throws SchedulerException {
+    for (final Flow flow : project.getFlows()) {
+      this.scheduler.unregisterJob(generateGroupName(flow));
+    }
+  }
+
+  private String generateGroupName(final Flow flow) {
+    return String.valueOf(flow.getProjectId()) + "." + flow.getId();
+  }
 
   public void start() {
     this.scheduler.start();

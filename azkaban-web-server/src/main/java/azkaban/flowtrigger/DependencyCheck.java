@@ -25,7 +25,7 @@ public interface DependencyCheck {
    * @return context of the running dependency.
    */
   DependencyInstanceContext run(DependencyInstanceConfig config,
-      DependencyInstanceCallback callback);
+      DependencyInstanceRuntimeProps runtimeProps, DependencyInstanceCallback callback);
 
   /**
    * Shutdown the dependency plugin. Clean up resource if needed.

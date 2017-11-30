@@ -18,6 +18,7 @@ package azkaban.webapp.servlet;
 
 import azkaban.flowtrigger.DependencyInstance;
 import azkaban.flowtrigger.FlowTriggerService;
+import azkaban.flowtrigger.KillingCause;
 import azkaban.flowtrigger.TriggerInstance;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
@@ -66,14 +67,10 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
       final HttpServletResponse resp, final Session session) {
     final Page page =
         newPage(req, resp, session,
-            "azkaban/webapp/servlet/velocity/runningflowtriggerspage.vm");
+            "azkaban/webapp/servlet/velocity/executionflowtriggerspage.vm");
 
-    //final List<TriggerInstance> triggerInstanceList = this.triggerService.getRunningTriggers();
-    final Collection<TriggerInstance> triggerInstanceList = this.triggerService
-        .getAllTriggerInstances();
-
-    //page.add("runningTriggers", triggerInstanceList.isEmpty() ? null : triggerInstanceList);
-    page.add("allTriggers", triggerInstanceList);
+    page.add("runningTriggers", this.triggerService.getRunningTriggers());
+    page.add("recentTriggers", this.triggerService.getRecentlyFinished());
 
     page.add("vmutils", new ExecutorVMHelper());
     page.render();
@@ -86,7 +83,7 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
     final String ajaxName = getParam(req, "ajax");
 
     if (ajaxName.equals("fetchRunningTriggers")) {
-      ajaxFetchTriggerInstances(ret);
+      ajaxFetchRunningTriggerInstances(ret);
     } else if (ajaxName.equals("killRunningTrigger")) {
       if (hasParam(req, "id")) {
         final String triggerInstanceId = getParam(req, "id");
@@ -102,11 +99,11 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
   }
 
   private void ajaxKillTriggerInstance(final String triggerInstanceId) {
-    this.triggerService.kill(triggerInstanceId, false);
+    this.triggerService.kill(triggerInstanceId, KillingCause.MANUAL);
 
   }
 
-  private void ajaxFetchTriggerInstances(final HashMap<String, Object> ret) throws
+  private void ajaxFetchRunningTriggerInstances(final HashMap<String, Object> ret) throws
       ServletException {
     final Collection<TriggerInstance> triggerInstanceList = this.triggerService
         .getRunningTriggers();

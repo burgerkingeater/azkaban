@@ -24,8 +24,6 @@ import azkaban.flowtrigger.database.FlowTriggerLoader;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import com.google.common.base.Preconditions;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
@@ -38,7 +36,7 @@ public class TriggerProcessor {
   private static final int THREAD_POOL_SIZE = 1;
   private final ProjectManager projectManager;
   private final ExecutorManager executorManager;
-  private final ExecutorService executorService;
+  //private final ExecutorService executorService;
   private final FlowTriggerLoader dependencyLoader;
 
   @Inject
@@ -48,21 +46,23 @@ public class TriggerProcessor {
     Preconditions.checkNotNull(executorManager);
     this.projectManager = projectManager;
     this.executorManager = executorManager;
-    this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+    //this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
     this.dependencyLoader = dependencyLoader;
   }
 
   private void executeFlowAndUpdateExecID(final TriggerInstance triggerInst) {
     try {
       final Project project = FlowUtils.getProject(this.projectManager, triggerInst
-          .getFlowTrigger().getProjectId());
-      final Flow flow = FlowUtils.getFlow(project, triggerInst.getFlowTrigger().getFlowId());
+          .getFlowConfigID().getProjectId());
+      final Flow flow = FlowUtils.getFlow(project, triggerInst.getFlowConfigID().getFlowId());
       final ExecutableFlow executableFlow = FlowUtils.createExecutableFlow(project, flow);
       this.executorManager.submitExecutableFlow(executableFlow, triggerInst.getSubmitUser());
 
       triggerInst.setFlowExecId(executableFlow.getExecutionId());
-      this.executorService.submit(() -> this.dependencyLoader.updateAssociatedFlowExecId
-          (triggerInst));
+      this.dependencyLoader.updateAssociatedFlowExecId(triggerInst);
+
+//      this.executorService.submit(() -> this.dependencyLoader.updateAssociatedFlowExecId
+//          (triggerInst));
     } catch (final Exception ex) {
       logger.error(ex.getMessage()); //todo chengren311: should we swallow the exception or
       // notify user
@@ -71,9 +71,10 @@ public class TriggerProcessor {
 
   private void processSucceed(final TriggerInstance triggerInst) {
     logger.debug("process succeed for " + triggerInst);
+    executeFlowAndUpdateExecID(triggerInst);
     // email and trigger a new flow
-    this.executorService
-        .submit(() -> executeFlowAndUpdateExecID(triggerInst));
+//    this.executorService
+//        .submit(() -> executeFlowAndUpdateExecID(triggerInst));
 
   }
 
@@ -89,8 +90,9 @@ public class TriggerProcessor {
 
   private void processNewInstance(final TriggerInstance triggerInst) {
     logger.debug("process new instance for " + triggerInst);
-    this.executorService
-        .submit(() -> this.dependencyLoader.uploadTriggerInstance(triggerInst));
+    this.dependencyLoader.uploadTriggerInstance(triggerInst);
+//    this.executorService
+//        .submit(() -> this.dependencyLoader.uploadTriggerInstance(triggerInst));
   }
 
   public void processStatusUpdate(final TriggerInstance updatedTriggerInst) {

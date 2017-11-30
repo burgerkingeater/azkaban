@@ -17,7 +17,11 @@
 package azkaban.test;
 
 import azkaban.flowtrigger.DependencyInstanceCallback;
+import azkaban.flowtrigger.DependencyInstanceConfig;
 import azkaban.flowtrigger.DependencyInstanceContext;
+import azkaban.flowtrigger.DependencyInstanceRuntimeProps;
+import com.google.common.collect.BoundType;
+import com.google.common.collect.Range;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,17 +32,22 @@ public class TestDependencyInstanceContext implements DependencyInstanceContext 
   private static final ScheduledExecutorService scheduleSerivce = Executors
       .newScheduledThreadPool(1);
   private final DependencyInstanceCallback callback;
+  private final Range<Long> range;
 
-  public TestDependencyInstanceContext(final DependencyInstanceCallback callback) {
+  public TestDependencyInstanceContext(final DependencyInstanceConfig config,
+      final DependencyInstanceRuntimeProps runtimeProps,
+      final DependencyInstanceCallback callback) {
     this.callback = callback;
+    this.range = Range.range(Long.valueOf(runtimeProps.get("starttime")), BoundType.CLOSED,
+        Long.valueOf(runtimeProps.get("starttime")) + 10, BoundType.CLOSED);
+
     //scheduleSerivce.schedule(this::onSucccess, 65, TimeUnit.SECONDS);
     if ((new Random().nextInt()) % 2 == 0) {
       //this dependency instance will succeed
-      scheduleSerivce.schedule(this::onSucccess, 30, TimeUnit
-          .SECONDS);
+      scheduleSerivce.schedule(this::onSucccess, 500, TimeUnit.SECONDS);
     } else {
       //this dependency instance will be timed out for running to long
-      scheduleSerivce.schedule(this::onSucccess, 65, TimeUnit.SECONDS);
+      scheduleSerivce.schedule(this::onSucccess, 500, TimeUnit.SECONDS);
     }
   }
 
