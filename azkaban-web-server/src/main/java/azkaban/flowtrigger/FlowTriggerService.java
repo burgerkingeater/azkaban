@@ -82,7 +82,8 @@ public class FlowTriggerService {
         .setNameFormat("FlowTrigger-service").build();
     this.executorService = Executors.newSingleThreadExecutor(namedThreadFactory);
     //this.executorService = Executors.newFixedThreadPool(60);
-    this.timeoutService = Executors.newSingleThreadScheduledExecutor(namedThreadFactory);
+    //this.timeoutService = Executors.newSingleThreadScheduledExecutor(namedThreadFactory);
+    this.timeoutService = Executors.newScheduledThreadPool(8);
     this.runningTriggers = new ArrayList<>();
     this.triggerPluginManager = pluginManager;
     this.triggerProcessor = triggerProcessor;
@@ -94,14 +95,14 @@ public class FlowTriggerService {
     this.flowTriggerMap = new HashMap<>();
     for (final FlowTrigger flowTrigger : flowTriggerList) {
       this.flowTriggerMap.put(generateFlowTriggerKey(flowTrigger), flowTrigger);
-    }*/
+    flowTrigger}*/
   }
 
   public static void main(final String[] args) throws InterruptedException {
-//    final FlowTriggerService service = new FlowTriggerService(new FlowTriggerPluginManager
-//        (), new TriggerProcessor(null, null, null), new DependencyProcessor(null),
-//        null, null, null);
-//
+    final FlowTriggerService service = new FlowTriggerService(new FlowTriggerPluginManager
+        (), new TriggerProcessor(null, null, null), new DependencyProcessor(null),
+        null, null, null);
+
 //    final DependencyInstanceConfig depInstConfig = new DependencyInstanceConfigImpl(
 //        new HashMap<>());
 //
@@ -117,42 +118,48 @@ public class FlowTriggerService {
 //    service.start(flowTrigger, submitUser);
 //    //logger.info("sleeping...");
 //    Thread.sleep(10 * 1000);
-//    //System.out.println(service.runningTriggerContainer);
+//  1000  //System.out.println(service.runningTriggerContainer);
   }
 
   private DependencyInstanceContext createDepContext(final FlowTriggerDependency dep, final long
-      starttimeInMills) {
+      starttimeInMills) throws Exception {
+//    throw new Exception();
     final DependencyCheck dependencyCheck = this.triggerPluginManager
         .getDependencyCheck(dep.getType());
     final DependencyInstanceCallback callback = new DependencyInstanceCallbackImpl(this);
     final DependencyInstanceConfigImpl config = new DependencyInstanceConfigImpl(dep.getProps());
     final DependencyInstanceRuntimeProps runtimeProps = new DependencyInstanceRuntimePropsImpl
         (ImmutableMap.of(START_TIME, String.valueOf(starttimeInMills)));
-    //todo chengren311: how to handle construction of context failure or run throws exception?
-    // what shoult it return??
     return dependencyCheck.run(config, runtimeProps, callback);
   }
 
+
   private TriggerInstance createTriggerInstance(final FlowTrigger flowTrigger,
       final FlowConfigID flowConfigID, final String submitUser) {
-    final String execId = generateId();
-    logger.info(String.format("Starting the flow trigger %s[execId %s] by %s", flowTrigger, execId,
-        submitUser));
+    final String triggerInstId = generateId();
+    logger.info(
+        String.format("Starting the flow trigger %s[execId %s] by %s", flowTrigger, triggerInstId,
+            submitUser));
     final long startTime = System.currentTimeMillis();
-
     final List<DependencyInstance> depInstList = new ArrayList<>();
     for (final FlowTriggerDependency dep : flowTrigger.getDependencies()) {
       final String depName = dep.getName();
       final Date startDate = new Date(startTime);
-      final Date endDate = null;
-      final DependencyInstanceContext context = createDepContext(dep, startTime);
-      final Status status = Status.RUNNING;
-      final DependencyInstance depInst = new DependencyInstance(depName, startDate, endDate,
-          context, status, KillingCause.NONE);
+      DependencyInstanceContext context = null;
+      try {
+        context = createDepContext(dep, startTime);
+      } catch (final Exception ex) {
+        logger.error(String.format("unable to create dependency context for trigger instance[id ="
+            + " %s]", triggerInstId), ex);
+      }
+      final Status status = context == null ? Status.FAILED : Status.RUNNING;
+      final KillingCause cause = context == null ? KillingCause.FAILURE : KillingCause.NONE;
+      final Date endTime = context == null ? new Date() : null;
+      final DependencyInstance depInst = new DependencyInstance(depName, startDate, endTime,
+          context, status, cause);
       depInstList.add(depInst);
     }
 
-    final String triggerInstId = generateId();
     final int flowExecId = Constants.DEFAULT_EXEC_ID;
     final TriggerInstance triggerInstance = new TriggerInstance(triggerInstId, flowTrigger,
         flowConfigID, submitUser, depInstList, flowExecId);
@@ -166,6 +173,8 @@ public class FlowTriggerService {
 
   private void scheduleKill(final String execId, final Duration duration, final KillingCause
       cause) {
+    logger
+        .info(String.format("Kill trigger instance %s in %s secs", execId, duration.getSeconds()));
     this.timeoutService.schedule(() -> {
       kill(execId, cause);
     }, duration.toMillis(), TimeUnit.MILLISECONDS);
@@ -189,32 +198,38 @@ public class FlowTriggerService {
   }
 
   private void recover(final TriggerInstance triggerInstance) {
-    logger.info(String.format("recovering unfinished trigger instance %s", triggerInstance.getId
-        ()));
-    final FlowTrigger flowTrigger = triggerInstance.getFlowTrigger();
-    KillingCause cause = KillingCause.NONE;
-    for (final DependencyInstance depInst : triggerInstance.getDepInstances()) {
-      if (depInst.getStatus() == Status.RUNNING || depInst.getStatus() == Status.KILLING) {
-        final FlowTriggerDependency dependency = flowTrigger
-            .getDependencyByName(depInst.getDepName());
-        final DependencyInstanceContext context = createDepContext(dependency,
-            depInst.getStartTime().getTime());
-        //todo chengren311: if context is null, then set status to failed
-        depInst.setDependencyInstanceContext(context);
-        if (depInst.getStatus() == Status.KILLING) {
-          cause = depInst.getKillingCause();
+    this.executorService.submit(() -> {
+      logger.info(String.format("recovering unfinished trigger instance %s", triggerInstance.getId
+          ()));
+      final FlowTrigger flowTrigger = triggerInstance.getFlowTrigger();
+      for (final DependencyInstance depInst : triggerInstance.getDepInstances()) {
+        if (depInst.getStatus() == Status.RUNNING || depInst.getStatus() == Status.KILLING) {
+          final FlowTriggerDependency dependency = flowTrigger
+              .getDependencyByName(depInst.getDepName());
+          DependencyInstanceContext context = null;
+          try {
+            context = createDepContext(dependency, depInst.getStartTime().getTime());
+          } catch (final Exception ex) {
+            logger
+                .error(String.format("unable to create dependency context for trigger instance[id ="
+                    + " %s]", triggerInstance.getId()), ex);
+          }
+          depInst.setDependencyInstanceContext(context);
+          if (context == null) {
+            depInst.setStatus(Status.FAILED);
+            depInst.setKillingCause(KillingCause.FAILURE);
+          }
         }
       }
-    }
 
-    if (triggerInstance.getStatus() == Status.KILLING) {
-      // kill immediately
-      addToRunningListAndScheduleKill(triggerInstance, Duration.ofSeconds(1), cause);
-    } else if (triggerInstance.getStatus() == Status.RUNNING) {
-      final long remainingTime = remainingTimeBeforeTimeout(triggerInstance);
-      addToRunningListAndScheduleKill(triggerInstance, Duration.ofMillis(remainingTime).plus
-          (KILLING_GRACE_PERIOD_AFTER_RESTART), KillingCause.TIMEOUT);
-    }
+      if (triggerInstance.getStatus() == Status.KILLING) {
+        addToRunningListAndResumeKilling(triggerInstance);
+      } else if (triggerInstance.getStatus() == Status.RUNNING) {
+        final long remainingTime = remainingTimeBeforeTimeout(triggerInstance);
+        addToRunningListAndScheduleKill(triggerInstance, Duration.ofMillis(remainingTime).plus
+            (KILLING_GRACE_PERIOD_AFTER_RESTART), KillingCause.TIMEOUT);
+      }
+    });
   }
 
   public void recoverUnfinishedTriggerInstances() {
@@ -233,13 +248,38 @@ public class FlowTriggerService {
 
   private void addToRunningListAndScheduleKill(final TriggerInstance triggerInst, final
   Duration durationBeforeKill, final KillingCause cause) {
-    this.executorService.submit(() -> {
-      // if trigger has no dependencies, then skip following steps and execute the flow immediately
-      if (!triggerInst.getDepInstances().isEmpty()) {
-        this.runningTriggers.add(triggerInst);
-        scheduleKill(triggerInst.getId(), durationBeforeKill, cause);
+    // if trigger instance is already done
+    if (!Status.isDone(triggerInst.getStatus())) {
+      this.runningTriggers.add(triggerInst);
+      scheduleKill(triggerInst.getId(), durationBeforeKill, cause);
+    }
+  }
+
+  private void addToRunningListAndResumeKilling(final TriggerInstance triggerInst) {
+    this.runningTriggers.add(triggerInst);
+    final KillingCause killingCause = triggerInst.getKillingCause();
+    for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
+      if (depInst.getStatus() == Status.KILLING) {
+        depInst.getContext().get().kill();
+      } else if (depInst.getStatus() == Status.RUNNING) {
+        // sometimes dependency instances of trigger instance in killing status can be running.
+        // e.x. dep inst1: failure, dep inst2: running -> trigger inst is in killing
+        depInst.setKillingCause(killingCause);
+        processStatusUpdate(depInst, Status.KILLING);
+        depInst.getContext().get().kill();
       }
-    });
+    }
+  }
+
+  public void processStatusUpdate(final DependencyInstance depInst, final Status newStatus) {
+    logger.debug("process status update for " + depInst);
+    depInst.setStatus(newStatus);
+    if (Status.isDone(depInst.getStatus())) {
+      depInst.setEndTime(new Date());
+    }
+    this.dependencyProcessor.processStatusUpdate(depInst);
+//    this.executorService
+//        .submit(() -> updateDepInst(dep));
   }
 
   private long remainingTimeBeforeTimeout(final TriggerInstance triggerInst) {
@@ -250,44 +290,30 @@ public class FlowTriggerService {
 
   public void start(final FlowTrigger flowTrigger, final FlowConfigID flowConfigID, final String
       submitUser) {
-    final TriggerInstance triggerInst = createTriggerInstance(flowTrigger, flowConfigID,
-        submitUser);
-    //todo chengren311: it's possible web server restarts before the db update, then
-    // new instance will not be recoverable from db.
-    this.triggerProcessor.processStatusUpdate(triggerInst);
-    addToRunningListAndScheduleKill(triggerInst, triggerInst.getFlowTrigger()
-        .getMaxWaitDuration(), KillingCause.TIMEOUT);
+    this.executorService.submit(() -> {
+      final TriggerInstance triggerInst = createTriggerInstance(flowTrigger, flowConfigID,
+          submitUser);
+
+      this.triggerProcessor.processNewInstance(triggerInst);
+      if (triggerInst.getStatus() == Status.FAILED) {
+        // all dependency instances failed
+        this.triggerProcessor.processTermination(triggerInst);
+      } else if (triggerInst.getStatus() == Status.KILLING) {
+        // some of the dependency instances failed
+        addToRunningListAndResumeKilling(triggerInst);
+      } else {
+        // todo chengren311: it's possible web server restarts before the db update, then
+        // new instance will not be recoverable from db.
+        addToRunningListAndScheduleKill(triggerInst, triggerInst.getFlowTrigger()
+            .getMaxWaitDuration(), KillingCause.TIMEOUT);
+      }
+    });
   }
 
   private FlowTriggerDependency getFlowTriggerDepByName(final FlowTrigger flowTrigger,
       final String depName) {
     return flowTrigger.getDependencies().stream().filter(ftd -> ftd.getName().equals(depName))
         .findFirst().orElse(null);
-  }
-
-  /*
-  public void resumeUnfinishedTriggerInstances() {
-    final List<TriggerInstance> unfinishedTriggerInsts = this.dependencyLoader
-        .loadUnfinishedTriggerInstances();
-
-    for (final TriggerInstance triggerInst : unfinishedTriggerInsts) {
-      for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-        depInst.setContext(createDepContext(triggerInst.getFlowTrigger().getDependencyByName
-            (depInst.getDepName())));
-      }
-    }
-
-    this.executorService.submit(() -> {
-      this.runningTriggers.addAll(unfinishedTriggerInsts);
-    });
-  }*/
-
-  private void processStatusUpdate(final DependencyInstance depInst, final Status status) {
-    depInst.updateStatus(status);
-    if (Status.isDone(depInst.getStatus())) {
-      depInst.updateEndTime(new Date());
-    }
-    this.dependencyProcessor.processStatusUpdate(depInst);
   }
 
   private TriggerInstance findTriggerInstById(final String triggerInstId) {
@@ -309,20 +335,19 @@ public class FlowTriggerService {
           logger.warn(String.format("killing trigger instance with id %s", triggerInstanceId));
           final TriggerInstance triggerInst = FlowTriggerService.this.findTriggerInstById
               (triggerInstanceId);
-          if (triggerInst != null && triggerInst.getStatus() != Status.KILLING) {
+          if (triggerInst != null) {
             for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
               // kill only running dependencies, no need to kill a killed/successful dependency
               // instance
               if (depInst.getStatus() == Status.RUNNING) {
                 depInst.setKillingCause(cause);
                 processStatusUpdate(depInst, Status.KILLING);
-                depInst.getContext().kill();
+                depInst.getContext().get().kill();
               }
             }
           } else {
-            final String status = triggerInst == null ? "non-running" : "killing";
             logger.warn(String
-                .format("unable to kill a trigger instance in %s state with id %s", status,
+                .format("unable to kill a trigger instance in non-running state with id %s",
                     triggerInstanceId));
           }
         }
@@ -331,14 +356,10 @@ public class FlowTriggerService {
 
   private DependencyInstance findDependencyInstanceByContext(
       final DependencyInstanceContext context) {
-    for (final TriggerInstance triggerInst : this.runningTriggers) {
-      for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-        if (depInst.getContext() == context) {
-          return depInst;
-        }
-      }
-    }
-    return null;
+    return this.runningTriggers.stream()
+        .flatMap(triggerInst -> triggerInst.getDepInstances().stream()).filter(
+            depInst -> depInst.getContext().isPresent() && depInst.getContext().get() == context)
+        .findFirst().orElse(null);
   }
 
   public void markDependencySuccess(final DependencyInstanceContext context) {
@@ -356,7 +377,7 @@ public class FlowTriggerService {
 
         processStatusUpdate(depInst, Status.SUCCEEDED);
         if (depInst.getTriggerInstance().getStatus() == Status.SUCCEEDED) {
-          this.triggerProcessor.processStatusUpdate(depInst.getTriggerInstance());
+          this.triggerProcessor.processSucceed(depInst.getTriggerInstance());
           this.runningTriggers.remove(depInst.getTriggerInstance());
         }
       } else {
@@ -367,7 +388,17 @@ public class FlowTriggerService {
     });
   }
 
-  public void markDependencyKilledOrTimeout(final DependencyInstanceContext context) {
+  private Status getTerminationStatusFromCause(final KillingCause cause) {
+    if (cause == KillingCause.MANUAL) {
+      return Status.KILLED;
+    } else if (cause == KillingCause.TIMEOUT) {
+      return Status.TIMEOUT;
+    } else {
+      return Status.FAILED;
+    }
+  }
+
+  public void markDependencyTerminationStatus(final DependencyInstanceContext context) {
     this.executorService.submit(() -> {
       final DependencyInstance depInst = findDependencyInstanceByContext(context);
       if (depInst != null) {
@@ -380,14 +411,11 @@ public class FlowTriggerService {
           return;
         }
 
-        //todo chengren311: failure status
-        final KillingCause cause = depInst.getKillingCause();
-        final Status finalStatus = cause == KillingCause.TIMEOUT ? Status.TIMEOUT : Status.KILLED;
-
+        final Status finalStatus = getTerminationStatusFromCause(depInst.getKillingCause());
         processStatusUpdate(depInst, finalStatus);
 
         if (depInst.getTriggerInstance().getStatus() == finalStatus) {
-          this.triggerProcessor.processStatusUpdate(depInst.getTriggerInstance());
+          this.triggerProcessor.processTermination(depInst.getTriggerInstance());
           removeTriggerInstById(depInst.getTriggerInstance().getId());
         }
       } else {

@@ -22,6 +22,7 @@ import azkaban.flowtrigger.DependencyInstanceContext;
 import azkaban.flowtrigger.DependencyInstanceRuntimeProps;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
+import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,7 +41,7 @@ public class TestDependencyInstanceContext implements DependencyInstanceContext 
     this.callback = callback;
     this.range = Range.range(Long.valueOf(runtimeProps.get("starttime")), BoundType.CLOSED,
         Long.valueOf(runtimeProps.get("starttime")) + 10, BoundType.CLOSED);
-
+    System.out.println("range:" + new Date(this.range.lowerEndpoint()));
     //scheduleSerivce.schedule(this::onSucccess, 65, TimeUnit.SECONDS);
     if ((new Random().nextInt()) % 2 == 0) {
       //this dependency instance will succeed

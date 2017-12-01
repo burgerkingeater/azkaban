@@ -22,9 +22,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -55,34 +55,33 @@ public class TriggerInstance {
   }
 
   public static void main(final String[] args) throws InterruptedException {
-//    final TriggerInstance ti = new TriggerInstance("1", FlowTriggerUtil.createFlowTrigger(),
-//        "chren");
+//    final DependencyInstance di1 = new DependencyInstance(null, null, null, null, Status
+//        .KILLED, KillingCause.MANUAL);
 //
-//    final DependencyInstance di1 = new DependencyInstance(null, null, null);
-//    di1.updateStatus(Status.KILLED);
-//    System.out.println(di1.getStartTime());
-//    ti.addDependencyInstance(di1);
+//    final DependencyInstance di2 = new DependencyInstance(null, null, null, null, Status
+//        .TIMEOUT, KillingCause.MANUAL);
 //
-//    final DependencyInstance di2 = new DependencyInstance(null, null, null);
-//    di2.updateStatus(Status.KILLED);
-//    System.out.println(di2.getStartTime());
-//    ti.addDependencyInstance(di2);
+//    final DependencyInstance di3 = new DependencyInstance(null, null, null, null, Status
+//        .SUCCEEDED, KillingCause.MANUAL);
 //
-//    Thread.sleep(10 * 1000);
-//    final DependencyInstance di3 = new DependencyInstance(null, null, null);
-//    di3.updateStatus(Status.KILLED);
-//    System.out.println(di3.getStartTime());
-//    ti.addDependencyInstance(di3);
+//    final DependencyInstance di4 = new DependencyInstance(null, null, null, null, Status
+//        .SUCCEEDED, KillingCause.MANUAL);
 //
-//    final DependencyInstance di4 = new DependencyInstance(null, null, null);
-//    di4.updateStatus(Status.KILLED);
-//    di4.updateEndTime(new Date());
-//    System.out.println(di4.getStartTime());
-//    ti.addDependencyInstance(di4);
+//    final DependencyInstance di5 = new DependencyInstance(null, null, null, null, Status
+//        .SUCCEEDED, KillingCause.MANUAL);
+//
+//    final List<DependencyInstance> dependencyInstanceList = new ArrayList<>();
+//
+//    dependencyInstanceList.add(di1);
+//    dependencyInstanceList.add(di2);
+//    dependencyInstanceList.add(di3);
+//    dependencyInstanceList.add(di4);
+//    dependencyInstanceList.add(di5);
+//
+//    final TriggerInstance ti = new TriggerInstance("1", null,
+//        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
 //
 //    System.out.println(ti.getStatus());
-//    System.out.println(ti.getStartTime());
-//    System.out.println(ti.getEndTime());
   }
 
 
@@ -122,28 +121,73 @@ public class TriggerInstance {
     return this.id;
   }
 
-  private boolean isRunning(final Map<Status, Integer> statusCount) {
+  private boolean isRunning(final Set<Status> statuses) {
     // 1. all dependencies are running or 2. at least one is running and rest are succeeded
-    return (statusCount.containsKey(Status.RUNNING) && statusCount.size() == 1) ||
-        (statusCount.containsKey(Status.RUNNING) && statusCount.containsKey(Status.SUCCEEDED) &&
-            statusCount.size() == 2);
+//    return (statusCount.containsKey(Status.RUNNING) && statusCount.size() == 1) ||
+//        (statusCount.containsKey(Status.RUNNING) && statusCount.containsKey(Status.SUCCEEDED) &&
+//            statusCount.size() == 2);
+
+    if (statuses.contains(Status.RUNNING)) {
+      for (final Status status : statuses) {
+        if (!status.equals(Status.SUCCEEDED) && !status.equals(Status.RUNNING)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
-  private boolean isSucceed(final Map<Status, Integer> statusCount) {
-    return statusCount.containsKey(Status.SUCCEEDED) && statusCount.size() == 1;
+  private boolean isSucceed(final Set<Status> statuses) {
+    // 1. all dependencies are succeeded
+    return statuses.contains(Status.SUCCEEDED) && statuses.size() == 1;
   }
 
 
-  private boolean isTimeout(final Map<Status, Integer> statusCount) {
-    return (statusCount.containsKey(Status.TIMEOUT) && statusCount.size() == 1) || (statusCount
-        .containsKey(Status.TIMEOUT) && statusCount.containsKey(Status.SUCCEEDED) && statusCount
-        .size() == 2);
+  private boolean isTimeout(final Set<Status> statuses) {
+    if (statuses.contains(Status.TIMEOUT)) {
+      for (final Status status : statuses) {
+        if (!Status.isDone(status) || status.equals(Status.FAILED)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
-  private boolean isKilled(final Map<Status, Integer> statusCount) {
-    return (statusCount.containsKey(Status.KILLED) && statusCount.size() == 1) || (statusCount
-        .containsKey(Status.KILLED) && statusCount.containsKey(Status.SUCCEEDED) && statusCount
-        .size() == 2);
+  private boolean isKilled(final Set<Status> statuses) {
+//    // 1. all dependencies are killed 2. at least one is killed and rest are succeeded
+//    return (statusCount.containsKey(Status.KILLED) && statusCount.size() == 1) || (statusCount
+//        .containsKey(Status.KILLED) && statusCount.containsKey(Status.SUCCEEDED) && statusCount
+//        .size() == 2);
+
+    if (statuses.contains(Status.KILLED)) {
+      for (final Status status : statuses) {
+        if (!status.equals(Status.SUCCEEDED) && !status.equals(Status.KILLED)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isFailed(final Set<Status> statuses) {
+    // 1. any of the dependency instance is failed and rest, if any, are succeeded/killed/timeout.
+    // failed status overrides other terminal status, which means even one dependency
+    // instance is failed and rest are succeeded/killed/timeout, the trigger instance is
+    // considered as failed. This is to alert users of investigating the failure even if other
+    // dependency instances are killed/timeout.
+    if (statuses.contains(Status.FAILED)) {
+      for (final Status status : statuses) {
+        if (!Status.isDone(status)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   public Status getStatus() {
@@ -151,21 +195,38 @@ public class TriggerInstance {
     if (this.depInstances.isEmpty()) {
       return Status.SUCCEEDED;
     }
-    final Map<Status, Integer> statusCount = new HashMap<>();
+    final Set<Status> statusSet = new HashSet<>();
+
     for (final DependencyInstance depInst : this.depInstances) {
-      final Integer count = statusCount.get(depInst.getStatus());
-      statusCount.put(depInst.getStatus(), count == null ? 1 : count + 1);
+      statusSet.add(depInst.getStatus());
     }
-    if (isRunning(statusCount)) {
+
+    if (isRunning(statusSet)) {
       return Status.RUNNING;
-    } else if (isSucceed(statusCount)) {
+    } else if (isSucceed(statusSet)) {
       return Status.SUCCEEDED;
-    } else if (isTimeout(statusCount)) {
+    } else if (isFailed(statusSet)) {
+      return Status.FAILED;
+    } else if (isTimeout(statusSet)) {
       return Status.TIMEOUT;
-    } else if (isKilled(statusCount)) {
+    } else if (isKilled(statusSet)) {
       return Status.KILLED;
     } else {
       return Status.KILLING;
+    }
+  }
+
+  public KillingCause getKillingCause() {
+    final Set<KillingCause> killingCauses = this.depInstances.stream()
+        .map(DependencyInstance::getKillingCause).collect(Collectors.toSet());
+    if (killingCauses.contains(KillingCause.FAILURE)) {
+      return KillingCause.FAILURE;
+    } else if (killingCauses.contains(KillingCause.TIMEOUT)) {
+      return KillingCause.TIMEOUT;
+    } else if (killingCauses.contains(KillingCause.MANUAL)) {
+      return KillingCause.MANUAL;
+    } else {
+      return KillingCause.NONE;
     }
   }
 

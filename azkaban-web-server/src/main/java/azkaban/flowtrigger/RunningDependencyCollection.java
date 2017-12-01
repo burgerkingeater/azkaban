@@ -18,7 +18,6 @@ package azkaban.flowtrigger;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.inject.Singleton;
 
@@ -48,23 +47,23 @@ public class RunningDependencyCollection implements Serializable {
     return null;
   }
 
-  public DependencyInstance get(final DependencyInstanceContext context) {
-    for (final DependencyInstance depInst : this.runningDependencies) {
-      if (depInst.getContext() == context) {
-        return depInst;
-      }
-    }
-    return null;
-  }
-
-  public void remove(final DependencyInstanceContext context) {
-    final Iterator<DependencyInstance> iter = this.runningDependencies.iterator();
-    while (iter.hasNext()) {
-      if (iter.next().getContext() == context) {
-        iter.remove();
-      }
-    }
-  }
+//  public DependencyInstance get(final DependencyInstanceContext context) {
+//    for (final DependencyInstance depInst : this.runningDependencies) {
+//      if (depInst.getContext() == context) {
+//        return depInst;
+//      }
+//    }
+//    return null;
+//  }
+//
+//  public void remove(final DependencyInstanceContext context) {
+//    final Iterator<DependencyInstance> iter = this.runningDependencies.iterator();
+//    while (iter.hasNext()) {
+//      if (iter.next().getContext() == context) {
+//        iter.remove();
+//      }
+//    }
+//  }
 
   @Override
   /**

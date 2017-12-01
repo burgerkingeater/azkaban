@@ -142,9 +142,6 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     //final Collection<TriggerInstance> unfinished = depLoader.getUnfinishedTriggerInstances();
     final List<FlowTrigger> flowTriggers = new ArrayList<>();
     final Collection<TriggerInstance> triggerInstances = depLoader.getUnfinishedTriggerInstances();
-    depLoader.executeUpdate("UPDATE execution_dependencies SET dep_status = ? AND killing_cause  "
-            + "= ? WHERE trigger_instance_id = ? AND dep_name = ? ;", 4, 2,
-        "f1055f78-efaf-4e03-96d0-ba9e24ac9a5c", "other-name");
     System.out.println();
     //flowTriggers.add(FlowTriggerUtil.createRealFlowTrigger());
 
@@ -166,8 +163,8 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
 
     depLoader.uploadTriggerInstance(triggerInst);
     final DependencyInstance depInst = new DependencyInstance("dep1", null, triggerInst);
-    depInst.updateStatus(Status.SUCCEEDED);
-    depInst.updateEndTime(new Date());
+    depInst.setStatus(Status.SUCCEEDED);
+    depInst.setEndTime(new Date());
     triggerInst.setFlowExecId(123123);
     depLoader.updateAssociatedFlowExecId(triggerInst);*/
   }
@@ -383,7 +380,6 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
         List<DependencyInstance> dependencyInstanceList = triggerInstMap.get(key);
         final DependencyInstance depInst = new DependencyInstance(depName, startTime, endTime,
             null, status, killingCause);
-
         if (dependencyInstanceList == null) {
           dependencyInstanceList = new ArrayList<>();
           triggerInstMap.put(key, dependencyInstanceList);

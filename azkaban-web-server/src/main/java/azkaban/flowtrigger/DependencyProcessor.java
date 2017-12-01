@@ -46,12 +46,10 @@ public class DependencyProcessor {
     }
   }
 
-  public void processStatusUpdate(final DependencyInstance dep) {
+  public void processStatusUpdate(final DependencyInstance depInst) {
     //update db, will do it in a separate threadpool
-    logger.debug("process status update for " + dep);
-    System.out.println("process status update for " + dep.getTriggerInstance().getId());
-    System.out.println("process status update for " + dep.getTriggerInstance().getId());
-    updateDepInst(dep);
+    logger.debug("process status update for " + depInst);
+    updateDepInst(depInst);
 //    this.executorService
 //        .submit(() -> updateDepInst(dep));
   }

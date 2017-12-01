@@ -69,7 +69,7 @@ public class TriggerProcessor {
     }
   }
 
-  private void processSucceed(final TriggerInstance triggerInst) {
+  public void processSucceed(final TriggerInstance triggerInst) {
     logger.debug("process succeed for " + triggerInst);
     executeFlowAndUpdateExecID(triggerInst);
     // email and trigger a new flow
@@ -78,39 +78,15 @@ public class TriggerProcessor {
 
   }
 
-  private void processKilled(final TriggerInstance triggerInst) {
-    logger.debug("process killed for " + triggerInst);
-    // email
+  public void processTermination(TriggerInstance triggerInst) {
+    logger.debug("process termination for " + triggerInst);
+    //email
   }
 
-  private void processTimeout(final TriggerInstance triggerInst) {
-    logger.debug("process timeout for " + triggerInst);
-    // email
-  }
-
-  private void processNewInstance(final TriggerInstance triggerInst) {
+  public void processNewInstance(final TriggerInstance triggerInst) {
     logger.debug("process new instance for " + triggerInst);
     this.dependencyLoader.uploadTriggerInstance(triggerInst);
 //    this.executorService
 //        .submit(() -> this.dependencyLoader.uploadTriggerInstance(triggerInst));
-  }
-
-  public void processStatusUpdate(final TriggerInstance updatedTriggerInst) {
-    switch (updatedTriggerInst.getStatus()) {
-      case RUNNING:
-        processNewInstance(updatedTriggerInst);
-        break;
-      case SUCCEEDED:
-        processSucceed(updatedTriggerInst);
-        break;
-      case KILLED:
-        processKilled(updatedTriggerInst);
-        break;
-      case TIMEOUT:
-        processTimeout(updatedTriggerInst);
-        break;
-      default:
-        break;
-    }
   }
 }

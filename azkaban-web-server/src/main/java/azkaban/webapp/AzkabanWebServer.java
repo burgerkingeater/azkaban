@@ -532,6 +532,7 @@ public class AzkabanWebServer extends AzkabanServer {
     }
 
     if (this.props.getBoolean(ConfigurationKeys.ENABLE_QUARTZ, false)) {
+      //todo chengren311: set it back
       this.scheduler.start();
     }
 

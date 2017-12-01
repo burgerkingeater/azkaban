@@ -17,6 +17,7 @@
 package azkaban.flowtrigger;
 
 import java.util.Date;
+import java.util.Optional;
 
 public class DependencyInstance {
 
@@ -24,21 +25,30 @@ public class DependencyInstance {
   // dependency name as defined by user
   private final String depName;
   private TriggerInstance triggerInstance;
-  private DependencyInstanceContext context;
+  private Optional<DependencyInstanceContext> context;
   private volatile Date endTime;
   private volatile Status status;
   private volatile KillingCause killingCause;
 
+//  public DependencyInstance(final String depName, final Date startTime,
+//      final DependencyInstanceContext context, final KillingCause killingCause) {
+//    this.depName = depName;
+//    this.startTime = startTime;
+//    this.context = Optional.ofNullable(context);
+//    this.killingCause = killingCause;
+//    this.status = null;
+//    this.endTime = null;
+//  }
+
   //todo chengren311: use builder pattern to construct the object
   public DependencyInstance(final String depName, final Date startTime,
       final Date endTime, final DependencyInstanceContext context, final Status status,
-      final KillingCause
-          killingCause) {
+      final KillingCause killingCause) {
     this.status = status;
     this.depName = depName;
     this.startTime = startTime;
     this.endTime = endTime;
-    this.context = context;
+    this.context = Optional.ofNullable(context);
     this.killingCause = killingCause;
   }
 
@@ -71,7 +81,7 @@ public class DependencyInstance {
   }
 
   public void setDependencyInstanceContext(final DependencyInstanceContext context) {
-    this.context = context;
+    this.context = Optional.ofNullable(context);
   }
 
   public Date getStartTime() {
@@ -82,24 +92,24 @@ public class DependencyInstance {
     return this.endTime;
   }
 
+  public void setEndTime(final Date endTime) {
+    this.endTime = endTime;
+  }
+
   public String getDepName() {
     return this.depName;
   }
 
-  public void updateEndTime(final Date endTime) {
-    this.endTime = endTime;
-  }
-
-  public void updateStatus(final Status status) {
-    this.status = status;
-  }
-
-  public DependencyInstanceContext getContext() {
+  public Optional<DependencyInstanceContext> getContext() {
     return this.context;
   }
 
   public Status getStatus() {
     return this.status;
+  }
+
+  public void setStatus(final Status status) {
+    this.status = status;
   }
 
 }
