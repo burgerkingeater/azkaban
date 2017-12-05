@@ -142,7 +142,7 @@
                 <td>-</td>
               #end
               <td>${trigger.getStatus()}</td>
-              #if (${trigger.getStatus()} != "RUNNING" && ${trigger.getStatus()} != "KILLING")
+              #if (${trigger.getStatus()} != "RUNNING" && ${trigger.getStatus()} != "CANCELLING")
                 <td>$utils.formatDuration(${trigger.getStartTime().getTime()}, ${trigger.getEndTime().getTime()})
                 </td>
               #else
@@ -280,7 +280,7 @@
                 <td>-</td>
               #end
               <td>${trigger.getStatus()}</td>
-              #if (${trigger.getStatus()} != "RUNNING" && ${trigger.getStatus()} != "KILLING")
+              #if (${trigger.getStatus()} != "RUNNING" && ${trigger.getStatus()} != "CANCELLING")
                 <td>$utils.formatDuration(${trigger.getStartTime().getTime()}, ${trigger.getEndTime().getTime()})
                 </td>
               #else
@@ -311,6 +311,7 @@
               <td>Start time</td>
               <td>End time</td>
               <td>Status</td>
+              <td>Cancellation Cause</td>
               <td>Elapsed time</td>
             </tr>
               #foreach ($dep in $trigger.getDepInstances())
@@ -324,6 +325,7 @@
                   <td>-</td>
                 #end
                 <td>${dep.getStatus()}</td>
+                <td>${dep.getCancellationCause()}</td>
                 #if (${dep.getEndTime()})
                   <td>$utils.formatDuration(${dep.getStartTime().getTime()}, ${dep.getEndTime().getTime()})
                   </td>

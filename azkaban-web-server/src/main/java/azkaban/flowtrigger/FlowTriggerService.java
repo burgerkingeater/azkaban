@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -39,6 +41,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
@@ -123,7 +126,9 @@ public class FlowTriggerService {
 
   private DependencyInstanceContext createDepContext(final FlowTriggerDependency dep, final long
       starttimeInMills) throws Exception {
-//    throw new Exception();
+    if (new Random().nextInt() % 2 == 0) {
+      throw new Exception();
+    }
     final DependencyCheck dependencyCheck = this.triggerPluginManager
         .getDependencyCheck(dep.getType());
     final DependencyInstanceCallback callback = new DependencyInstanceCallbackImpl(this);
@@ -152,8 +157,9 @@ public class FlowTriggerService {
         logger.error(String.format("unable to create dependency context for trigger instance[id ="
             + " %s]", triggerInstId), ex);
       }
-      final Status status = context == null ? Status.FAILED : Status.RUNNING;
-      final KillingCause cause = context == null ? KillingCause.FAILURE : KillingCause.NONE;
+      final Status status = context == null ? Status.CANCELLED : Status.RUNNING;
+      final CancellationCause cause =
+          context == null ? CancellationCause.FAILURE : CancellationCause.NONE;
       final Date endTime = context == null ? new Date() : null;
       final DependencyInstance depInst = new DependencyInstance(depName, startDate, endTime,
           context, status, cause);
@@ -171,7 +177,7 @@ public class FlowTriggerService {
     return UUID.randomUUID().toString();
   }
 
-  private void scheduleKill(final String execId, final Duration duration, final KillingCause
+  private void scheduleKill(final String execId, final Duration duration, final CancellationCause
       cause) {
     logger
         .info(String.format("Kill trigger instance %s in %s secs", execId, duration.getSeconds()));
@@ -203,7 +209,7 @@ public class FlowTriggerService {
           ()));
       final FlowTrigger flowTrigger = triggerInstance.getFlowTrigger();
       for (final DependencyInstance depInst : triggerInstance.getDepInstances()) {
-        if (depInst.getStatus() == Status.RUNNING || depInst.getStatus() == Status.KILLING) {
+        if (depInst.getStatus() == Status.RUNNING || depInst.getStatus() == Status.CANCELLING) {
           final FlowTriggerDependency dependency = flowTrigger
               .getDependencyByName(depInst.getDepName());
           DependencyInstanceContext context = null;
@@ -216,18 +222,18 @@ public class FlowTriggerService {
           }
           depInst.setDependencyInstanceContext(context);
           if (context == null) {
-            depInst.setStatus(Status.FAILED);
-            depInst.setKillingCause(KillingCause.FAILURE);
+            depInst.setStatus(Status.CANCELLED);
+            depInst.setKillingCause(CancellationCause.FAILURE);
           }
         }
       }
 
-      if (triggerInstance.getStatus() == Status.KILLING) {
-        addToRunningListAndResumeKilling(triggerInstance);
+      if (triggerInstance.getStatus() == Status.CANCELLING) {
+        addToRunningListAndCancel(triggerInstance);
       } else if (triggerInstance.getStatus() == Status.RUNNING) {
         final long remainingTime = remainingTimeBeforeTimeout(triggerInstance);
         addToRunningListAndScheduleKill(triggerInstance, Duration.ofMillis(remainingTime).plus
-            (KILLING_GRACE_PERIOD_AFTER_RESTART), KillingCause.TIMEOUT);
+            (KILLING_GRACE_PERIOD_AFTER_RESTART), CancellationCause.TIMEOUT);
       }
     });
   }
@@ -247,7 +253,7 @@ public class FlowTriggerService {
   }
 
   private void addToRunningListAndScheduleKill(final TriggerInstance triggerInst, final
-  Duration durationBeforeKill, final KillingCause cause) {
+  Duration durationBeforeKill, final CancellationCause cause) {
     // if trigger instance is already done
     if (!Status.isDone(triggerInst.getStatus())) {
       this.runningTriggers.add(triggerInst);
@@ -255,32 +261,63 @@ public class FlowTriggerService {
     }
   }
 
-  private void addToRunningListAndResumeKilling(final TriggerInstance triggerInst) {
-    this.runningTriggers.add(triggerInst);
-    final KillingCause killingCause = triggerInst.getKillingCause();
+  private CancellationCause getKillingCause(final TriggerInstance triggerInst) {
+    final Set<CancellationCause> killingCauses = triggerInst.getDepInstances().stream()
+        .map(DependencyInstance::getCancellationCause).collect(Collectors.toSet());
+
+    if (killingCauses.contains(CancellationCause.FAILURE) || killingCauses
+        .contains(CancellationCause.CASCADING)) {
+      return CancellationCause.CASCADING;
+    } else if (killingCauses.contains(CancellationCause.TIMEOUT)) {
+      return CancellationCause.TIMEOUT;
+    } else if (killingCauses.contains(CancellationCause.MANUAL)) {
+      return CancellationCause.MANUAL;
+    } else {
+      return CancellationCause.NONE;
+    }
+  }
+
+
+  private void cancelTriggerInstance(final TriggerInstance triggerInst) {
+    final CancellationCause killingCause = getKillingCause(triggerInst);
     for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-      if (depInst.getStatus() == Status.KILLING) {
+      if (depInst.getStatus() == Status.CANCELLING) {
         depInst.getContext().get().kill();
       } else if (depInst.getStatus() == Status.RUNNING) {
         // sometimes dependency instances of trigger instance in killing status can be running.
         // e.x. dep inst1: failure, dep inst2: running -> trigger inst is in killing
-        depInst.setKillingCause(killingCause);
-        processStatusUpdate(depInst, Status.KILLING);
+        this.processStatusAndCancelCauseUpdate(depInst, Status.CANCELLING, killingCause);
         depInst.getContext().get().kill();
       }
     }
   }
 
-  public void processStatusUpdate(final DependencyInstance depInst, final Status newStatus) {
-    logger.debug("process status update for " + depInst);
+  private void addToRunningListAndCancel(final TriggerInstance triggerInst) {
+    this.runningTriggers.add(triggerInst);
+    cancelTriggerInstance(triggerInst);
+  }
+
+
+  private void updateDepInstStatus(final DependencyInstance depInst, final Status newStatus) {
     depInst.setStatus(newStatus);
     if (Status.isDone(depInst.getStatus())) {
       depInst.setEndTime(new Date());
     }
-    this.dependencyProcessor.processStatusUpdate(depInst);
-//    this.executorService
-//        .submit(() -> updateDepInst(dep));
   }
+
+  private void processStatusUpdate(final DependencyInstance depInst, final Status newStatus) {
+    logger.debug("process status update for " + depInst);
+    updateDepInstStatus(depInst, newStatus);
+    this.dependencyProcessor.processStatusUpdate(depInst);
+  }
+
+  private void processStatusAndCancelCauseUpdate(final DependencyInstance depInst, final Status
+      newStatus, final CancellationCause cause) {
+    depInst.setKillingCause(cause);
+    updateDepInstStatus(depInst, newStatus);
+    this.dependencyProcessor.processStatusUpdate(depInst);
+  }
+
 
   private long remainingTimeBeforeTimeout(final TriggerInstance triggerInst) {
     final long now = System.currentTimeMillis();
@@ -295,17 +332,17 @@ public class FlowTriggerService {
           submitUser);
 
       this.triggerProcessor.processNewInstance(triggerInst);
-      if (triggerInst.getStatus() == Status.FAILED) {
+      if (triggerInst.getStatus() == Status.CANCELLED) {
         // all dependency instances failed
         this.triggerProcessor.processTermination(triggerInst);
-      } else if (triggerInst.getStatus() == Status.KILLING) {
+      } else if (triggerInst.getStatus() == Status.CANCELLING) {
         // some of the dependency instances failed
-        addToRunningListAndResumeKilling(triggerInst);
+        addToRunningListAndCancel(triggerInst);
       } else {
         // todo chengren311: it's possible web server restarts before the db update, then
         // new instance will not be recoverable from db.
         addToRunningListAndScheduleKill(triggerInst, triggerInst.getFlowTrigger()
-            .getMaxWaitDuration(), KillingCause.TIMEOUT);
+            .getMaxWaitDuration(), CancellationCause.TIMEOUT);
       }
     });
   }
@@ -329,7 +366,7 @@ public class FlowTriggerService {
     }
   }
 
-  public void kill(final String triggerInstanceId, final KillingCause cause) {
+  public void kill(final String triggerInstanceId, final CancellationCause cause) {
     this.executorService.submit(
         () -> {
           logger.warn(String.format("killing trigger instance with id %s", triggerInstanceId));
@@ -340,8 +377,7 @@ public class FlowTriggerService {
               // kill only running dependencies, no need to kill a killed/successful dependency
               // instance
               if (depInst.getStatus() == Status.RUNNING) {
-                depInst.setKillingCause(cause);
-                processStatusUpdate(depInst, Status.KILLING);
+                this.processStatusAndCancelCauseUpdate(depInst, Status.CANCELLING, cause);
                 depInst.getContext().get().kill();
               }
             }
@@ -388,14 +424,19 @@ public class FlowTriggerService {
     });
   }
 
-  private Status getTerminationStatusFromCause(final KillingCause cause) {
-    if (cause == KillingCause.MANUAL) {
-      return Status.KILLED;
-    } else if (cause == KillingCause.TIMEOUT) {
-      return Status.TIMEOUT;
-    } else {
-      return Status.FAILED;
-    }
+  private boolean killedByAzkaban(final DependencyInstance depInst) {
+    return depInst.getStatus() == Status.CANCELLING && (
+        depInst.getCancellationCause() == CancellationCause
+            .MANUAL || depInst.getCancellationCause() == CancellationCause.TIMEOUT || depInst
+            .getCancellationCause() == CancellationCause.CASCADING);
+  }
+
+  private boolean killedByDependencyPlugin(final DependencyInstance depInst) {
+    // When onKill is called by the dependency plugin not through flowTriggerService, we treat it
+    // as cancelled by dependency due to failure on dependency side. In this case, cancel cause
+    // remains unset.
+    return depInst.getStatus() == Status.CANCELLED && (depInst.getCancellationCause()
+        == CancellationCause.NONE);
   }
 
   public void markDependencyTerminationStatus(final DependencyInstanceContext context) {
@@ -406,15 +447,17 @@ public class FlowTriggerService {
             String.format("killing/timing out status of trigger instance with execId %s",
                 depInst.getTriggerInstance().getId()));
 
-        if (depInst.getStatus() != Status.KILLING) {
+        if (killedByDependencyPlugin(depInst)) {
+          processStatusAndCancelCauseUpdate(depInst, Status.CANCELLING, CancellationCause.FAILURE);
+          cancelTriggerInstance(depInst.getTriggerInstance());
+        } else if (killedByAzkaban(depInst)) {
+          processStatusUpdate(depInst, Status.CANCELLED);
+        } else {
           logger.warn(String.format("OnKilled of %s is ignored", depInst));
           return;
         }
 
-        final Status finalStatus = getTerminationStatusFromCause(depInst.getKillingCause());
-        processStatusUpdate(depInst, finalStatus);
-
-        if (depInst.getTriggerInstance().getStatus() == finalStatus) {
+        if (depInst.getTriggerInstance().getStatus() == Status.CANCELLED) {
           this.triggerProcessor.processTermination(depInst.getTriggerInstance());
           removeTriggerInstById(depInst.getTriggerInstance().getId());
         }

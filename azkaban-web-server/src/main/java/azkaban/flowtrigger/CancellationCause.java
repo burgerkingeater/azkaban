@@ -16,12 +16,10 @@
 
 package azkaban.flowtrigger;
 
-/**
- * Represents status for trigger/dependency
- */
-public enum KillingCause {
-  NONE, //no killing occurred
-  TIMEOUT, // killing is issued due to exceeding max wait time
-  MANUAL, // killing is issued by user
-  FAILURE // killing is issued by dependency instance failure
+public enum CancellationCause {
+  NONE, //no cancellation occurred
+  TIMEOUT, // cancellation is issued due to exceeding max wait time
+  MANUAL, // cancellation is issued by user
+  FAILURE, // cancellation is issued by dependency instance failure
+  CASCADING // cancelled by cascading failure
 }

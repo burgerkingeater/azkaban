@@ -25,13 +25,13 @@ import java.util.Set;
 public enum Status {
   RUNNING, // dependency instance is running
   SUCCEEDED, // dependency instance succeeds
-  TIMEOUT, // dependency instance exceeds the max wait time
-  KILLED, // dependency instance is killed by user
-  KILLING, // dependency instance is being killed by timeout or user
-  FAILED; // dependency instance fails due to internal/external failure
+  //  TIMEOUT, // dependency instance exceeds the max wait time
+  CANCELLED, // dependency instance is cancelled
+  CANCELLING; // dependency instance is being cancelled
+//  FAILED; // dependency instance fails due to internal/external failure
 
   public static boolean isDone(final Status status) {
-    final Set<Status> terminalStatus = ImmutableSet.of(SUCCEEDED, TIMEOUT, KILLED, FAILED);
+    final Set<Status> terminalStatus = ImmutableSet.of(SUCCEEDED, CANCELLED);
     return terminalStatus.contains(status);
   }
 }

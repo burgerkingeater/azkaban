@@ -28,7 +28,7 @@ public class DependencyInstance {
   private Optional<DependencyInstanceContext> context;
   private volatile Date endTime;
   private volatile Status status;
-  private volatile KillingCause killingCause;
+  private volatile CancellationCause killingCause;
 
 //  public DependencyInstance(final String depName, final Date startTime,
 //      final DependencyInstanceContext context, final KillingCause killingCause) {
@@ -43,7 +43,7 @@ public class DependencyInstance {
   //todo chengren311: use builder pattern to construct the object
   public DependencyInstance(final String depName, final Date startTime,
       final Date endTime, final DependencyInstanceContext context, final Status status,
-      final KillingCause killingCause) {
+      final CancellationCause killingCause) {
     this.status = status;
     this.depName = depName;
     this.startTime = startTime;
@@ -52,11 +52,11 @@ public class DependencyInstance {
     this.killingCause = killingCause;
   }
 
-  public KillingCause getKillingCause() {
+  public CancellationCause getCancellationCause() {
     return this.killingCause;
   }
 
-  public void setKillingCause(final KillingCause killingCause) {
+  public void setKillingCause(final CancellationCause killingCause) {
     this.killingCause = killingCause;
   }
 

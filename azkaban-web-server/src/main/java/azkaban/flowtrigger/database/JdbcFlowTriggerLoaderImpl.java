@@ -20,9 +20,9 @@ import azkaban.database.AzkabanDataSource;
 import azkaban.database.DataSourceUtils;
 import azkaban.db.DatabaseOperator;
 import azkaban.db.SQLTransaction;
+import azkaban.flowtrigger.CancellationCause;
 import azkaban.flowtrigger.DependencyException;
 import azkaban.flowtrigger.DependencyInstance;
-import azkaban.flowtrigger.KillingCause;
 import azkaban.flowtrigger.Status;
 import azkaban.flowtrigger.TriggerInstance;
 import azkaban.project.FlowConfigID;
@@ -73,9 +73,9 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
   private static final String UPDATE_DEPENDENCY_STATUS = String.format("UPDATE %s SET dep_status "
       + "= ? WHERE trigger_instance_id = ? AND dep_name = ? ;", DEPENDENCY_EXECUTION_TABLE);
 
-  private static final String UPDATE_DEPENDENCY_STATUS_AND_KILLING_CAUSE = String.format
-      ("UPDATE %s SET dep_status = ?, killing_cause  = ? WHERE trigger_instance_id = ? AND "
-          + "dep_name = ? ;", DEPENDENCY_EXECUTION_TABLE);
+  private static final String UPDATE_DEPENDENCY_STATUS_ENDTIME_AND_KILLING_CAUSE = String.format
+      ("UPDATE %s SET dep_status = ?, endtime = ?, killing_cause  = ? WHERE trigger_instance_id = "
+          + "? AND dep_name = ? ;", DEPENDENCY_EXECUTION_TABLE);
 
   private static final String UPDATE_DEPENDENCY_STATUS_ENDTIME = String.format("UPDATE %s SET "
           + "dep_status = ?, endtime = ? WHERE trigger_instance_id = ? AND dep_name = ?;",
@@ -96,7 +96,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
               StringUtils.join(DEPENDENCY_EXECUTIONS_COLUMNS, ","),
               DEPENDENCY_EXECUTION_TABLE,
               DEPENDENCY_EXECUTION_TABLE,
-              Status.RUNNING.ordinal(), Status.KILLING.ordinal());
+              Status.RUNNING.ordinal(), Status.CANCELLING.ordinal());
 
   private static final String SELECT_RECENTLY_FINISHED =
       "SELECT execution_dependencies.trigger_instance_id,dep_name,starttime,endtime,dep_status,"
@@ -279,7 +279,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
         transOperator
             .update(INSERT_DEPENDENCY, triggerInst.getId(), depInst.getDepName(),
                 depInst.getStartTime(), depInst.getEndTime(), depInst.getStatus().ordinal(),
-                depInst.getKillingCause().ordinal(),
+                depInst.getCancellationCause().ordinal(),
                 triggerInst.getFlowConfigID().getProjectId(),
                 triggerInst.getFlowConfigID().getProjectVersion(),
                 triggerInst.getFlowConfigID().getFlowId(),
@@ -293,25 +293,11 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
   }
 
   @Override
-  public void updateDependencyStatusAndKillingCause(final DependencyInstance depInst) {
-    executeUpdate(UPDATE_DEPENDENCY_STATUS_AND_KILLING_CAUSE, depInst.getStatus().ordinal(),
-        depInst.getKillingCause().ordinal(), depInst.getTriggerInstance().getId(),
+  public void updateDependency(final DependencyInstance depInst) {
+    executeUpdate(UPDATE_DEPENDENCY_STATUS_ENDTIME_AND_KILLING_CAUSE, depInst.getStatus().ordinal(),
+        depInst.getEndTime(), depInst.getCancellationCause().ordinal(),
+        depInst.getTriggerInstance().getId(),
         depInst.getDepName());
-  }
-
-  @Override
-  public void updateDependencyStatus(final DependencyInstance depInst) {
-    executeUpdate(UPDATE_DEPENDENCY_STATUS, depInst.getStatus().ordinal(),
-        depInst.getTriggerInstance().getId(), depInst.getDepName());
-  }
-
-  @Override
-  public void updateDependencyStatusAndEndTime(final DependencyInstance depInst) {
-    System.out.println("query:" + UPDATE_DEPENDENCY_STATUS_ENDTIME + depInst.getStatus().ordinal()
-        + ":" + depInst.getEndTime() + ":" + depInst.getTriggerInstance().getId() + ":" + depInst
-        .getDepName());
-    executeUpdate(UPDATE_DEPENDENCY_STATUS_ENDTIME, depInst.getStatus().ordinal(),
-        depInst.getEndTime(), depInst.getTriggerInstance().getId(), depInst.getDepName());
   }
 
   @Override
@@ -368,7 +354,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
         final Date startTime = rs.getTimestamp(3);
         final Date endTime = rs.getTimestamp(4);
         final Status status = Status.values()[rs.getInt(5)];
-        final KillingCause killingCause = KillingCause.values()[rs.getInt(6)];
+        final CancellationCause killingCause = CancellationCause.values()[rs.getInt(6)];
         final int projId = rs.getInt(7);
         final int projVersion = rs.getInt(8);
         final String flowId = rs.getString(9);

@@ -143,45 +143,10 @@ public class TriggerInstance {
     return statuses.contains(Status.SUCCEEDED) && statuses.size() == 1;
   }
 
-
-  private boolean isTimeout(final Set<Status> statuses) {
-    if (statuses.contains(Status.TIMEOUT)) {
+  private boolean isCancelled(final Set<Status> statuses) {
+    if (statuses.contains(Status.CANCELLED)) {
       for (final Status status : statuses) {
-        if (!Status.isDone(status) || status.equals(Status.FAILED)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
-  private boolean isKilled(final Set<Status> statuses) {
-//    // 1. all dependencies are killed 2. at least one is killed and rest are succeeded
-//    return (statusCount.containsKey(Status.KILLED) && statusCount.size() == 1) || (statusCount
-//        .containsKey(Status.KILLED) && statusCount.containsKey(Status.SUCCEEDED) && statusCount
-//        .size() == 2);
-
-    if (statuses.contains(Status.KILLED)) {
-      for (final Status status : statuses) {
-        if (!status.equals(Status.SUCCEEDED) && !status.equals(Status.KILLED)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
-  private boolean isFailed(final Set<Status> statuses) {
-    // 1. any of the dependency instance is failed and rest, if any, are succeeded/killed/timeout.
-    // failed status overrides other terminal status, which means even one dependency
-    // instance is failed and rest are succeeded/killed/timeout, the trigger instance is
-    // considered as failed. This is to alert users of investigating the failure even if other
-    // dependency instances are killed/timeout.
-    if (statuses.contains(Status.FAILED)) {
-      for (final Status status : statuses) {
-        if (!Status.isDone(status)) {
+        if (!status.equals(Status.SUCCEEDED) && !status.equals(Status.CANCELLED)) {
           return false;
         }
       }
@@ -205,28 +170,10 @@ public class TriggerInstance {
       return Status.RUNNING;
     } else if (isSucceed(statusSet)) {
       return Status.SUCCEEDED;
-    } else if (isFailed(statusSet)) {
-      return Status.FAILED;
-    } else if (isTimeout(statusSet)) {
-      return Status.TIMEOUT;
-    } else if (isKilled(statusSet)) {
-      return Status.KILLED;
+    } else if (isCancelled(statusSet)) {
+      return Status.CANCELLED;
     } else {
-      return Status.KILLING;
-    }
-  }
-
-  public KillingCause getKillingCause() {
-    final Set<KillingCause> killingCauses = this.depInstances.stream()
-        .map(DependencyInstance::getKillingCause).collect(Collectors.toSet());
-    if (killingCauses.contains(KillingCause.FAILURE)) {
-      return KillingCause.FAILURE;
-    } else if (killingCauses.contains(KillingCause.TIMEOUT)) {
-      return KillingCause.TIMEOUT;
-    } else if (killingCauses.contains(KillingCause.MANUAL)) {
-      return KillingCause.MANUAL;
-    } else {
-      return KillingCause.NONE;
+      return Status.CANCELLING;
     }
   }
 

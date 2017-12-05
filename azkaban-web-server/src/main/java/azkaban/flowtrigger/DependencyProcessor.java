@@ -37,13 +37,7 @@ public class DependencyProcessor {
   }
 
   private void updateDepInst(final DependencyInstance depInst) {
-    if (Status.isDone(depInst.getStatus())) {
-      this.dependencyLoader.updateDependencyStatusAndEndTime(depInst);
-    } else if (depInst.getStatus() == Status.KILLING) {
-      this.dependencyLoader.updateDependencyStatusAndKillingCause(depInst);
-    } else {
-      this.dependencyLoader.updateDependencyStatus(depInst);
-    }
+    this.dependencyLoader.updateDependency(depInst);
   }
 
   public void processStatusUpdate(final DependencyInstance depInst) {

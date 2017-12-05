@@ -16,9 +16,9 @@
 
 package azkaban.webapp.servlet;
 
+import azkaban.flowtrigger.CancellationCause;
 import azkaban.flowtrigger.DependencyInstance;
 import azkaban.flowtrigger.FlowTriggerService;
-import azkaban.flowtrigger.KillingCause;
 import azkaban.flowtrigger.TriggerInstance;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
@@ -99,7 +99,7 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
   }
 
   private void ajaxKillTriggerInstance(final String triggerInstanceId) {
-    this.triggerService.kill(triggerInstanceId, KillingCause.MANUAL);
+    this.triggerService.kill(triggerInstanceId, CancellationCause.MANUAL);
 
   }
 

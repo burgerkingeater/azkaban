@@ -24,9 +24,7 @@ public interface FlowTriggerLoader {
 
   void uploadTriggerInstance(TriggerInstance triggerInstance);
 
-  void updateDependencyStatus(DependencyInstance depInst);
-
-  void updateDependencyStatusAndEndTime(DependencyInstance depInst);
+  void updateDependency(DependencyInstance depInst);
 
   Collection<TriggerInstance> getUnfinishedTriggerInstances();
 
@@ -34,5 +32,5 @@ public interface FlowTriggerLoader {
 
   Collection<TriggerInstance> getRecentlyFinished(int limit);
 
-  void updateDependencyStatusAndKillingCause(final DependencyInstance depInst);
+  //void updateDependencyStatusAndKillingCause(final DependencyInstance depInst);
 }

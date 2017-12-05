@@ -25,8 +25,9 @@ import org.junit.Test;
 
 public class TriggerInstanceTest {
 
-  private DependencyInstance createTestDependencyInstance(final Status status, final KillingCause
-      killingCause) {
+  private DependencyInstance createTestDependencyInstance(final Status status,
+      final CancellationCause
+          killingCause) {
     final DependencyInstance depInst = new DependencyInstance(null, null, null, null, null,
         null);
     depInst.setStatus(status);
@@ -37,47 +38,47 @@ public class TriggerInstanceTest {
   @Test
   public void testTriggerInstanceKillingCause() throws Exception {
 
-    final List<DependencyInstance> dependencyInstanceList = new ArrayList<>();
-    TriggerInstance ti = null;
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getKillingCause()).isEqualTo(KillingCause.MANUAL);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.FAILURE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getKillingCause()).isEqualTo(KillingCause.FAILURE);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.TIMEOUT));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.TIMEOUT));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getKillingCause()).isEqualTo(KillingCause.TIMEOUT);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.TIMEOUT));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getKillingCause()).isEqualTo(KillingCause.TIMEOUT);
-    dependencyInstanceList.clear();
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getKillingCause()).isEqualTo(KillingCause.NONE);
+//    final List<DependencyInstance> dependencyInstanceList = new ArrayList<>();
+//    TriggerInstance ti = null;
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.CANCELLED, CancelCause.MANUAL));
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.CANCELLING, CancelCause.MANUAL));
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, CancelCause.NONE));
+//
+//    ti = new TriggerInstance("1", null,
+//        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+//    assertThat(ti.getCancellationCause()).isEqualTo(CancelCause.MANUAL);
+//    dependencyInstanceList.clear();
+//
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, CancelCause.FAILURE));
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, CancelCause.MANUAL));
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, CancelCause.NONE));
+//
+//    ti = new TriggerInstance("1", null,
+//        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+//    assertThat(ti.getCancellationCause()).isEqualTo(CancelCause.FAILURE);
+//    dependencyInstanceList.clear();
+//
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, CancelCause.TIMEOUT));
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, CancelCause.TIMEOUT));
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, CancelCause.NONE));
+//
+//    ti = new TriggerInstance("1", null,
+//        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+//    assertThat(ti.getCancellationCause()).isEqualTo(CancelCause.TIMEOUT);
+//    dependencyInstanceList.clear();
+//
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, CancelCause.TIMEOUT));
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, CancelCause.MANUAL));
+//    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, CancelCause.NONE));
+//
+//    ti = new TriggerInstance("1", null,
+//        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+//    assertThat(ti.getCancellationCause()).isEqualTo(CancelCause.TIMEOUT);
+//    dependencyInstanceList.clear();
+//
+//    ti = new TriggerInstance("1", null,
+//        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+//    assertThat(ti.getCancellationCause()).isEqualTo(CancelCause.NONE);
   }
 
   @Test
@@ -85,150 +86,118 @@ public class TriggerInstanceTest {
 
     final List<DependencyInstance> dependencyInstanceList = new ArrayList<>();
     TriggerInstance ti = null;
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.TIMEOUT);
+    assertThat(ti.getStatus()).isEqualTo(Status.CANCELLED);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.TIMEOUT);
+    assertThat(ti.getStatus()).isEqualTo(Status.CANCELLED);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLING, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.TIMEOUT);
+    assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLING, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.RUNNING, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.KILLING);
+    assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.RUNNING, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLING, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.RUNNING, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.KILLING);
+    assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.FAILED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.RUNNING, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLING, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.FAILED);
+    assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.FAILED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLING, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.RUNNING, KillingCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.RUNNING, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.KILLING);
+    assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.FAILED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.FAILED);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.FAILED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.RUNNING, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLING, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.KILLING);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.RUNNING, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLING, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.KILLING);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.KILLED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.TIMEOUT);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.FAILED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.RUNNING, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.KILLING);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.FAILED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.TIMEOUT, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.FAILED);
-    dependencyInstanceList.clear();
-
-    dependencyInstanceList.add(createTestDependencyInstance(Status.RUNNING, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.RUNNING, CancellationCause.MANUAL));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
     assertThat(ti.getStatus()).isEqualTo(Status.RUNNING);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.SUCCEEDED, KillingCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
+    dependencyInstanceList
+        .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
         new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
@@ -240,13 +209,6 @@ public class TriggerInstanceTest {
     assertThat(ti.getStatus()).isEqualTo(Status.SUCCEEDED);
     dependencyInstanceList.clear();
 
-    dependencyInstanceList.add(createTestDependencyInstance(Status.FAILED, KillingCause.MANUAL));
-    dependencyInstanceList.add(createTestDependencyInstance(Status.FAILED, KillingCause.NONE));
-
-    ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
-    assertThat(ti.getStatus()).isEqualTo(Status.FAILED);
-    dependencyInstanceList.clear();
   }
 
 }
