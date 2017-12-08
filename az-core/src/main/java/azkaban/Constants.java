@@ -79,7 +79,7 @@ public class Constants {
   // One Schedule's default End Time: 01/01/2050, 00:00:00, UTC
   public static final long DEFAULT_SCHEDULE_END_EPOCH_TIME = 2524608000000L;
 
-  public static final int DEFAULT_EXEC_ID = -1;
+  public static final int UNASSIGNED_EXEC_ID = -1;
 
   public static class ConfigurationKeys {
 
@@ -181,7 +181,7 @@ public class Constants {
     public static final String AZKABAN_STORAGE_ARTIFACT_MAX_RETENTION = "azkaban.storage.artifact.max.retention";
 
     // enable Quartz Scheduler if true.
-    public static final String ENABLE_QUARTZ= "azkaban.server.schedule.enable_quartz";
+    public static final String ENABLE_QUARTZ = "azkaban.server.schedule.enable_quartz";
 
     public static final String CUSTOM_CREDENTIAL_NAME = "azkaban.security.credential";
   }

@@ -53,7 +53,7 @@
       var requestURL = document.location.href.replace("#currently-running", "");
       var requestData = {"id": id, "ajax": "killRunningTrigger"};
       var successHandler = function (data) {
-        console.log("kill clicked");
+        console.log("cancel clicked");
         if (data.error) {
           showDialog("Error", data.error);
         }

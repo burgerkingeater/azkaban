@@ -26,7 +26,7 @@ public interface FlowTriggerLoader {
 
   void updateDependency(DependencyInstance depInst);
 
-  Collection<TriggerInstance> getUnfinishedTriggerInstances();
+  Collection<TriggerInstance> getIncompleteTriggerInstances();
 
   void updateAssociatedFlowExecId(TriggerInstance triggerInst);
 

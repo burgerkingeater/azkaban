@@ -103,6 +103,7 @@ public class Emailer extends AbstractMailer implements Alerter {
     return failedJobs;
   }
 
+
   private void sendSlaAlertEmail(final SlaOption slaOption, final String slaMessage) {
     final String subject =
         "SLA violation for " + getJobOrFlowName(slaOption) + " on " + getAzkabanName();

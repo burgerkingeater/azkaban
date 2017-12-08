@@ -33,8 +33,8 @@ public class DependencyInstanceCallbackImpl implements DependencyInstanceCallbac
   }
 
   @Override
-  public void onKilled(final DependencyInstanceContext depContext) {
-    this.service.markDependencyTerminationStatus(depContext);
+  public void onCancel(final DependencyInstanceContext depContext) {
+    this.service.markDependencyCancelled(depContext);
   }
 
 }

@@ -405,7 +405,7 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
       final HashMap<String, Object> ret, final HttpServletRequest req)
       throws ServletException {
     final String flowId = getParam(req, "flow");
-    final int from = Integer.valueOf(getParam(req, "start"));
+    final int from = Integer.valueOf(getParam(req, "startTrigger"));
     final int length = Integer.valueOf(getParam(req, "length"));
 
     final ArrayList<ExecutableFlow> exFlows = new ArrayList<>();
@@ -553,7 +553,7 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
       } else {
         project = this.projectManager.getProject(projectParam); // get project by
         // name (name cannot
-        // start
+        // startTrigger
         // from ints)
       }
 

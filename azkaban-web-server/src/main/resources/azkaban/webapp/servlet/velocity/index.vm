@@ -100,7 +100,7 @@
           #foreach ($project in $projects)
             <li>
               <div class="project-info">
-              ## The UI logic elsewhere enforces that $project.name must start with a letter, followed by any number
+              ## The UI logic elsewhere enforces that $project.name must startTrigger with a letter, followed by any number
               ## of letters, digits, '-' or '_'. Escape it just to play it safe.
               ## todo: make escaping the default.
                 <h4><a

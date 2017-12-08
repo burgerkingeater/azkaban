@@ -536,7 +536,7 @@ public class AzkabanWebServer extends AzkabanServer {
       this.scheduler.start();
     }
 
-    this.flowTriggerService.recoverUnfinishedTriggerInstances();
+    this.flowTriggerService.recoverIncompleteTriggerInstances();
 
     try {
       this.server.start();

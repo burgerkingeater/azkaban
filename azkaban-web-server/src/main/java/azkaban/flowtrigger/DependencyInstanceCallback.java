@@ -24,7 +24,7 @@ public interface DependencyInstanceCallback {
   void onSuccess(DependencyInstanceContext depContext);
 
   /**
-   * action to invoke when dependency check instance is successfully killed.
+   * action to invoke when dependency check instance is cancelled.
    */
-  void onKilled(DependencyInstanceContext depContext);
+  void onCancel(DependencyInstanceContext depContext);
 }

@@ -78,7 +78,7 @@ public class TriggerProcessor {
 
   }
 
-  public void processTermination(TriggerInstance triggerInst) {
+  public void processTermination(final TriggerInstance triggerInst) {
     logger.debug("process termination for " + triggerInst);
     //email
   }

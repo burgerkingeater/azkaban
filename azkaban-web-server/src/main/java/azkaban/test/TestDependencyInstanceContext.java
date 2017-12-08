@@ -45,10 +45,10 @@ public class TestDependencyInstanceContext implements DependencyInstanceContext 
     //scheduleSerivce.schedule(this::onSucccess, 65, TimeUnit.SECONDS);
     if ((new Random().nextInt()) % 2 == 0) {
       //this dependency instance will succeed
-      scheduleSerivce.schedule(this::onSucccess, 500, TimeUnit.SECONDS);
+      scheduleSerivce.schedule(this::onSucccess, 60, TimeUnit.SECONDS);
     } else {
       //this dependency instance will be timed out for running to long
-      scheduleSerivce.schedule(this::onSucccess, 500, TimeUnit.SECONDS);
+      scheduleSerivce.schedule(this::onSucccess, 5, TimeUnit.SECONDS);
     }
   }
 
@@ -57,8 +57,8 @@ public class TestDependencyInstanceContext implements DependencyInstanceContext 
   }
 
   @Override
-  public void kill() {
+  public void cancel() {
     System.out.println("Killing TestDependencyInstanceContext");
-    this.callback.onKilled(this);
+    this.callback.onCancel(this);
   }
 }

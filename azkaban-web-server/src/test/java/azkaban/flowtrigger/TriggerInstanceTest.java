@@ -31,7 +31,7 @@ public class TriggerInstanceTest {
     final DependencyInstance depInst = new DependencyInstance(null, null, null, null, null,
         null);
     depInst.setStatus(status);
-    depInst.setKillingCause(killingCause);
+    depInst.setCancellationCause(killingCause);
     return depInst;
   }
 

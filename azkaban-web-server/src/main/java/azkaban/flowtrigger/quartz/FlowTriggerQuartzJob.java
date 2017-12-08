@@ -39,8 +39,9 @@ public class FlowTriggerQuartzJob extends AbstractQuartzJob {
   public void execute(final JobExecutionContext context) {
 
     final JobDataMap data = context.getMergedJobDataMap();
-    this.triggerService.start((FlowTrigger) data.get(FlowTrigger.class.getName()), (FlowConfigID)
-        data.get(FlowConfigID.class.getName()), data.getString("submitUser"));
+    this.triggerService
+        .startTrigger((FlowTrigger) data.get(FlowTrigger.class.getName()), (FlowConfigID)
+            data.get(FlowConfigID.class.getName()), data.getString("submitUser"));
 
     //this.depService = dependencyService;
     /*

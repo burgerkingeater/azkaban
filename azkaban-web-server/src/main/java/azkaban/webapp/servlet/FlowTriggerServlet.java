@@ -99,7 +99,7 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
   }
 
   private void ajaxKillTriggerInstance(final String triggerInstanceId) {
-    this.triggerService.kill(triggerInstanceId, CancellationCause.MANUAL);
+    this.triggerService.cancel(triggerInstanceId, CancellationCause.MANUAL);
 
   }
 

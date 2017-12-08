@@ -4,7 +4,7 @@ CREATE TABLE azkaban.execution_dependencies(
   starttime datetime not null,
   endtime datetime,
   dep_status tinyint not null,
-  killing_cause tinyint not null,
+  cancelleation_cause tinyint not null,
 
   project_id int(11) not null,
   project_version int(11) not null,

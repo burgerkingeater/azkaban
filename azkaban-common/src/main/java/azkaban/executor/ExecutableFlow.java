@@ -47,7 +47,7 @@ public class ExecutableFlow extends ExecutableFlowBase {
   public static final String SLAOPTIONS_PARAM = "slaOptions";
   public static final String AZKABANFLOWVERSION_PARAM = "azkabanFlowVersion";
   private final HashSet<String> proxyUsers = new HashSet<>();
-  private int executionId = Constants.DEFAULT_EXEC_ID;
+  private int executionId = Constants.UNASSIGNED_EXEC_ID;
   private int scheduleId = -1;
   private int projectId;
   private String projectName;
