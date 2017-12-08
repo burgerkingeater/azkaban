@@ -153,7 +153,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     dependencyInstanceList.add(depInst2);
 
     final TriggerInstance triggerInstance = new TriggerInstance("1", null, new FlowConfigID(1,
-        1, "1", 1), null, dependencyInstanceList, -1);
+        1, "1", 1), null, dependencyInstanceList, -1, null);
 
     depLoader.uploadTriggerInstance(triggerInstance);
     System.out.println();
@@ -368,6 +368,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
       final Map<TriggerInstKey, List<DependencyInstance>> triggerInstMap = new HashMap<>();
       //todo chengren311: get submitUser from another table with projId, projectVersion
       final String submitUser = "test";
+      final List<String> emails = new ArrayList<>();
 
       while (rs.next()) {
         final String triggerInstId = rs.getString(1);
@@ -400,7 +401,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
           .entrySet()) {
         res.add(new TriggerInstance(entry.getKey().triggerInstId, null, entry.getKey()
             .flowConfigID, entry.getKey().submitUser, entry.getValue(), entry.getKey()
-            .flowExecId));
+            .flowExecId, emails));
       }
 
       //sort on startTrigger time

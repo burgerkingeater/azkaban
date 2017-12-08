@@ -98,7 +98,8 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1),
+        "test", dependencyInstanceList, -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.CANCELLED);
     dependencyInstanceList.clear();
 
@@ -108,7 +109,8 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.CANCELLED, CancellationCause.MANUAL));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1),
+        "test", dependencyInstanceList, -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.CANCELLED);
     dependencyInstanceList.clear();
 
@@ -124,7 +126,8 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList,
+        -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
@@ -140,7 +143,8 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList,
+        -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
@@ -152,7 +156,8 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.RUNNING, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1), "test",
+        dependencyInstanceList, -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
@@ -164,7 +169,8 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1),
+        "test", dependencyInstanceList, -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
@@ -174,7 +180,8 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.RUNNING, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList,
+        -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.CANCELLING);
     dependencyInstanceList.clear();
 
@@ -188,7 +195,8 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList,
+        -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.RUNNING);
     dependencyInstanceList.clear();
 
@@ -200,12 +208,14 @@ public class TriggerInstanceTest {
         .add(createTestDependencyInstance(Status.SUCCEEDED, CancellationCause.NONE));
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1),
+        "test", dependencyInstanceList, -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.SUCCEEDED);
     dependencyInstanceList.clear();
 
     ti = new TriggerInstance("1", null,
-        new FlowConfigID(1, 1, null, 1), "test", dependencyInstanceList, -1);
+        new FlowConfigID(1, 1, null, 1),
+        "test", dependencyInstanceList, -1, null);
     assertThat(ti.getStatus()).isEqualTo(Status.SUCCEEDED);
     dependencyInstanceList.clear();
 

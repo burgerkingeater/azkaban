@@ -26,6 +26,7 @@ import azkaban.project.Project;
 import azkaban.project.ProjectLoader;
 import azkaban.scheduler.QuartzJobDescription;
 import azkaban.scheduler.QuartzScheduler;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.util.Map;
@@ -51,6 +52,7 @@ public class FlowTriggerScheduler {
   public void scheduleAll(final Project project, final String submitUser)
       throws SchedulerException {
     //todo chengren311: schedule on uploading via CRT
+
     for (final Flow flow : project.getFlows()) {
       this.scheduler.unregisterJob(generateGroupName(flow));
       final String flowFileName = flow.getId() + ".flow";
@@ -67,7 +69,8 @@ public class FlowTriggerScheduler {
           final FlowConfigID flowConfigID = new FlowConfigID(project.getId(), project.getVersion(),
               flow.getId(), latestFlowVersion);
           final Map<String, Object> contextMap = ImmutableMap.of("submitUser", submitUser,
-              FlowTrigger.class.getName(), flowTrigger, FlowConfigID.class.getName(), flowConfigID);
+              FlowTrigger.class.getName(), flowTrigger, FlowConfigID.class.getName(),
+              flowConfigID, "emails", ImmutableList.of("chren@linkedin.com"));
           this.scheduler
               .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription
                   (FlowTriggerQuartzJob.class, generateGroupName(flow), contextMap));
