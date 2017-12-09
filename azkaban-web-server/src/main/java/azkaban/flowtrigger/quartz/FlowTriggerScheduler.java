@@ -19,6 +19,7 @@ package azkaban.flowtrigger.quartz;
 import static java.util.Objects.requireNonNull;
 
 import azkaban.flow.Flow;
+import azkaban.flow.FlowUtils;
 import azkaban.project.FlowConfigID;
 import azkaban.project.FlowLoaderUtils;
 import azkaban.project.FlowTrigger;
@@ -26,7 +27,6 @@ import azkaban.project.Project;
 import azkaban.project.ProjectLoader;
 import azkaban.scheduler.QuartzJobDescription;
 import azkaban.scheduler.QuartzScheduler;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.util.Map;
@@ -68,9 +68,12 @@ public class FlowTriggerScheduler {
         if (flowTrigger != null && flowTrigger.getSchedule() != null) {
           final FlowConfigID flowConfigID = new FlowConfigID(project.getId(), project.getVersion(),
               flow.getId(), latestFlowVersion);
-          final Map<String, Object> contextMap = ImmutableMap.of("submitUser", submitUser,
-              FlowTrigger.class.getName(), flowTrigger, FlowConfigID.class.getName(),
-              flowConfigID, "emails", ImmutableList.of("chren@linkedin.com"));
+          final String projectJson = FlowUtils.toJson(project);
+          final Map<String, Object> contextMap = ImmutableMap
+              .of(FlowTriggerQuartzJob.SUBMIT_USER, submitUser,
+                  FlowTriggerQuartzJob.FLOW_TRIGGER, flowTrigger, FlowConfigID.class.getName(),
+                  flowConfigID, FlowTriggerQuartzJob.PROJECT, projectJson);
+
           this.scheduler
               .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription
                   (FlowTriggerQuartzJob.class, generateGroupName(flow), contextMap));

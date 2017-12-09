@@ -18,6 +18,7 @@ package azkaban.flowtrigger;
 
 import azkaban.project.FlowConfigID;
 import azkaban.project.FlowTrigger;
+import azkaban.project.Project;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.Collections;
@@ -42,7 +43,7 @@ public class TriggerInstance {
   //todo chengren311: convert it to builder
   public TriggerInstance(final String id, final FlowTrigger flowTrigger, final FlowConfigID
       flowConfigID, final String submitUser, final List<DependencyInstance> depInstances,
-      final int flowExecId, final List<String> emailsToNotifyFailure) {
+      final int flowExecId, Project project) {
     Preconditions.checkNotNull(flowConfigID);
     this.depInstances = ImmutableList.copyOf(depInstances);
     this.id = id;

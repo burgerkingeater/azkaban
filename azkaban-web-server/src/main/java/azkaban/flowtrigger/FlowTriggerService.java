@@ -22,6 +22,7 @@ import azkaban.flowtrigger.database.FlowTriggerLoader;
 import azkaban.project.FlowConfigID;
 import azkaban.project.FlowTrigger;
 import azkaban.project.FlowTriggerDependency;
+import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -139,8 +140,7 @@ public class FlowTriggerService {
 
 
   private TriggerInstance createTriggerInstance(final FlowTrigger flowTrigger,
-      final FlowConfigID flowConfigID, final String submitUser, final List<String>
-      emailsToNotifyFailure) {
+      final FlowConfigID flowConfigID, final String submitUser, final Project project) {
     final String triggerInstId = generateId();
     logger.info(
         String.format("Starting the flow trigger %s[execId %s] by %s", flowTrigger, triggerInstId,
@@ -168,7 +168,7 @@ public class FlowTriggerService {
 
     final int flowExecId = Constants.UNASSIGNED_EXEC_ID;
     final TriggerInstance triggerInstance = new TriggerInstance(triggerInstId, flowTrigger,
-        flowConfigID, submitUser, depInstList, flowExecId, emailsToNotifyFailure);
+        flowConfigID, submitUser, depInstList, flowExecId, project);
 
     return triggerInstance;
   }
@@ -343,10 +343,10 @@ public class FlowTriggerService {
   }
 
   public void startTrigger(final FlowTrigger flowTrigger, final FlowConfigID flowConfigID,
-      final String submitUser, final List<String> emailsToNotifyFailure) {
+      final String submitUser, final Project project) {
     this.executorService.submit(() -> {
       final TriggerInstance triggerInst = createTriggerInstance(flowTrigger, flowConfigID,
-          submitUser, emailsToNotifyFailure);
+          submitUser, project);
 
       logger.info(String.format("Starting trigger instance[id: %s]", triggerInst.getId()));
 

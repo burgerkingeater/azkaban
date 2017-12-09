@@ -16,11 +16,12 @@
 
 package azkaban.flowtrigger.quartz;
 
+import azkaban.flow.FlowUtils;
 import azkaban.flowtrigger.FlowTriggerService;
 import azkaban.project.FlowConfigID;
 import azkaban.project.FlowTrigger;
+import azkaban.project.Project;
 import azkaban.scheduler.AbstractQuartzJob;
-import java.util.List;
 import javax.inject.Inject;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -29,6 +30,9 @@ import org.quartz.JobExecutionContext;
 public class FlowTriggerQuartzJob extends AbstractQuartzJob {
 
   public static final String DELEGATE_CLASS_NAME = "FlowTriggerQuartzJob";
+  public static final String SUBMIT_USER = "SUBMIT_USER";
+  public static final String PROJECT = "PROJECT";
+  public static final String FLOW_TRIGGER = "FLOW_TRIGGER";
   private final FlowTriggerService triggerService;
 
   @Inject
@@ -40,10 +44,12 @@ public class FlowTriggerQuartzJob extends AbstractQuartzJob {
   public void execute(final JobExecutionContext context) {
 
     final JobDataMap data = context.getMergedJobDataMap();
+    final String projectJson = data.getString(FLOW_TRIGGER);
+    final Project project = FlowUtils.toProject(projectJson);
+
     this.triggerService
-        .startTrigger((FlowTrigger) data.get(FlowTrigger.class.getName()), (FlowConfigID)
-            data.get(FlowConfigID.class.getName()), data.getString("submitUser"), (List<String>)
-            data.get("email"));
+        .startTrigger((FlowTrigger) data.get(FLOW_TRIGGER), (FlowConfigID)
+            data.get(FlowConfigID.class.getName()), data.getString(SUBMIT_USER), project);
 
     //this.depService = dependencyService;
     /*
