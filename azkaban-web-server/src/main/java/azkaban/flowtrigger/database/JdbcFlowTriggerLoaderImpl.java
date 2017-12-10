@@ -401,7 +401,7 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
           .entrySet()) {
         res.add(new TriggerInstance(entry.getKey().triggerInstId, null, entry.getKey()
             .flowConfigID, entry.getKey().submitUser, entry.getValue(), entry.getKey()
-            .flowExecId, emails));
+            .flowExecId, null));
       }
 
       //sort on startTrigger time

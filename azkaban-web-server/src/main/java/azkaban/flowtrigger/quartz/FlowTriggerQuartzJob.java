@@ -44,7 +44,7 @@ public class FlowTriggerQuartzJob extends AbstractQuartzJob {
   public void execute(final JobExecutionContext context) {
 
     final JobDataMap data = context.getMergedJobDataMap();
-    final String projectJson = data.getString(FLOW_TRIGGER);
+    final String projectJson = data.getString(PROJECT);
     final Project project = FlowUtils.toProject(projectJson);
 
     this.triggerService

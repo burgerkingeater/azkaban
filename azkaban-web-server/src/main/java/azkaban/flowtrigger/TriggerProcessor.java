@@ -23,6 +23,7 @@ import azkaban.flow.FlowUtils;
 import azkaban.flowtrigger.database.FlowTriggerLoader;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
+import azkaban.utils.Emailer;
 import com.google.common.base.Preconditions;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -38,10 +39,13 @@ public class TriggerProcessor {
   private final ExecutorManager executorManager;
   //private final ExecutorService executorService;
   private final FlowTriggerLoader dependencyLoader;
+  private final Emailer emailer;
 
   @Inject
   public TriggerProcessor(final ProjectManager projectManager,
-      final ExecutorManager executorManager, final FlowTriggerLoader dependencyLoader) {
+      final ExecutorManager executorManager, final FlowTriggerLoader dependencyLoader, final Emailer
+      emailer) {
+    this.emailer = emailer;
     Preconditions.checkNotNull(projectManager);
     Preconditions.checkNotNull(executorManager);
     this.projectManager = projectManager;
@@ -67,6 +71,10 @@ public class TriggerProcessor {
       logger.error(ex.getMessage()); //todo chengren311: should we swallow the exception or
       // notify user
     }
+  }
+
+  private void sendFailureEmail(final TriggerInstance triggerInstance) {
+    emailer.s
   }
 
   public void processSucceed(final TriggerInstance triggerInst) {

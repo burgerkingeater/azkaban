@@ -36,14 +36,14 @@ public class TriggerInstance {
   private final String id;
   private final FlowConfigID flowConfigID;
   private final String submitUser;
-  List<String> emailsToNotifyFailure;
+  private final Project project;
   private FlowTrigger flowTrigger;
   private volatile int flowExecId; // associated flow execution id
 
   //todo chengren311: convert it to builder
   public TriggerInstance(final String id, final FlowTrigger flowTrigger, final FlowConfigID
       flowConfigID, final String submitUser, final List<DependencyInstance> depInstances,
-      final int flowExecId, Project project) {
+      final int flowExecId, final Project project) {
     Preconditions.checkNotNull(flowConfigID);
     this.depInstances = ImmutableList.copyOf(depInstances);
     this.id = id;
@@ -51,10 +51,10 @@ public class TriggerInstance {
     this.submitUser = submitUser;
     this.flowConfigID = flowConfigID;
     this.flowExecId = flowExecId;
+    this.project = project;
     for (final DependencyInstance depInst : this.depInstances) {
       depInst.setTriggerInstance(this);
     }
-    this.emailsToNotifyFailure = ImmutableList.copyOf(emailsToNotifyFailure);
   }
 
   public static void main(final String[] args) throws InterruptedException {
@@ -87,8 +87,8 @@ public class TriggerInstance {
 //    System.out.println(ti.getStatus());
   }
 
-  public List<String> getEmailsToNotifyFailure() {
-    return this.emailsToNotifyFailure;
+  private List<String> getFailureEmails() {
+    return this.project.getFlow(this.getFlowConfigID().getFlowId()).getFailureEmails();
   }
 
   public FlowConfigID getFlowConfigID() {
