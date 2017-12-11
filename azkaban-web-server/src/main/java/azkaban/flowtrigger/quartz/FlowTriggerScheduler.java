@@ -54,7 +54,6 @@ public class FlowTriggerScheduler {
     //todo chengren311: schedule on uploading via CRT
 
     for (final Flow flow : project.getFlows()) {
-      this.scheduler.unregisterJob(generateGroupName(flow));
       final String flowFileName = flow.getId() + ".flow";
       final int latestFlowVersion = this.projectLoader
           .getLatestFlowVersion(flow.getProjectId(), flow

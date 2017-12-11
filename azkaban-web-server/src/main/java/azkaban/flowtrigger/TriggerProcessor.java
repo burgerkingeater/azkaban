@@ -25,6 +25,7 @@ import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import azkaban.utils.Emailer;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
@@ -35,6 +36,10 @@ public class TriggerProcessor {
 
   private static final Logger logger = LoggerFactory.getLogger(TriggerProcessor.class);
   private static final int THREAD_POOL_SIZE = 1;
+  private static final String FAILURE_EMAIL_SUBJECT = "flow trigger for %s "
+      + "cancelled from %s";
+  private static final String FAILURE_EMAIL_BODY = "Your flow trigger cancelled [id: %s]";
+
   private final ProjectManager projectManager;
   private final ExecutorManager executorManager;
   //private final ExecutorService executorService;
@@ -56,8 +61,7 @@ public class TriggerProcessor {
 
   private void executeFlowAndUpdateExecID(final TriggerInstance triggerInst) {
     try {
-      final Project project = FlowUtils.getProject(this.projectManager, triggerInst
-          .getFlowConfigID().getProjectId());
+      final Project project = triggerInst.getProject();
       final Flow flow = FlowUtils.getFlow(project, triggerInst.getFlowConfigID().getFlowId());
       final ExecutableFlow executableFlow = FlowUtils.createExecutableFlow(project, flow);
       this.executorManager.submitExecutableFlow(executableFlow, triggerInst.getSubmitUser());
@@ -68,13 +72,33 @@ public class TriggerProcessor {
 //      this.executorService.submit(() -> this.dependencyLoader.updateAssociatedFlowExecId
 //          (triggerInst));
     } catch (final Exception ex) {
-      logger.error(ex.getMessage()); //todo chengren311: should we swallow the exception or
+      logger.error("exception when executing the associate flow and updating flow exec id", ex);
+      //todo
+      // chengren311: should
+      // we
+      // swallow the exception or
       // notify user
     }
   }
 
+  private String generateFailureEmailSubject(final TriggerInstance triggerInstance) {
+    final String flowFullName =
+        triggerInstance.getProjectName() + "." + triggerInstance.getFlowName();
+    return String.format(FAILURE_EMAIL_SUBJECT, flowFullName, this.emailer.getAzkabanName());
+  }
+
+  private String generateFailureEmailBody(final TriggerInstance triggerInstance) {
+    final String flowFullName =
+        triggerInstance.getProjectName() + "." + triggerInstance.getFlowName();
+    return String.format(FAILURE_EMAIL_BODY, triggerInstance.getId());
+  }
+
   private void sendFailureEmail(final TriggerInstance triggerInstance) {
-    emailer.s
+    final List<String> failureEmails = triggerInstance.getFailureEmails();
+    if (!failureEmails.isEmpty()) {
+      this.emailer.sendEmail(failureEmails, generateFailureEmailSubject(triggerInstance),
+          generateFailureEmailBody(triggerInstance));
+    }
   }
 
   public void processSucceed(final TriggerInstance triggerInst) {
@@ -88,6 +112,7 @@ public class TriggerProcessor {
 
   public void processTermination(final TriggerInstance triggerInst) {
     logger.debug("process termination for " + triggerInst);
+    sendFailureEmail(triggerInst);
     //email
   }
 

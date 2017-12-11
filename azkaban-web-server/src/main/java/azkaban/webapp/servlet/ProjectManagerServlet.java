@@ -1713,10 +1713,14 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
         IOUtils.copy(item.getInputStream(), out);
         out.close();
 
+        //todo chengren311: unscheduleall/scheduleall should only work with flow 2.0 project
+        //unschedule all flows within the old project
+        this.scheduler.unscheduleAll(project);
         final Map<String, ValidationReport> reports =
             this.projectManager.uploadProject(project, archiveFile, type, user,
                 props);
 
+        //schedule the new project
         this.scheduler.scheduleAll(project, user.getUserId());
         final StringBuffer errorMsgs = new StringBuffer();
         final StringBuffer warnMsgs = new StringBuffer();

@@ -39,7 +39,6 @@ public class TriggerInstance {
   private final Project project;
   private FlowTrigger flowTrigger;
   private volatile int flowExecId; // associated flow execution id
-
   //todo chengren311: convert it to builder
   public TriggerInstance(final String id, final FlowTrigger flowTrigger, final FlowConfigID
       flowConfigID, final String submitUser, final List<DependencyInstance> depInstances,
@@ -87,7 +86,19 @@ public class TriggerInstance {
 //    System.out.println(ti.getStatus());
   }
 
-  private List<String> getFailureEmails() {
+  public Project getProject() {
+    return project;
+  }
+
+  public String getProjectName() {
+    return this.project.getName();
+  }
+
+  public String getFlowName() {
+    return this.project.getFlow(this.flowConfigID.getFlowId()).getId();
+  }
+
+  public List<String> getFailureEmails() {
     return this.project.getFlow(this.getFlowConfigID().getFlowId()).getFailureEmails();
   }
 

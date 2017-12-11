@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -103,7 +104,7 @@ public class FlowTriggerService {
 
   public static void main(final String[] args) throws InterruptedException {
     final FlowTriggerService service = new FlowTriggerService(new FlowTriggerPluginManager
-        (), new TriggerProcessor(null, null, null), new DependencyProcessor(null),
+        (), new TriggerProcessor(null, null, null, null), new DependencyProcessor(null),
         null, null, null);
 
 //    final DependencyInstanceConfig depInstConfig = new DependencyInstanceConfigImpl(
@@ -126,9 +127,9 @@ public class FlowTriggerService {
 
   private DependencyInstanceContext createDepContext(final FlowTriggerDependency dep, final long
       starttimeInMills) throws Exception {
-//    if (new Random().nextInt() % 2 == 0) {
-//      throw new Exception();
-//    }
+    if (new Random().nextInt() % 2 == 0) {
+      throw new Exception();
+    }
     final DependencyCheck dependencyCheck = this.triggerPluginManager
         .getDependencyCheck(dep.getType());
     final DependencyInstanceCallback callback = new DependencyInstanceCallbackImpl(this);

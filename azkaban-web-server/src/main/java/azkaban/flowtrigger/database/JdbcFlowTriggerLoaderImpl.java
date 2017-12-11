@@ -290,7 +290,6 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
   public void uploadTriggerInstance(final TriggerInstance triggerInst) {
     final SQLTransaction<Integer> insertTrigger = transOperator -> {
       for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-        System.out.println("uploading ");
         transOperator
             .update(INSERT_DEPENDENCY, triggerInst.getId(), depInst.getDepName(),
                 depInst.getStartTime(), depInst.getEndTime(), depInst.getStatus().ordinal(),
@@ -300,11 +299,6 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
                 triggerInst.getFlowConfigID().getFlowId(),
                 triggerInst.getFlowConfigID().getFlowVersion(),
                 triggerInst.getFlowExecId());
-        try {
-          Thread.sleep(30 * 1000);
-        } catch (final InterruptedException e) {
-          e.printStackTrace();
-        }
       }
       return null;
     };
