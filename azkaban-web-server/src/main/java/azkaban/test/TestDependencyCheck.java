@@ -22,14 +22,24 @@ import azkaban.flowtrigger.DependencyInstanceConfig;
 import azkaban.flowtrigger.DependencyInstanceContext;
 import azkaban.flowtrigger.DependencyInstanceRuntimeProps;
 import azkaban.flowtrigger.DependencyPluginConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestDependencyCheck implements DependencyCheck {
+
+  private static final Logger logger = LoggerFactory.getLogger(TestDependencyCheck.class);
 
   @Override
   public DependencyInstanceContext run(final DependencyInstanceConfig config,
       final DependencyInstanceRuntimeProps runtimeProps,
       final DependencyInstanceCallback callback) {
-    System.out.println("running TestDependencyCheck with config:" + config);
+    logger.info("running TestDependencyCheck with config:" + config);
+    try {
+      Thread.sleep(1000 * 30);
+    } catch (final Exception ex) {
+
+    }
+    logger.info("done with TestDependencyCheck with config:" + config);
     return new TestDependencyInstanceContext(config, runtimeProps, callback);
   }
 

@@ -25,6 +25,8 @@ import azkaban.scheduler.AbstractQuartzJob;
 import javax.inject.Inject;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class FlowTriggerQuartzJob extends AbstractQuartzJob {
@@ -33,6 +35,7 @@ public class FlowTriggerQuartzJob extends AbstractQuartzJob {
   public static final String SUBMIT_USER = "SUBMIT_USER";
   public static final String PROJECT = "PROJECT";
   public static final String FLOW_TRIGGER = "FLOW_TRIGGER";
+  private static final Logger logger = LoggerFactory.getLogger(FlowTriggerQuartzJob.class);
   private final FlowTriggerService triggerService;
 
   @Inject
@@ -46,6 +49,9 @@ public class FlowTriggerQuartzJob extends AbstractQuartzJob {
     final JobDataMap data = context.getMergedJobDataMap();
     final String projectJson = data.getString(PROJECT);
     final Project project = FlowUtils.toProject(projectJson);
+
+    // todo chengren311: remove it
+    logger.info("executing...");
 
     this.triggerService
         .startTrigger((FlowTrigger) data.get(FLOW_TRIGGER), (FlowConfigID)

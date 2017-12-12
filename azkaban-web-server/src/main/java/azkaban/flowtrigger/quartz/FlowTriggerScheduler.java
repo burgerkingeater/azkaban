@@ -33,10 +33,13 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class FlowTriggerScheduler {
 
+  private static final Logger logger = LoggerFactory.getLogger(FlowTriggerScheduler.class);
   private final ProjectLoader projectLoader;
   private final QuartzScheduler scheduler;
 
@@ -64,7 +67,7 @@ public class FlowTriggerScheduler {
                 latestFlowVersion, flowFileName);
         final FlowTrigger flowTrigger = FlowLoaderUtils.getFlowTriggerFromYamlFile(flowFile);
 
-        if (flowTrigger != null && flowTrigger.getSchedule() != null) {
+        if (flowTrigger != null) {
           final FlowConfigID flowConfigID = new FlowConfigID(project.getId(), project.getVersion(),
               flow.getId(), latestFlowVersion);
           final String projectJson = FlowUtils.toJson(project);
@@ -72,7 +75,7 @@ public class FlowTriggerScheduler {
               .of(FlowTriggerQuartzJob.SUBMIT_USER, submitUser,
                   FlowTriggerQuartzJob.FLOW_TRIGGER, flowTrigger, FlowConfigID.class.getName(),
                   flowConfigID, FlowTriggerQuartzJob.PROJECT, projectJson);
-
+          logger.info("scheduling flow " + flow.getProjectId() + "." + flow.getId());
           this.scheduler
               .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription
                   (FlowTriggerQuartzJob.class, generateGroupName(flow), contextMap));
@@ -87,6 +90,8 @@ public class FlowTriggerScheduler {
    */
   public void unscheduleAll(final Project project) throws SchedulerException {
     for (final Flow flow : project.getFlows()) {
+      logger.info("unscheduling flow" + flow.getProjectId() + "." + flow.getId() + "if it has "
+          + " schedule");
       this.scheduler.unregisterJob(generateGroupName(flow));
     }
   }

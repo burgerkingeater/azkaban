@@ -10,7 +10,7 @@ CREATE TABLE azkaban.execution_dependencies(
   project_version int(11) not null,
   flow_id varchar(128) not null,
   flow_version int(11) not null,
-
+  project_json MEDIUMTEXT not null,
   flow_exec_id int(11) not null,
   primary key(trigger_instance_id, dep_name)
   #CONSTRAINT fk1 FOREIGN KEY (project_id, project_version, flow_id)
