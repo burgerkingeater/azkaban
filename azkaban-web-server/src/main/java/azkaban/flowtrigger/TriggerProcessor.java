@@ -64,6 +64,8 @@ public class TriggerProcessor {
       final Project project = triggerInst.getProject();
       final Flow flow = FlowUtils.getFlow(project, triggerInst.getFlowConfigID().getFlowId());
       final ExecutableFlow executableFlow = FlowUtils.createExecutableFlow(project, flow);
+      // execute the flow with default execution option(concurrency option being "ignore
+      // currently running")
       this.executorManager.submitExecutableFlow(executableFlow, triggerInst.getSubmitUser());
 
       triggerInst.setFlowExecId(executableFlow.getExecutionId());
@@ -88,9 +90,9 @@ public class TriggerProcessor {
   }
 
   private String generateFailureEmailBody(final TriggerInstance triggerInstance) {
-    final String flowFullName =
+    final String triggerInstFullName =
         triggerInstance.getProjectName() + "." + triggerInstance.getFlowName();
-    return String.format(FAILURE_EMAIL_BODY, triggerInstance.getId());
+    return String.format(FAILURE_EMAIL_BODY, triggerInstFullName);
   }
 
   private void sendFailureEmail(final TriggerInstance triggerInstance) {

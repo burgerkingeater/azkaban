@@ -23,7 +23,6 @@ import azkaban.flowtrigger.DependencyInstanceRuntimeProps;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
 import java.util.Date;
-import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -42,17 +41,20 @@ public class TestDependencyInstanceContext implements DependencyInstanceContext 
     this.range = Range.range(Long.valueOf(runtimeProps.get("starttime")), BoundType.CLOSED,
         Long.valueOf(runtimeProps.get("starttime")) + 10, BoundType.CLOSED);
     System.out.println("range:" + new Date(this.range.lowerEndpoint()));
+    System.out.println("on success in 30 secs");
+    scheduleSerivce.schedule(this::onSucccess, 30, TimeUnit.SECONDS);
     //scheduleSerivce.schedule(this::onSucccess, 65, TimeUnit.SECONDS);
-    if ((new Random().nextInt()) % 2 == 0) {
-      //this dependency instance will succeed
-      scheduleSerivce.schedule(this::onSucccess, 60, TimeUnit.SECONDS);
-    } else {
-      //this dependency instance will be timed out for running to long
-      scheduleSerivce.schedule(this::onSucccess, 5, TimeUnit.SECONDS);
-    }
+//    if ((new Random().nextInt()) % 2 == 0) {
+//      //this dependency instance will succeed
+//      scheduleSerivce.schedule(this::onSucccess, 60, TimeUnit.SECONDS);
+//    } else {
+//      //this dependency instance will be timed out for running too long
+//      scheduleSerivce.schedule(this::onSucccess, 30, TimeUnit.SECONDS);
+//    }
   }
 
   private void onSucccess() {
+    System.out.println("on success done");
     this.callback.onSuccess(this);
   }
 

@@ -34,11 +34,11 @@ public class TestDependencyCheck implements DependencyCheck {
       final DependencyInstanceRuntimeProps runtimeProps,
       final DependencyInstanceCallback callback) {
     logger.info("running TestDependencyCheck with config:" + config);
-    try {
-      Thread.sleep(1000 * 30);
-    } catch (final Exception ex) {
-
-    }
+//    try {
+//      Thread.sleep(1000 * 30);
+//    } catch (final Exception ex) {
+//
+//    }
     logger.info("done with TestDependencyCheck with config:" + config);
     return new TestDependencyInstanceContext(config, runtimeProps, callback);
   }
