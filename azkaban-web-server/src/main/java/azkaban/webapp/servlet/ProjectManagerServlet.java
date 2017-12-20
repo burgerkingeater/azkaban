@@ -1713,7 +1713,7 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
         IOUtils.copy(item.getInputStream(), out);
         out.close();
 
-        //todo chengren311: unscheduleall/scheduleall should only work with flow 2.0 project
+        //unscheduleall/scheduleall should only work with flow which has defined flow trigger
         //unschedule all flows within the old project
         this.scheduler.unscheduleAll(project);
         final Map<String, ValidationReport> reports =

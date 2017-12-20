@@ -34,7 +34,9 @@ import azkaban.project.JdbcProjectImpl;
 import azkaban.project.Project;
 import azkaban.project.ProjectLoader;
 import azkaban.utils.Props;
+import com.google.common.io.Files;
 import java.io.File;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -212,16 +214,24 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
 
       final Map<FlowConfigID, FlowTrigger> flowTriggers = new HashMap<>();
       for (final FlowConfigID flowConfigID : flowConfigIDSet) {
-        final File flowFile = this.projectLoader
-            .getUploadedFlowFile(flowConfigID.getProjectId(), flowConfigID.getProjectVersion(),
-                flowConfigID.getFlowVersion(), flowConfigID.getFlowId() + ".flow");
-        if (flowFile != null) {
-          final FlowTrigger flowTrigger = FlowLoaderUtils.getFlowTriggerFromYamlFile(flowFile);
-          if (flowTrigger != null) {
-            flowTriggers.put(flowConfigID, flowTrigger);
+        final File tempDir = Files.createTempDir();
+        try {
+          final File flowFile = this.projectLoader
+              .getUploadedFlowFile(flowConfigID.getProjectId(), flowConfigID.getProjectVersion(),
+                  flowConfigID.getFlowId() + ".flow", flowConfigID.getFlowVersion(), tempDir);
+
+          if (flowFile != null) {
+            final FlowTrigger flowTrigger = FlowLoaderUtils.getFlowTriggerFromYamlFile(flowFile);
+            if (flowTrigger != null) {
+              flowTriggers.put(flowConfigID, flowTrigger);
+            }
+          } else {
+            logger.error("Unable to find flow file for " + flowConfigID);
           }
-        } else {
-          logger.error("Unable to find flow file for " + flowConfigID);
+        } catch (final IOException ex) {
+          logger.error("error in getting flow file", ex);
+        } finally {
+          FlowLoaderUtils.cleanUpDir(tempDir);
         }
       }
 

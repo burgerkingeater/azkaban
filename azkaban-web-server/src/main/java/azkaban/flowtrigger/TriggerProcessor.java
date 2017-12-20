@@ -75,11 +75,7 @@ public class TriggerProcessor {
 //          (triggerInst));
     } catch (final Exception ex) {
       logger.error("exception when executing the associate flow and updating flow exec id", ex);
-      //todo
-      // chengren311: should
-      // we
-      // swallow the exception or
-      // notify user
+      //todo chengren311: should we swallow the exception or notify user
     }
   }
 

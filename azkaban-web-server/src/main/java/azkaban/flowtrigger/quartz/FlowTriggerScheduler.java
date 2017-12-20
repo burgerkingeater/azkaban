@@ -28,7 +28,9 @@ import azkaban.project.ProjectLoader;
 import azkaban.scheduler.QuartzJobDescription;
 import azkaban.scheduler.QuartzScheduler;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -62,23 +64,33 @@ public class FlowTriggerScheduler {
           .getLatestFlowVersion(flow.getProjectId(), flow
               .getVersion(), flowFileName);
       if (latestFlowVersion > 0) {
-        final File flowFile = this.projectLoader
-            .getUploadedFlowFile(project.getId(), project.getVersion(),
-                latestFlowVersion, flowFileName);
-        final FlowTrigger flowTrigger = FlowLoaderUtils.getFlowTriggerFromYamlFile(flowFile);
+        final File tempDir = Files.createTempDir();
+        final File flowFile;
+        try {
+          flowFile = this.projectLoader
+              .getUploadedFlowFile(project.getId(), project.getVersion(),
+                  flowFileName, latestFlowVersion, tempDir);
 
-        if (flowTrigger != null) {
-          final FlowConfigID flowConfigID = new FlowConfigID(project.getId(), project.getVersion(),
-              flow.getId(), latestFlowVersion);
-          final String projectJson = FlowUtils.toJson(project);
-          final Map<String, Object> contextMap = ImmutableMap
-              .of(FlowTriggerQuartzJob.SUBMIT_USER, submitUser,
-                  FlowTriggerQuartzJob.FLOW_TRIGGER, flowTrigger, FlowConfigID.class.getName(),
-                  flowConfigID, FlowTriggerQuartzJob.PROJECT, projectJson);
-          logger.info("scheduling flow " + flow.getProjectId() + "." + flow.getId());
-          this.scheduler
-              .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription
-                  (FlowTriggerQuartzJob.class, generateGroupName(flow), contextMap));
+          final FlowTrigger flowTrigger = FlowLoaderUtils.getFlowTriggerFromYamlFile(flowFile);
+
+          if (flowTrigger != null) {
+            final FlowConfigID flowConfigID = new FlowConfigID(project.getId(),
+                project.getVersion(),
+                flow.getId(), latestFlowVersion);
+            final String projectJson = FlowUtils.toJson(project);
+            final Map<String, Object> contextMap = ImmutableMap
+                .of(FlowTriggerQuartzJob.SUBMIT_USER, submitUser,
+                    FlowTriggerQuartzJob.FLOW_TRIGGER, flowTrigger, FlowConfigID.class.getName(),
+                    flowConfigID, FlowTriggerQuartzJob.PROJECT, projectJson);
+            logger.info("scheduling flow " + flow.getProjectId() + "." + flow.getId());
+            this.scheduler
+                .registerJob(flowTrigger.getSchedule().getCronExpression(), new QuartzJobDescription
+                    (FlowTriggerQuartzJob.class, generateGroupName(flow), contextMap));
+          }
+        } catch (final IOException ex) {
+          logger.error("error in getting flow file", ex);
+        } finally {
+          FlowLoaderUtils.cleanUpDir(tempDir);
         }
       }
     }
