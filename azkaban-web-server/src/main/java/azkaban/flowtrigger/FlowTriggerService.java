@@ -174,13 +174,15 @@ public class FlowTriggerService {
     return UUID.randomUUID().toString();
   }
 
-  private void scheduleKill(final String execId, final Duration duration, final CancellationCause
+  private void scheduleKill(final TriggerInstance triggerInst, final Duration duration, final
+  CancellationCause
       cause) {
     logger
-        .info(String.format("Cancel trigger instance %s in %s secs", execId, duration.getSeconds
-            ()));
+        .info(String.format("Cancel trigger instance %s in %s secs", triggerInst.getId(), duration
+            .getSeconds
+                ()));
     this.timeoutService.schedule(() -> {
-      cancel(execId, cause);
+      cancel(triggerInst, cause);
     }, duration.toMillis(), TimeUnit.MILLISECONDS);
   }
 
@@ -270,7 +272,7 @@ public class FlowTriggerService {
     // if trigger instance is already done
     if (!Status.isDone(triggerInst.getStatus())) {
       this.runningTriggers.add(triggerInst);
-      scheduleKill(triggerInst.getId(), durationBeforeKill, cause);
+      scheduleKill(triggerInst, durationBeforeKill, cause);
     }
   }
 
@@ -376,9 +378,21 @@ public class FlowTriggerService {
         .findFirst().orElse(null);
   }
 
-  private TriggerInstance findTriggerInstById(final String triggerInstId) {
-    return this.runningTriggers.stream()
-        .filter(triggerInst -> triggerInst.getId().equals(triggerInstId)).findFirst().orElse(null);
+  public TriggerInstance findTriggerInstById(final String triggerInstId) {
+    //todo chengren311: make the method single threaded
+    final Future<TriggerInstance> future = this.executorService.submit(
+        () -> {
+          return this.runningTriggers.stream()
+              .filter(triggerInst -> triggerInst.getId().equals(triggerInstId)).findFirst()
+              .orElse(null);
+        }
+    );
+    try {
+      return future.get();
+    } catch (final Exception e) {
+      logger.error("exception when finding trigger instance by id" + triggerInstId, e);
+      return null;
+    }
   }
 
   private void removeTriggerInstById(final String triggerInstId) {
@@ -389,12 +403,13 @@ public class FlowTriggerService {
     }
   }
 
-  public void cancel(final String triggerInstanceId, final CancellationCause cause) {
+  public void cancel(final TriggerInstance triggerInst, final CancellationCause cause) {
     this.executorService.submit(
         () -> {
-          logger.info(String.format("cancelling trigger instance with id %s", triggerInstanceId));
-          final TriggerInstance triggerInst = FlowTriggerService.this.findTriggerInstById
-              (triggerInstanceId);
+          logger.info(
+              String.format("cancelling trigger instance with id %s", triggerInst.getId()));
+//          final TriggerInstance triggerInst = FlowTriggerService.this.findTriggerInstById
+//              (triggerInstanceId);
           if (triggerInst != null) {
             for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
               // cancel only running dependencies, no need to cancel a killed/successful dependency
@@ -407,7 +422,7 @@ public class FlowTriggerService {
           } else {
             logger.warn(String
                 .format("unable to cancel a trigger instance in non-running state with id %s",
-                    triggerInstanceId));
+                    triggerInst.getId()));
           }
         }
     );

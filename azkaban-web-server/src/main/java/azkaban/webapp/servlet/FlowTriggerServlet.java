@@ -23,6 +23,7 @@ import azkaban.flowtrigger.TriggerInstance;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import azkaban.server.session.Session;
+import azkaban.user.Permission.Type;
 import azkaban.webapp.AzkabanWebServer;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -87,7 +88,7 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
     } else if (ajaxName.equals("killRunningTrigger")) {
       if (hasParam(req, "id")) {
         final String triggerInstanceId = getParam(req, "id");
-        ajaxKillTriggerInstance(triggerInstanceId);
+        ajaxKillTriggerInstance(triggerInstanceId, session, ret);
       } else {
         ret.put("error", "please specify a valid running trigger instance id");
       }
@@ -98,9 +99,18 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
     }
   }
 
-  private void ajaxKillTriggerInstance(final String triggerInstanceId) {
-    this.triggerService.cancel(triggerInstanceId, CancellationCause.MANUAL);
-
+  private void ajaxKillTriggerInstance(final String triggerInstanceId, final Session session,
+      final HashMap<String, Object> ret) {
+    final TriggerInstance triggerInst = this.triggerService.findTriggerInstById(triggerInstanceId);
+    if (triggerInst != null) {
+      if (hasPermission(triggerInst.getProject(), session.getUser(), Type.EXECUTE)) {
+        this.triggerService.cancel(triggerInst, CancellationCause.MANUAL);
+      } else {
+        ret.put("error", "no permission to kill the trigger");
+      }
+    } else {
+      ret.put("error", "the trigger doesn't exist, might already finished or cancelled");
+    }
   }
 
   private void ajaxFetchRunningTriggerInstances(final HashMap<String, Object> ret) throws
