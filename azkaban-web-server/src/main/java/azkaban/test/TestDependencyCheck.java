@@ -37,7 +37,6 @@ public class TestDependencyCheck implements DependencyCheck {
 //    try {
 //      Thread.sleep(1000 * 30);
 //    } catch (final Exception ex) {
-//
 //    }
     logger.info("done with TestDependencyCheck with config:" + config);
     return new TestDependencyInstanceContext(config, runtimeProps, callback);

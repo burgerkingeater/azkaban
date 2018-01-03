@@ -92,11 +92,29 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
       } else {
         ret.put("error", "please specify a valid running trigger instance id");
       }
+    } else if (ajaxName.equals("showTriggerProperties")) {
+      if (hasParam(req, "id")) {
+        final String triggerInstanceId = getParam(req, "id");
+        loadTriggerProperties(triggerInstanceId, ret);
+      } else {
+        ret.put("error", "please specify a valid running trigger instance id");
+      }
     }
 
     if (ret != null) {
       this.writeJSON(resp, ret);
     }
+  }
+
+  private void loadTriggerProperties(final String triggerInstanceId,
+      final HashMap<String, Object> ret) {
+//    final TriggerInstance triggerInst =
+//    //.findTriggerInstById(triggerInstanceId);
+//    if (triggerInst != null) {
+//    } else {
+//      ret.put("error", "the trigger doesn't exist, might already finished or cancelled");
+//    }
+
   }
 
   private void ajaxKillTriggerInstance(final String triggerInstanceId, final Session session,

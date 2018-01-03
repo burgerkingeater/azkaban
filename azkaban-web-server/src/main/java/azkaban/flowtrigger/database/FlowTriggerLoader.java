@@ -32,5 +32,7 @@ public interface FlowTriggerLoader {
 
   Collection<TriggerInstance> getRecentlyFinished(int limit);
 
+  TriggerInstance getTriggerInstanceById(String triggerInstanceId);
+
   //void updateDependencyStatusAndKillingCause(final DependencyInstance depInst);
 }

@@ -175,8 +175,7 @@ public class FlowTriggerService {
   }
 
   private void scheduleKill(final TriggerInstance triggerInst, final Duration duration, final
-  CancellationCause
-      cause) {
+  CancellationCause cause) {
     logger
         .info(String.format("Cancel trigger instance %s in %s secs", triggerInst.getId(), duration
             .getSeconds
@@ -203,6 +202,9 @@ public class FlowTriggerService {
     return this.dependencyLoader.getRecentlyFinished(RECENTLY_FINISHED_TRIGGER_LIMIT);
   }
 
+  public TriggerInstance getTriggerInstanceById(final String triggerInstanceId) {
+    return this.dependencyLoader.getTriggerInstanceById(triggerInstanceId);
+  }
 
   private boolean isDoneButFlowNotExecuted(final TriggerInstance triggerInstance) {
     return triggerInstance.getStatus() == Status.SUCCEEDED && triggerInstance.getFlowExecId() ==

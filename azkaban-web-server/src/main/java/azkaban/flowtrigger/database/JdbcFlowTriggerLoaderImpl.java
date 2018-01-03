@@ -93,6 +93,11 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
           StringUtils.join(DEPENDENCY_EXECUTIONS_COLUMNS, ","),
           DEPENDENCY_EXECUTION_TABLE);
 
+  private static final String SELECT_EXECUTIONS_BY_INSTANCE_ID =
+      String.format("SELECT %s FROM %s WHERE trigger_instance_id = ?",
+          StringUtils.join(DEPENDENCY_EXECUTIONS_COLUMNS, ","),
+          DEPENDENCY_EXECUTION_TABLE);
+
   private static final String SELECT_ALL_PENDING_EXECUTIONS =
       String
           .format(
@@ -330,6 +335,11 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
   }
 
   @Override
+  /**
+   * Retrieve recently finished trigger instances, but flow trigger properties are not populated
+   * into the returned trigger instances for efficiency. Flow trigger properties will be
+   * retrieved only on request time.
+   */
   public Collection<TriggerInstance> getRecentlyFinished(final int limit) {
     final String query = String.format(SELECT_RECENTLY_FINISHED, limit);
     try {
@@ -338,6 +348,48 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
       handleSQLException(ex);
     }
     return Collections.emptyList();
+  }
+
+  @Override
+  /**
+   * Retrieve a trigger instance given an instance id. Flow trigger properties will also be
+   * populated into the returned trigger instance.
+   */
+  public TriggerInstance getTriggerInstanceById(final String triggerInstanceId) {
+    final String query = String.format(SELECT_EXECUTIONS_BY_INSTANCE_ID, triggerInstanceId);
+    TriggerInstance triggerInstance = null;
+    try {
+      final Collection<TriggerInstance> res = this.dbOperator
+          .query(query, new TriggerInstanceHandler());
+      triggerInstance = !res.isEmpty() ? res.iterator().next() : null;
+    } catch (final SQLException ex) {
+      handleSQLException(ex);
+    }
+    if (triggerInstance != null) {
+      final int projectId = triggerInstance.getProject().getId();
+      final int projectVersion = triggerInstance.getProject().getVersion();
+      final String flowFileName = triggerInstance.getFlowName() + ".flow";
+      final int flowVersion = triggerInstance.getFlowConfigID().getFlowVersion();
+      final File tempDir = Files.createTempDir();
+      try {
+        final File flowFile = this.projectLoader
+            .getUploadedFlowFile(projectId, projectVersion, flowFileName, flowVersion, tempDir);
+
+        if (flowFile != null) {
+          final FlowTrigger flowTrigger = FlowLoaderUtils.getFlowTriggerFromYamlFile(flowFile);
+          if (flowTrigger != null) {
+            triggerInstance.setFlowTrigger(flowTrigger);
+          }
+        } else {
+          logger.error("Unable to find flow file for " + triggerInstanceId);
+        }
+      } catch (final IOException ex) {
+        logger.error("error in getting flow file", ex);
+      } finally {
+        FlowLoaderUtils.cleanUpDir(tempDir);
+      }
+    }
+    return triggerInstance;
   }
 
   /*

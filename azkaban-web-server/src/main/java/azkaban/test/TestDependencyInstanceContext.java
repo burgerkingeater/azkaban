@@ -42,7 +42,7 @@ public class TestDependencyInstanceContext implements DependencyInstanceContext 
         Long.valueOf(runtimeProps.get("starttime")) + 10, BoundType.CLOSED);
     System.out.println("range:" + new Date(this.range.lowerEndpoint()));
     System.out.println("on success in 5 secs");
-    scheduleSerivce.schedule(this::onSucccess, 5, TimeUnit.SECONDS);
+    scheduleSerivce.schedule(this::onSucccess, 10, TimeUnit.SECONDS);
     //scheduleSerivce.schedule(this::onSucccess, 65, TimeUnit.SECONDS);
 //    if ((new Random().nextInt()) % 2 == 0) {
 //      //this dependency instance will succeed
