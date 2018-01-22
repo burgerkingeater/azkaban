@@ -64,6 +64,23 @@
       };
       ajaxCall(requestURL, requestData, successHandler);
     }
+
+    function showTriggerProperties(id) {
+      var requestURL = document.location.href.replace("#currently-running", "");
+      var requestData = {"id": id, "ajax": "showTriggerProperties"};
+      var successHandler = function (data) {
+        console.log("cancel clicked");
+        if (data.error) {
+          showDialog("Error", data.error);
+        }
+        else {
+          //showDialog("flow trigger properties", data.triggerProperties);
+          alert(data.triggerProperties);
+        }
+      };
+      //alert(requestURL);
+      ajaxCall(requestURL, requestData, successHandler);
+    }
   </script>
 </head>
 <body>
@@ -105,7 +122,7 @@
           <th class="date">End time</th>
           <th class="status">Status</th>
           <th class="elapse">Elapsed</th>
-          <th class="flowExecId">Triggerred Flow Execution Id</th>
+          <th class="flowExecId">Triggered Flow Execution Id</th>
           <th class="config">Trigger Properties</th>
           <th class="action">Action</th>
         </tr>
@@ -156,7 +173,14 @@
               #else
                 <td>-</td>
               #end
-              <td>-</td>
+
+              <td>
+                <button type="button" id="showTriggerProperties" class="btn btn-danger btn-sm"
+                        onclick="showTriggerProperties('${trigger.getId()}')">
+                  Trigger Config
+                </button>
+              </td>
+
               <td>
                 #if (${trigger.getStatus()} == "RUNNING")
                   <button type="button" id="cancelbtn" class="btn btn-danger btn-sm"
@@ -243,7 +267,7 @@
           <th class="date">End time</th>
           <th class="status">Status</th>
           <th class="elapse">Elapsed</th>
-          <th class="flowExecId">Triggerred Flow Execution Id</th>
+          <th class="flowExecId">Triggered Flow Execution Id</th>
           <th class="config">Trigger Properties</th>
           <th class="action">Action</th>
         </tr>
@@ -294,15 +318,16 @@
               #else
                 <td>-</td>
               #end
-              <td>-</td>
+
               <td>
-                #if (${trigger.getStatus()} == "RUNNING")
-                  <button type="button" id="cancelbtn" class="btn btn-danger btn-sm"
-                          onclick="killTrigger('${trigger.getId()}')">Kill
-                  </button>
-                #else
-                  -
-                #end
+                <button type="button" id="showTriggerProperties" class="btn btn-danger btn-sm"
+                        onclick="showTriggerProperties('${trigger.getId()}')">
+                  Trigger Config
+                </button>
+              </td>
+
+              <td>
+                -
               </td>
 
             <tr class="child-${trigger.getId()}">

@@ -17,7 +17,7 @@
 package azkaban.webapp.servlet;
 
 
-import static azkaban.test.Utils.initServiceProvider;
+import static azkaban.testplugin.Utils.initServiceProvider;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotSame;
 import static org.mockito.Mockito.mock;

@@ -1,4 +1,4 @@
-package azkaban.test;
+package azkaban.testplugin;
 
 import static azkaban.ServiceProvider.SERVICE_PROVIDER;
 

@@ -16,21 +16,13 @@
 
 package azkaban.webapp.servlet;
 
-import azkaban.flowtrigger.CancellationCause;
-import azkaban.flowtrigger.DependencyInstance;
-import azkaban.flowtrigger.FlowTriggerService;
-import azkaban.flowtrigger.TriggerInstance;
-import azkaban.project.Project;
+import azkaban.flowtrigger.quartz.FlowTriggerScheduler;
 import azkaban.project.ProjectManager;
 import azkaban.server.session.Session;
-import azkaban.user.Permission.Type;
+import azkaban.user.User;
 import azkaban.webapp.AzkabanWebServer;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -43,14 +35,14 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
 
   private static final long serialVersionUID = 1L;
   private static final Logger logger = Logger.getLogger(FlowTriggerServlet.class);
-  private FlowTriggerService triggerService;
+  private FlowTriggerScheduler scheduler;
   private ProjectManager projectManager;
 
   @Override
   public void init(final ServletConfig config) throws ServletException {
     super.init(config);
     final AzkabanWebServer server = (AzkabanWebServer) getApplication();
-    this.triggerService = server.getFlowTriggerService();
+    this.scheduler = server.getScheduler();
     this.projectManager = server.getProjectManager();
   }
 
@@ -68,12 +60,9 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
       final HttpServletResponse resp, final Session session) {
     final Page page =
         newPage(req, resp, session,
-            "azkaban/webapp/servlet/velocity/executionflowtriggerspage.vm");
+            "azkaban/webapp/servlet/velocity/flowtriggerspage.vm");
 
-    page.add("runningTriggers", this.triggerService.getRunningTriggers());
-    page.add("recentTriggers", this.triggerService.getRecentlyFinished());
-
-    page.add("vmutils", new ExecutorVMHelper());
+    page.add("flowTriggers", this.scheduler.getScheduledFlowTriggerJobs());
     page.render();
   }
 
@@ -83,22 +72,10 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
     final HashMap<String, Object> ret = new HashMap<>();
     final String ajaxName = getParam(req, "ajax");
 
-    if (ajaxName.equals("fetchRunningTriggers")) {
-      ajaxFetchRunningTriggerInstances(ret);
-    } else if (ajaxName.equals("killRunningTrigger")) {
-      if (hasParam(req, "id")) {
-        final String triggerInstanceId = getParam(req, "id");
-        ajaxKillTriggerInstance(triggerInstanceId, session, ret);
-      } else {
-        ret.put("error", "please specify a valid running trigger instance id");
-      }
-    } else if (ajaxName.equals("showTriggerProperties")) {
-      if (hasParam(req, "id")) {
-        final String triggerInstanceId = getParam(req, "id");
-        loadTriggerProperties(triggerInstanceId, ret);
-      } else {
-        ret.put("error", "please specify a valid running trigger instance id");
-      }
+    if (ajaxName.equals("fetchFlowTriggers")) {
+      ajaxFetchFlowTriggers(req, ret, session.getUser());
+    } else if (ajaxName.equals("fetchFlowTrigger")) {
+      ajaxFetchFlowTrigger(req, ret, session.getUser());
     }
 
     if (ret != null) {
@@ -106,69 +83,14 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
     }
   }
 
-  private void loadTriggerProperties(final String triggerInstanceId,
-      final HashMap<String, Object> ret) {
-//    final TriggerInstance triggerInst =
-//    //.findTriggerInstById(triggerInstanceId);
-//    if (triggerInst != null) {
-//    } else {
-//      ret.put("error", "the trigger doesn't exist, might already finished or cancelled");
-//    }
+  private void ajaxFetchFlowTriggers(final HttpServletRequest req,
+      final HashMap<String, Object> ret, final User user) {
 
   }
 
-  private void ajaxKillTriggerInstance(final String triggerInstanceId, final Session session,
-      final HashMap<String, Object> ret) {
-    final TriggerInstance triggerInst = this.triggerService.findTriggerInstById(triggerInstanceId);
-    if (triggerInst != null) {
-      if (hasPermission(triggerInst.getProject(), session.getUser(), Type.EXECUTE)) {
-        this.triggerService.cancel(triggerInst, CancellationCause.MANUAL);
-      } else {
-        ret.put("error", "no permission to kill the trigger");
-      }
-    } else {
-      ret.put("error", "the trigger doesn't exist, might already finished or cancelled");
-    }
-  }
+  private void ajaxFetchFlowTrigger(final HttpServletRequest req,
+      final HashMap<String, Object> ret, final User user) {
 
-  private void ajaxFetchRunningTriggerInstances(final HashMap<String, Object> ret) throws
-      ServletException {
-    final Collection<TriggerInstance> triggerInstanceList = this.triggerService
-        .getRunningTriggers();
-
-    final List<HashMap<String, Object>> output = new ArrayList<>();
-    ret.put("items", output);
-
-    for (final TriggerInstance triggerInstance : triggerInstanceList) {
-      writeTriggerInstancesData(output, triggerInstance);
-    }
-  }
-
-  private void writeTriggerInstancesData(final List<HashMap<String, Object>> output,
-      final TriggerInstance triggerInst) {
-
-    final HashMap<String, Object> data = new HashMap<>();
-    data.put("id", triggerInst.getId());
-    data.put("starttime", triggerInst.getStartTime());
-    data.put("endtime", triggerInst.getEndTime());
-    data.put("status", triggerInst.getStatus());
-    data.put("flowExecutionId", triggerInst.getFlowExecId());
-    data.put("submitUser", triggerInst.getSubmitUser());
-    data.put("flowTriggerConfig", triggerInst.getFlowTrigger());
-    final List<Map<String, Object>> dependencyOutput = new ArrayList<>();
-    for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
-      final Map<String, Object> depMap = new HashMap<>();
-      depMap.put("dependencyName", depInst.getDepName());
-      depMap.put("dependencyStarttime", depInst.getStartTime());
-      depMap.put("dependencyEndtime", depInst.getEndTime());
-      depMap.put("dependencyStatus", depInst.getStatus());
-      depMap.put("dependencyConfig", depInst.getTriggerInstance().getFlowTrigger()
-          .getDependencyByName
-              (depInst.getDepName()));
-      dependencyOutput.add(depMap);
-    }
-    data.put("dependencies", dependencyOutput);
-    output.add(data);
   }
 
   @Override
@@ -215,17 +137,5 @@ public class FlowTriggerServlet extends LoginAbstractAzkabanServlet {
 
   private DateTime getPresentTimeByTimezone(final DateTimeZone timezone) {
     return new DateTime(timezone);
-  }
-
-  public class ExecutorVMHelper {
-
-    public String getProjectName(final int id) {
-      final Project project = FlowTriggerServlet.this.projectManager.getProject(id);
-      if (project == null) {
-        return String.valueOf(id);
-      }
-
-      return project.getName();
-    }
   }
 }

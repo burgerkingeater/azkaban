@@ -19,7 +19,7 @@ package azkaban.utils;
 import azkaban.executor.ExecutableFlow;
 import azkaban.flow.Flow;
 import azkaban.project.Project;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.user.User;
 import azkaban.user.UserManager;
 import azkaban.user.XmlUserManager;

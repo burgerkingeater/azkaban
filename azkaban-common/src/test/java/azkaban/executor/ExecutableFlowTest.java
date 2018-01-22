@@ -20,7 +20,7 @@ import azkaban.executor.ExecutionOptions.FailureAction;
 import azkaban.flow.Flow;
 import azkaban.project.DirectoryFlowLoader;
 import azkaban.project.Project;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
 import java.util.Arrays;

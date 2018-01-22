@@ -50,6 +50,7 @@ public class FlowLoaderUtils {
   private static final Logger logger = LoggerFactory.getLogger(FlowLoaderUtils.class);
   private static final String XMS = "Xms";
   private static final String XMX = "Xmx";
+
   /**
    * Sets props in flow yaml file.
    *

@@ -26,7 +26,7 @@ import azkaban.executor.ExecutableNode;
 import azkaban.executor.InteractiveTestJob;
 import azkaban.executor.Status;
 import azkaban.project.Project;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.Props;
 import java.io.File;
 import java.util.HashMap;

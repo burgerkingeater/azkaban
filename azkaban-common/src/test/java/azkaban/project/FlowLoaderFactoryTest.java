@@ -19,7 +19,7 @@ package azkaban.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.Props;
 import java.io.File;
 import org.junit.Test;

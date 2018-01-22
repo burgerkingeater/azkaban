@@ -31,7 +31,7 @@ import azkaban.executor.Status;
 import azkaban.jobtype.JobTypeManager;
 import azkaban.jobtype.JobTypePluginSet;
 import azkaban.spi.EventType;
-import azkaban.test.TestUtils;
+import azkaban.testplugin.TestUtils;
 import azkaban.utils.Props;
 import java.io.File;
 import java.io.IOException;

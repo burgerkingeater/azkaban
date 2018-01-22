@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.test;
+package azkaban.testplugin;
 
 import azkaban.flowtrigger.DependencyCheck;
 import azkaban.flowtrigger.DependencyInstanceCallback;
@@ -44,12 +44,12 @@ public class TestDependencyCheck implements DependencyCheck {
 
   @Override
   public void shutdown() {
-
   }
 
   @Override
   public void init(final DependencyPluginConfig config) {
-
+    //logger.info("initing TestDependencyCheck with config:" + config);
+    System.out.println("initing TestDependencyCheck with config:" + config);
   }
 }
 

@@ -21,7 +21,7 @@ import azkaban.metrics.CommonMetrics;
 import azkaban.metrics.MetricsManager;
 import azkaban.project.DirectoryFlowLoader;
 import azkaban.project.Project;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import com.codahale.metrics.MetricRegistry;
 import java.util.ArrayList;
 import java.util.List;

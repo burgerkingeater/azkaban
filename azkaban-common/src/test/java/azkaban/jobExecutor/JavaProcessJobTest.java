@@ -66,7 +66,7 @@ public class JavaProcessJobTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    azkaban.test.Utils.initServiceProvider();
+    azkaban.testplugin.Utils.initServiceProvider();
     // Get the classpath
     final Properties prop = System.getProperties();
     classPaths =

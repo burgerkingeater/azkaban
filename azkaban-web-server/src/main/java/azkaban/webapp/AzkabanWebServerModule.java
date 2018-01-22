@@ -17,8 +17,13 @@
 
 package azkaban.webapp;
 
+import static java.util.Objects.requireNonNull;
+
+import azkaban.Constants.ConfigurationKeys;
 import azkaban.flowtrigger.database.FlowTriggerLoader;
 import azkaban.flowtrigger.database.JdbcFlowTriggerLoaderImpl;
+import azkaban.flowtrigger.plugin.FlowTriggerDependencyPluginException;
+import azkaban.flowtrigger.plugin.FlowTriggerDependencyPluginManager;
 import azkaban.scheduler.ScheduleLoader;
 import azkaban.scheduler.TriggerBasedScheduleLoader;
 import azkaban.user.UserManager;
@@ -46,6 +51,15 @@ public class AzkabanWebServerModule extends AbstractModule {
   private static final Logger log = Logger.getLogger(AzkabanWebServerModule.class);
   private static final String USER_MANAGER_CLASS_PARAM = "user.manager.class";
   private static final String VELOCITY_DEV_MODE_PARAM = "velocity.dev.mode";
+
+  @Provides
+  @Singleton
+  public FlowTriggerDependencyPluginManager getDependencyPluginManager(final Props props)
+      throws FlowTriggerDependencyPluginException {
+    final String dependencyPluginDir = requireNonNull(props.getString(ConfigurationKeys
+        .DEPENDENCY_PLUGIN_DIR));
+    return new FlowTriggerDependencyPluginManager(dependencyPluginDir);
+  }
 
   @Override
   protected void configure() {

@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import azkaban.db.DatabaseOperator;
 import azkaban.flow.Flow;
-import azkaban.test.Utils;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.Utils;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.user.Permission;
 import azkaban.user.User;
 import azkaban.utils.Md5Hasher;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.test;
+package azkaban.testplugin2;
 
 import azkaban.flowtrigger.DependencyInstanceCallback;
 import azkaban.flowtrigger.DependencyInstanceConfig;
@@ -27,14 +27,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class TestDependencyInstanceContext implements DependencyInstanceContext {
+public class TestDependencyInstanceContext2 implements DependencyInstanceContext {
 
   private static final ScheduledExecutorService scheduleSerivce = Executors
       .newScheduledThreadPool(1);
   private final DependencyInstanceCallback callback;
   private final Range<Long> range;
 
-  public TestDependencyInstanceContext(final DependencyInstanceConfig config,
+  public TestDependencyInstanceContext2(final DependencyInstanceConfig config,
       final DependencyInstanceRuntimeProps runtimeProps,
       final DependencyInstanceCallback callback) {
     this.callback = callback;
@@ -52,6 +52,7 @@ public class TestDependencyInstanceContext implements DependencyInstanceContext 
 //      scheduleSerivce.schedule(this::onSucccess, 30, TimeUnit.SECONDS);
 //    }
   }
+
 
   private void onSucccess() {
     System.out.println("on success done");

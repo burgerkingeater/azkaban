@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * FlowTrigger is the logical representation of a trigger.
@@ -48,10 +49,11 @@ public class FlowTrigger implements Serializable {
    */
   public FlowTrigger(final CronSchedule schedule, final List<FlowTriggerDependency> dependencies,
       final Duration maxWaitDuration) {
-    Preconditions.checkNotNull(schedule);
-    Preconditions.checkNotNull(dependencies);
-    Preconditions.checkNotNull(maxWaitDuration);
-    Preconditions.checkArgument(maxWaitDuration.toMinutes() >= 1);
+    Preconditions.checkNotNull(schedule, "schedule cannot be null");
+    Preconditions.checkNotNull(dependencies, "dependency cannot be null");
+    Preconditions.checkNotNull(maxWaitDuration, "max wait time cannot be null");
+    Preconditions.checkArgument(maxWaitDuration.toMinutes() >= 1, "max wait time should be "
+        + "longer than 1 min");
     validateDependencies(dependencies);
     this.schedule = schedule;
     final ImmutableMap.Builder builder = new Builder();
@@ -75,10 +77,9 @@ public class FlowTrigger implements Serializable {
   @Override
   public String toString() {
     return "FlowTrigger{" +
-        "dependencies=" + this.dependencies +
-        ", schedule=" + this.schedule +
-        ", maxWaitDuration=" + this.maxWaitDuration +
-        '}';
+        "schedule=" + this.schedule +
+        ", maxWaitDurationInMins=" + this.maxWaitDuration.toMinutes() +
+        "\n " + StringUtils.join(this.dependencies.values(), "\n") + '}';
   }
 
   /**

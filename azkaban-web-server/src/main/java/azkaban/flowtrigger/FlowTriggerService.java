@@ -19,6 +19,7 @@ package azkaban.flowtrigger;
 import azkaban.Constants;
 import azkaban.executor.ExecutorManager;
 import azkaban.flowtrigger.database.FlowTriggerLoader;
+import azkaban.flowtrigger.plugin.FlowTriggerDependencyPluginManager;
 import azkaban.project.FlowConfigID;
 import azkaban.project.FlowTrigger;
 import azkaban.project.FlowTriggerDependency;
@@ -66,7 +67,7 @@ public class FlowTriggerService {
   private final List<TriggerInstance> runningTriggers;
   //private final Map<String, FlowTrigger> flowTriggerMap;
   private final ScheduledExecutorService timeoutService;
-  private final FlowTriggerPluginManager triggerPluginManager;
+  private final FlowTriggerDependencyPluginManager triggerPluginManager;
   private final TriggerProcessor triggerProcessor;
   private final FlowTriggerLoader dependencyLoader;
   private final DependencyProcessor dependencyProcessor;
@@ -75,8 +76,8 @@ public class FlowTriggerService {
 
 
   @Inject
-  public FlowTriggerService(final FlowTriggerPluginManager pluginManager, final TriggerProcessor
-      triggerProcessor, final DependencyProcessor
+  public FlowTriggerService(final FlowTriggerDependencyPluginManager pluginManager,
+      final TriggerProcessor triggerProcessor, final DependencyProcessor
       dependencyProcessor, final ProjectManager projectManager,
       final ExecutorManager executorManager,
       final FlowTriggerLoader dependencyLoader/*, final List<FlowTrigger> flowTriggerList*/) {
@@ -102,9 +103,6 @@ public class FlowTriggerService {
   }
 
   public static void main(final String[] args) throws InterruptedException {
-    final FlowTriggerService service = new FlowTriggerService(new FlowTriggerPluginManager
-        (), new TriggerProcessor(null, null, null, null), new DependencyProcessor(null),
-        null, null, null);
 
 //    final DependencyInstanceConfig depInstConfig = new DependencyInstanceConfigImpl(
 //        new HashMap<>());
@@ -202,7 +200,7 @@ public class FlowTriggerService {
     return this.dependencyLoader.getRecentlyFinished(RECENTLY_FINISHED_TRIGGER_LIMIT);
   }
 
-  public TriggerInstance getTriggerInstanceById(final String triggerInstanceId) {
+  public TriggerInstance findTriggerInstanceById(final String triggerInstanceId) {
     return this.dependencyLoader.getTriggerInstanceById(triggerInstanceId);
   }
 
@@ -380,7 +378,7 @@ public class FlowTriggerService {
         .findFirst().orElse(null);
   }
 
-  public TriggerInstance findTriggerInstById(final String triggerInstId) {
+  public TriggerInstance findRunningTriggerInstById(final String triggerInstId) {
     //todo chengren311: make the method single threaded
     final Future<TriggerInstance> future = this.executorService.submit(
         () -> {
@@ -397,7 +395,7 @@ public class FlowTriggerService {
     }
   }
 
-  private void removeTriggerInstById(final String triggerInstId) {
+  private void removeRunningTriggerInstById(final String triggerInstId) {
     for (final Iterator<TriggerInstance> it = this.runningTriggers.iterator(); it.hasNext(); ) {
       if (triggerInstId.equals(it.next().getId())) {
         it.remove();
@@ -410,7 +408,7 @@ public class FlowTriggerService {
         () -> {
           logger.info(
               String.format("cancelling trigger instance with id %s", triggerInst.getId()));
-//          final TriggerInstance triggerInst = FlowTriggerService.this.findTriggerInstById
+//          final TriggerInstance triggerInst = FlowTriggerService.this.findRunningTriggerInstById
 //              (triggerInstanceId);
           if (triggerInst != null) {
             for (final DependencyInstance depInst : triggerInst.getDepInstances()) {
@@ -505,7 +503,7 @@ public class FlowTriggerService {
               String.format("trigger instance with execId %s is cancelled",
                   depInst.getTriggerInstance().getId()));
           this.triggerProcessor.processTermination(depInst.getTriggerInstance());
-          removeTriggerInstById(depInst.getTriggerInstance().getId());
+          removeRunningTriggerInstById(depInst.getTriggerInstance().getId());
         }
       } else {
         logger.warn(String.format("unable to find trigger instance with context %s when marking "
@@ -515,29 +513,11 @@ public class FlowTriggerService {
   }
 
   /**
-   * Shuts down the service and wait for the tasks to finish.
-   *
-   * Adopted from
-   * <a href="https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ExecutorService.html">
-   * the Oracle JAVA Documentation.
-   * </a>
+   * Shuts down the service immediately.
    */
-  public void shutdownAndAwaitTermination() {
+  public void shutdown() {
     this.executorService.shutdown(); // Disable new tasks from being submitted
-    try {
-      // Wait a while for existing tasks to terminate
-      if (!this.executorService.awaitTermination(SHUTDOWN_WAIT_TIMEOUT, TimeUnit.SECONDS)) {
-        this.executorService.shutdownNow(); // Cancel currently executing tasks
-        // Wait a while for tasks to respond to being cancelled
-        if (!this.executorService.awaitTermination(SHUTDOWN_WAIT_TIMEOUT, TimeUnit.SECONDS)) {
-          logger.error("FlowDependencyService did not terminate.");
-        }
-      }
-    } catch (final InterruptedException ie) {
-      // (Re-)Cancel if current thread also interrupted
-      this.executorService.shutdownNow();
-      // Preserve interrupt status
-      Thread.currentThread().interrupt();
-    }
+    this.executorService.shutdownNow(); // Cancel currently executing tasks
+    this.triggerPluginManager.shutdown();
   }
 }

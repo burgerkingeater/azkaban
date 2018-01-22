@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 import azkaban.project.validator.ValidationReport;
 import azkaban.project.validator.ValidationStatus;
 import azkaban.storage.StorageManager;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.user.User;
 import azkaban.utils.Props;
 import java.io.File;

@@ -102,6 +102,7 @@
       <li id="graphViewLink"><a href="#graph">Graph</a></li>
       <li id="executionsViewLink"><a href="#executions">Executions</a></li>
       <li id="summaryViewLink"><a href="#summary">Summary</a></li>
+      <li id="flowTriggerViewLink"><a href="#flowtrigger">Flow Trigger</a></li>
     </ul>
   </div>
 

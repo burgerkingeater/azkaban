@@ -35,6 +35,9 @@ public class FlowTriggerQuartzJob extends AbstractQuartzJob {
   public static final String SUBMIT_USER = "SUBMIT_USER";
   public static final String PROJECT = "PROJECT";
   public static final String FLOW_TRIGGER = "FLOW_TRIGGER";
+
+  public static final String FLOW_CONFIG_ID = FlowConfigID.class.getName();
+
   private static final Logger logger = LoggerFactory.getLogger(FlowTriggerQuartzJob.class);
   private final FlowTriggerService triggerService;
 
@@ -50,12 +53,9 @@ public class FlowTriggerQuartzJob extends AbstractQuartzJob {
     final String projectJson = data.getString(PROJECT);
     final Project project = FlowUtils.toProject(projectJson);
 
-    // todo chengren311: remove it
-    logger.info("executing...");
-
     this.triggerService
         .startTrigger((FlowTrigger) data.get(FLOW_TRIGGER), (FlowConfigID)
-            data.get(FlowConfigID.class.getName()), data.getString(SUBMIT_USER), project);
+            data.get(FLOW_CONFIG_ID), data.getString(SUBMIT_USER), project);
 
     //this.depService = dependencyService;
     /*

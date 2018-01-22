@@ -14,23 +14,23 @@
  * the License.
  */
 
-package azkaban.flowtrigger;
+package azkaban.testplugin;
 
-import azkaban.test.TestDependencyCheck;
-import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionFactory;
 
-@Singleton
-public class FlowTriggerPluginManager {
+/**
+ * Common test utility methods.
+ */
+public class TestUtils {
+
 
   /**
-   * return or create a dependency check based on type
-   *
-   * @return if the dependencyCheck of the same type already exists, return the check,
-   * otherwise create a new one and return.
+   * Wait for 10 seconds, max. Poll every 10ms.
    */
-
-  public DependencyCheck getDependencyCheck(final String type) {
-    return new TestDependencyCheck();
+  public static ConditionFactory await() {
+    return Awaitility.await().atMost(10L, TimeUnit.SECONDS)
+        .pollInterval(10L, TimeUnit.MILLISECONDS);
   }
-
 }

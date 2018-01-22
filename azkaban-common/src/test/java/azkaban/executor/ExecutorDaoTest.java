@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import azkaban.db.DatabaseOperator;
-import azkaban.test.Utils;
+import azkaban.testplugin.Utils;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;

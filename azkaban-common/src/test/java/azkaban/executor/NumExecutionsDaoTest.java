@@ -19,7 +19,7 @@ package azkaban.executor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import azkaban.db.DatabaseOperator;
-import azkaban.test.Utils;
+import azkaban.testplugin.Utils;
 import azkaban.utils.TestUtils;
 import java.sql.SQLException;
 import org.junit.After;

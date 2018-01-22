@@ -33,9 +33,17 @@ public class CronSchedule implements Serializable {
    * @throws IllegalArgumentException if cronExpression is null or blank
    */
   public CronSchedule(final String cronExpression) {
-    Preconditions.checkArgument(StringUtils.isNotBlank(cronExpression));
+    Preconditions.checkArgument(StringUtils.isNotBlank(cronExpression), "cron expression must be"
+        + " non empty");
     this.cronExpression = cronExpression;
     //todo chengren311: check cronExpression is valid: quartz has CronExpression.isValidExpression()
+  }
+
+  @Override
+  public String toString() {
+    return "CronSchedule{" +
+        "cronExpression='" + cronExpression + '\'' +
+        '}';
   }
 
   public String getCronExpression() {

@@ -27,9 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.concurrent.NotThreadSafe;
 
-@NotThreadSafe
 public class TriggerInstance {
 
   private final List<DependencyInstance> depInstances;

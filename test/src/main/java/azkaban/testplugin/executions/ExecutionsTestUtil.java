@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.test.executions;
+package azkaban.testplugin.executions;
 
 import java.io.File;
 

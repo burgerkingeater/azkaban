@@ -16,7 +16,7 @@
 
 package azkaban.project;
 
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.Props;
 import org.junit.Assert;
 import org.junit.Before;

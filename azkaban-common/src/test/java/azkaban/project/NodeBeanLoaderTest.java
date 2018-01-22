@@ -20,15 +20,15 @@ package azkaban.project;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import azkaban.Constants;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.Props;
-import java.io.File;
-import org.apache.commons.io.FileUtils;
 import com.google.common.collect.ImmutableMap;
+import java.io.File;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
 public class NodeBeanLoaderTest {

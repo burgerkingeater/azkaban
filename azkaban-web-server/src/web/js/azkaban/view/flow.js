@@ -33,7 +33,8 @@ azkaban.FlowTabView = Backbone.View.extend({
   events: {
     "click #graphViewLink": "handleGraphLinkClick",
     "click #executionsViewLink": "handleExecutionLinkClick",
-    "click #summaryViewLink": "handleSummaryLinkClick"
+    "click #summaryViewLink": "handleSummaryLinkClick",
+    "click #flowTriggerViewLink": "handleFlowTriggerLinkClick"
   },
 
   initialize: function (settings) {
@@ -54,20 +55,24 @@ azkaban.FlowTabView = Backbone.View.extend({
     $("#executionsViewLink").removeClass("active");
     $("#graphViewLink").addClass("active");
     $('#summaryViewLink').removeClass('active');
+    $('#flowTriggerViewLink').removeClass('active');
 
     $("#executionsView").hide();
     $("#graphView").show();
     $('#summaryView').hide();
+    $('#flowTriggerView').hide();
   },
 
   handleExecutionLinkClick: function () {
     $("#graphViewLink").removeClass("active");
     $("#executionsViewLink").addClass("active");
     $('#summaryViewLink').removeClass('active');
+    $('#flowTriggerViewLink').removeClass('active');
 
     $("#graphView").hide();
     $("#executionsView").show();
     $('#summaryView').hide();
+    $('#flowTriggerView').hide();
     executionModel.trigger("change:view");
   },
 
@@ -75,11 +80,25 @@ azkaban.FlowTabView = Backbone.View.extend({
     $('#graphViewLink').removeClass('active');
     $('#executionsViewLink').removeClass('active');
     $('#summaryViewLink').addClass('active');
+    $('#flowTriggerViewLink').removeClass('active');
 
     $('#graphView').hide();
     $('#executionsView').hide();
     $('#summaryView').show();
+    $('#flowTriggerView').hide();
   },
+
+  handleFlowTriggerLinkClick: function () {
+    $('#graphViewLink').removeClass('active');
+    $('#executionsViewLink').removeClass('active');
+    $('#summaryViewLink').removeClass('active');
+    $('#flowTriggerViewLink').addClass('active');
+
+    $('#graphView').hide();
+    $('#executionsView').hide();
+    $('#summaryView').hide();
+    $('#flowTriggerView').show();
+  }
 });
 
 var jobListView;
@@ -287,6 +306,117 @@ azkaban.ExecutionsView = Backbone.View.extend({
 
 var summaryView;
 azkaban.SummaryView = Backbone.View.extend({
+  events: {
+    'click #analyze-btn': 'fetchLastRun'
+  },
+
+  initialize: function (settings) {
+    this.model.bind('change:view', this.handleChangeView, this);
+    this.model.bind('render', this.render, this);
+
+    this.fetchDetails();
+    this.fetchSchedule();
+    this.model.trigger('render');
+  },
+
+  fetchDetails: function () {
+    var requestURL = contextURL + "/manager";
+    var requestData = {
+      'ajax': 'fetchflowdetails',
+      'project': projectName,
+      'flow': flowId
+    };
+
+    var model = this.model;
+
+    var successHandler = function (data) {
+      console.log(data);
+      model.set({
+        'jobTypes': data.jobTypes
+      });
+      model.trigger('render');
+    };
+    $.get(requestURL, requestData, successHandler, 'json');
+  },
+
+  fetchSchedule: function () {
+    var requestURL = contextURL + "/schedule"
+    var requestData = {
+      'ajax': 'fetchSchedule',
+      'projectId': projectId,
+      'flowId': flowId
+    };
+    var model = this.model;
+    var view = this;
+    var successHandler = function (data) {
+      model.set({'schedule': data.schedule});
+      model.trigger('render');
+      view.fetchSla();
+    };
+    $.get(requestURL, requestData, successHandler, 'json');
+  },
+
+  fetchSla: function () {
+    var schedule = this.model.get('schedule');
+    if (schedule == null || schedule.scheduleId == null) {
+      return;
+    }
+
+    var requestURL = contextURL + "/schedule"
+    var requestData = {
+      "scheduleId": schedule.scheduleId,
+      "ajax": "slaInfo"
+    };
+    var model = this.model;
+    var successHandler = function (data) {
+      if (data == null || data.settings == null || data.settings.length == 0) {
+        return;
+      }
+      schedule.slaOptions = true;
+      model.set({'schedule': schedule});
+      model.trigger('render');
+    };
+    $.get(requestURL, requestData, successHandler, 'json');
+  },
+
+  fetchLastRun: function () {
+    var requestURL = contextURL + "/manager";
+    var requestData = {
+      'ajax': 'fetchLastSuccessfulFlowExecution',
+      'project': projectName,
+      'flow': flowId
+    };
+    var view = this;
+    var successHandler = function (data) {
+      if (data.success == "false" || data.execId == null) {
+        dust.render("flowstats-no-data", data, function (err, out) {
+          $('#flow-stats-container').html(out);
+        });
+        return;
+      }
+      flowStatsView.show(data.execId);
+    };
+    $.get(requestURL, requestData, successHandler, 'json');
+  },
+
+  handleChangeView: function (evt) {
+  },
+
+  render: function (evt) {
+    var data = {
+      projectName: projectName,
+      flowName: flowId,
+      jobTypes: this.model.get('jobTypes'),
+      schedule: this.model.get('schedule'),
+    };
+    dust.render("flowsummary", data, function (err, out) {
+      $('#summary-view-content').html(out);
+    });
+  },
+});
+
+var flowTriggerView;
+azkaban.FlowTriggerView = Backbone.View.extend({
   events: {
     'click #analyze-btn': 'fetchLastRun'
   },

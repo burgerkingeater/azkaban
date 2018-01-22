@@ -64,9 +64,9 @@ public class FlowTriggerDependency implements Serializable {
   @Override
   public String toString() {
     return "FlowTriggerDependency{" +
-        "props=" + this.props +
-        ", name='" + this.name + '\'' +
+        "name='" + this.name + '\'' +
         ", type='" + this.type + '\'' +
+        ", props=" + this.props +
         '}';
   }
 }

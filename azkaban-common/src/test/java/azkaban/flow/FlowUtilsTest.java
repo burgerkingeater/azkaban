@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import azkaban.executor.ExecutableFlow;
 import azkaban.project.DirectoryFlowLoader;
 import azkaban.project.Project;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.Props;
 import org.junit.Assert;
 import org.junit.Before;

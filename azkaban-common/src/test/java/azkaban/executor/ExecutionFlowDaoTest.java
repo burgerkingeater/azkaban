@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import azkaban.db.DatabaseOperator;
-import azkaban.test.Utils;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.Utils;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
 import azkaban.utils.TestUtils;

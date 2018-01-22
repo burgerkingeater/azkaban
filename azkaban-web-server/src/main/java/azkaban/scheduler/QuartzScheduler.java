@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
 public class QuartzScheduler {
 
   //Unless specified, all Quartz jobs's identities comes with the default job name.
-  private static final String DEFAULT_JOB_NAME = "job1";
+  public static final String DEFAULT_JOB_NAME = "job1";
   private static final Logger logger = LoggerFactory.getLogger(QuartzScheduler.class);
   private Scheduler scheduler = null;
 
@@ -129,7 +129,8 @@ public class QuartzScheduler {
    * duplicate quartz schedules, we design the naming convention depending on use cases: <ul>
    * <li>User flow schedule: we use {@link org.quartz.JobKey#JobKey} to represent the identity of a
    * flow's schedule. The format follows "$projectID_$flowName" to guarantee no duplicates.
-   * <li>Quartz schedule for AZ internal use: the groupName should startTrigger with letters, rather than
+   * <li>Quartz schedule for AZ internal use: the groupName should startTrigger with letters, rather
+   * than
    * number, which is the first case.</ul>
    */
   public synchronized void registerJob(final String cronExpression, final QuartzJobDescription

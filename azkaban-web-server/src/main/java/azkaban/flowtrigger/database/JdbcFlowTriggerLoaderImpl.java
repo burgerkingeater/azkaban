@@ -165,7 +165,9 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
     final TriggerInstance triggerInstance = new TriggerInstance("1", null, new FlowConfigID(1,
         1, "1", 1), null, dependencyInstanceList, -1, null);
 
-    depLoader.uploadTriggerInstance(triggerInstance);
+    //depLoader.uploadTriggerInstance(triggerInstance);
+    final TriggerInstance triggerInst = depLoader
+        .getTriggerInstanceById("0006568b-09e0-4b07-ad8d-93a8bff3a4ae");
     System.out.println();
     //flowTriggers.add(FlowTriggerUtil.createRealFlowTrigger());
 
@@ -356,11 +358,10 @@ public class JdbcFlowTriggerLoaderImpl implements FlowTriggerLoader {
    * populated into the returned trigger instance.
    */
   public TriggerInstance getTriggerInstanceById(final String triggerInstanceId) {
-    final String query = String.format(SELECT_EXECUTIONS_BY_INSTANCE_ID, triggerInstanceId);
     TriggerInstance triggerInstance = null;
     try {
       final Collection<TriggerInstance> res = this.dbOperator
-          .query(query, new TriggerInstanceHandler());
+          .query(SELECT_EXECUTIONS_BY_INSTANCE_ID, new TriggerInstanceHandler(), triggerInstanceId);
       triggerInstance = !res.isEmpty() ? res.iterator().next() : null;
     } catch (final SQLException ex) {
       handleSQLException(ex);

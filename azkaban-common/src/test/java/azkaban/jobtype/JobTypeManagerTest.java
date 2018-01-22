@@ -16,7 +16,7 @@
 
 package azkaban.jobtype;
 
-import static azkaban.test.Utils.initServiceProvider;
+import static azkaban.testplugin.Utils.initServiceProvider;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;

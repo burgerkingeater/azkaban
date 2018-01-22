@@ -388,7 +388,7 @@ public class ExecutorManagerTest {
   }
 
   private ExecutableFlow waitFlowFinished(final ExecutableFlow flow) throws Exception {
-    azkaban.test.TestUtils.await().untilAsserted(() -> assertThat(getFlowStatus(flow))
+    azkaban.testplugin.TestUtils.await().untilAsserted(() -> assertThat(getFlowStatus(flow))
         .matches(Status::isStatusFinished, "isStatusFinished"));
     return fetchFlow(flow);
   }

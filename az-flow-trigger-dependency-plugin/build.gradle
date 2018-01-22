@@ -12,25 +12,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
-package azkaban.test;
-
-import java.util.concurrent.TimeUnit;
-import org.awaitility.Awaitility;
-import org.awaitility.core.ConditionFactory;
-
-/**
- * Common test utility methods.
- */
-public class TestUtils {
-
-
-  /**
-   * Wait for 10 seconds, max. Poll every 10ms.
-   */
-  public static ConditionFactory await() {
-    return Awaitility.await().atMost(10L, TimeUnit.SECONDS)
-        .pollInterval(10L, TimeUnit.MILLISECONDS);
-  }
+dependencies {
+    compile(project(':azkaban-web-server'))
+    compile(project(':azkaban-common'))
 }
+

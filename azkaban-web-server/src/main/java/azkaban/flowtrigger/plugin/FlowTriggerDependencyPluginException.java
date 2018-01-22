@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 LinkedIn Corp.
+ * Copyright 2018 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,15 @@
  * the License.
  */
 
-rootProject.name = 'azkaban'
+package azkaban.flowtrigger.plugin;
 
-include 'az-core'
-include 'az-exec-util'
-include 'azkaban-spi'
-include 'azkaban-db'
-include 'azkaban-common'
-include 'azkaban-exec-server'
-include 'azkaban-hadoop-security-plugin'
-include 'azkaban-solo-server'
-include 'azkaban-web-server'
-include 'test'
-include 'az-flow-trigger-dependency-plugin'
+public class FlowTriggerDependencyPluginException extends Exception {
 
+  public FlowTriggerDependencyPluginException(final String message) {
+    super(message);
+  }
+
+  public FlowTriggerDependencyPluginException(final Throwable cause) {
+    super(cause);
+  }
+}

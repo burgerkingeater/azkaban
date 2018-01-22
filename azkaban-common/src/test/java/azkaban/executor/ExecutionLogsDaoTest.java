@@ -19,8 +19,8 @@ package azkaban.executor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import azkaban.db.DatabaseOperator;
-import azkaban.test.Utils;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.Utils;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.FileIOUtils.LogData;
 import java.io.File;
 import java.sql.SQLException;

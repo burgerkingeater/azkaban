@@ -31,10 +31,17 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +103,44 @@ public class FlowTriggerScheduler {
     }
   }
 
+  public List<ScheduledFlowTrigger> getScheduledFlowTriggerJobs() {
+    final Scheduler quartzScheduler = this.scheduler.getScheduler();
+    try {
+      final List<String> groupNames = quartzScheduler.getJobGroupNames();
+
+      final List<ScheduledFlowTrigger> flowTriggerJobDetails = new ArrayList<>();
+      for (final String groupName : groupNames) {
+        final JobKey jobKey = new JobKey(QuartzScheduler.DEFAULT_JOB_NAME, groupName);
+        ScheduledFlowTrigger scheduledFlowTrigger = null;
+        try {
+          final JobDetail job = quartzScheduler.getJobDetail(jobKey);
+          final JobDataMap jobDataMap = job.getJobDataMap();
+          final FlowConfigID flowConfigID = (FlowConfigID) jobDataMap
+              .get(FlowTriggerQuartzJob.FLOW_CONFIG_ID);
+          final String projectJson = jobDataMap.getString(FlowTriggerQuartzJob.PROJECT);
+          final Project project = FlowUtils.toProject(projectJson);
+          final FlowTrigger flowTrigger = (FlowTrigger) jobDataMap
+              .get(FlowTriggerQuartzJob.FLOW_TRIGGER);
+          final String submitUser = jobDataMap.getString(FlowTriggerQuartzJob.SUBMIT_USER);
+          final List<? extends Trigger> quartzTriggers = quartzScheduler.getTriggersOfJob(jobKey);
+          scheduledFlowTrigger = new ScheduledFlowTrigger(
+              project.getName(),
+              flowConfigID.getFlowId(), flowTrigger, submitUser, quartzTriggers.isEmpty() ? null
+              : quartzTriggers.get(0));
+        } catch (final Exception ex) {
+          logger
+              .error(String.format("unable to get flow trigger by job key %s", jobKey, ex));
+          scheduledFlowTrigger = null;
+        }
+
+        flowTriggerJobDetails.add(scheduledFlowTrigger);
+      }
+      return flowTriggerJobDetails;
+    } catch (final SchedulerException ex) {
+      logger.error("unable to get scheduled flow triggers", ex);
+      return new ArrayList<>();
+    }
+  }
 
   /**
    * Unschedule all possible flows in a project
@@ -120,4 +165,42 @@ public class FlowTriggerScheduler {
     this.scheduler.shutdown();
   }
 
+  public class ScheduledFlowTrigger {
+
+    private final String projectName;
+    private final String flowId;
+    private final FlowTrigger flowTrigger;
+    private final Trigger quartzTrigger;
+    private final String submitUser;
+
+    public ScheduledFlowTrigger(final String projectName, final String flowId,
+        final FlowTrigger flowTrigger, final String submitUser,
+        final Trigger quartzTrigger) {
+      this.projectName = projectName;
+      this.flowId = flowId;
+      this.flowTrigger = flowTrigger;
+      this.submitUser = submitUser;
+      this.quartzTrigger = quartzTrigger;
+    }
+
+    public String getProjectName() {
+      return this.projectName;
+    }
+
+    public String getFlowId() {
+      return this.flowId;
+    }
+
+    public FlowTrigger getFlowTrigger() {
+      return this.flowTrigger;
+    }
+
+    public Trigger getQuartzTrigger() {
+      return this.quartzTrigger;
+    }
+
+    public String getSubmitUser() {
+      return this.submitUser;
+    }
+  }
 }

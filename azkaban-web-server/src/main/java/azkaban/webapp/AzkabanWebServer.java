@@ -54,6 +54,7 @@ import azkaban.webapp.plugin.TriggerPlugin;
 import azkaban.webapp.plugin.ViewerPlugin;
 import azkaban.webapp.servlet.AbstractAzkabanServlet;
 import azkaban.webapp.servlet.ExecutorServlet;
+import azkaban.webapp.servlet.FlowTriggerInstanceServlet;
 import azkaban.webapp.servlet.FlowTriggerServlet;
 import azkaban.webapp.servlet.HistoryServlet;
 import azkaban.webapp.servlet.IndexRedirectServlet;
@@ -236,24 +237,25 @@ public class AzkabanWebServer extends AzkabanServer {
       public void run() {
         try {
           if (webServer.scheduler != null) {
+            logger.info("Shutting down quartz scheduler...");
             webServer.scheduler.shutdown();
           }
-        } catch (final Exception e) {
-          logger.error(("Exception while shutting down quartz scheduler."), e);
-        }
 
-        try {
+          if (webServer.flowTriggerService != null) {
+            logger.info("Shutting down flow trigger service...");
+            webServer.flowTriggerService.shutdown();
+          }
+
+          logger.info("Logging top memory consumers...");
           logTopMemoryConsumers();
+
+          logger.info("Shutting down http server...");
+          webServer.close();
+
         } catch (final Exception e) {
-          logger.error(("Exception when logging top memory consumers"), e);
+          logger.error(("Exception while shutting down web server."), e);
         }
 
-        logger.info("Shutting down http server...");
-        try {
-          webServer.close();
-        } catch (final Exception e) {
-          logger.error("Error while shutting down http server.", e);
-        }
         logger.info("kk thx bye.");
       }
 
@@ -499,6 +501,7 @@ public class AzkabanWebServer extends AzkabanServer {
     root.addServlet(new ServletHolder(new StatsServlet()), "/stats");
     root.addServlet(new ServletHolder(new StatusServlet(this.statusService)), "/status");
     root.addServlet(new ServletHolder(new NoteServlet()), "/notes");
+    root.addServlet(new ServletHolder(new FlowTriggerInstanceServlet()), "/flowtriggerinstance");
     root.addServlet(new ServletHolder(new FlowTriggerServlet()), "/flowtrigger");
 
     final ServletHolder restliHolder = new ServletHolder(new RestliServlet());

@@ -24,7 +24,7 @@ import azkaban.AzkabanCommonModule;
 import azkaban.Constants.ConfigurationKeys;
 import azkaban.db.AzDBTestUtility;
 import azkaban.db.DatabaseOperator;
-import azkaban.test.TestUtils;
+import azkaban.testplugin.TestUtils;
 import azkaban.utils.Props;
 import azkaban.webapp.AzkabanWebServerModule;
 import com.google.inject.Guice;

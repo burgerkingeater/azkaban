@@ -19,6 +19,7 @@ package azkaban.jobExecutor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import azkaban.flow.CommonJobProperties;
+import azkaban.testplugin.Utils;
 import azkaban.utils.Props;
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +47,7 @@ public class ProcessJobTest {
 
   @BeforeClass
   public static void classInit() throws Exception {
-    azkaban.test.Utils.initServiceProvider();
+    Utils.initServiceProvider();
 
   }
 

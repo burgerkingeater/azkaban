@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import azkaban.Constants;
 import azkaban.flow.Edge;
 import azkaban.flow.Flow;
-import azkaban.test.executions.ExecutionsTestUtil;
+import azkaban.testplugin.executions.ExecutionsTestUtil;
 import azkaban.utils.Props;
 import org.junit.Before;
 import org.junit.Test;
