@@ -84,6 +84,7 @@ public class AzkabanProcess {
 
     final ProcessBuilder builder = new ProcessBuilder(this.cmd);
     builder.directory(new File(this.workingDir));
+    this.logger.info("absolutePath:" + builder.directory().getAbsolutePath());
     builder.environment().putAll(this.env);
     builder.redirectErrorStream(true);
     this.process = builder.start();

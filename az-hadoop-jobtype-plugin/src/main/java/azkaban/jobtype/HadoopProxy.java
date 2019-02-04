@@ -17,12 +17,12 @@ package azkaban.jobtype;
 
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
-import java.io.File;
-import org.apache.log4j.Logger;
 import azkaban.flow.CommonJobProperties;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.security.commons.HadoopSecurityManagerException;
 import azkaban.utils.Props;
+import java.io.File;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -36,7 +36,7 @@ public class HadoopProxy {
   private String userToProxy = null;
   private File tokenFile = null;
 
-  public HadoopProxy(Props sysProps, Props jobProps, final Logger logger) {
+  public HadoopProxy(final Props sysProps, final Props jobProps, final Logger logger) {
     init(sysProps, jobProps, logger);
   }
 
@@ -51,15 +51,15 @@ public class HadoopProxy {
    * @param jobProps job properties
    * @param logger logger handler
    */
-  private void init(Props sysProps, Props jobProps, final Logger logger) {
-    shouldProxy = sysProps.getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
-    jobProps.put(HadoopSecurityManager.ENABLE_PROXYING, Boolean.toString(shouldProxy));
-    obtainTokens = sysProps.getBoolean(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, false);
-    if (shouldProxy) {
+  private void init(final Props sysProps, final Props jobProps, final Logger logger) {
+    this.shouldProxy = sysProps.getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
+    jobProps.put(HadoopSecurityManager.ENABLE_PROXYING, Boolean.toString(this.shouldProxy));
+    this.obtainTokens = sysProps.getBoolean(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, false);
+    if (this.shouldProxy) {
       logger.info("Initiating hadoop security manager.");
       try {
-        hadoopSecurityManager = HadoopJobUtils.loadHadoopSecurityManager(sysProps, logger);
-      } catch (RuntimeException e) {
+        this.hadoopSecurityManager = HadoopJobUtils.loadHadoopSecurityManager(sysProps, logger);
+      } catch (final RuntimeException e) {
         e.printStackTrace();
         throw new RuntimeException("Failed to get hadoop security manager!"
             + e.getCause());
@@ -74,14 +74,18 @@ public class HadoopProxy {
    * @param jobProps job properties
    * @param logger logger handler
    */
-  public void setupPropsForProxy(Props props, Props jobProps, final Logger logger)
+  public void setupPropsForProxy(final Props props, final Props jobProps, final Logger logger)
       throws Exception {
     if (isProxyEnabled()) {
-      userToProxy = jobProps.getString(HadoopSecurityManager.USER_TO_PROXY);
+      this.userToProxy = jobProps.getString(HadoopSecurityManager.USER_TO_PROXY);
       logger.info("Need to proxy. Getting tokens.");
-      // get tokens in to a file, and put the location in props
-      tokenFile = HadoopJobUtils.getHadoopTokens(hadoopSecurityManager, props, logger);
-      jobProps.put("env." + HADOOP_TOKEN_FILE_LOCATION, tokenFile.getAbsolutePath());
+      final String HADOOP_TOKEN_FILE_LOCATION_KEY = "env." + HADOOP_TOKEN_FILE_LOCATION;
+      if (!jobProps.containsKey(HADOOP_TOKEN_FILE_LOCATION_KEY)) {
+        // get tokens into a file, and put the location in props
+        this.tokenFile = HadoopJobUtils.getHadoopTokens(this.hadoopSecurityManager, props, logger);
+        logger.info("tokenfile" + this.tokenFile);
+        jobProps.put(HADOOP_TOKEN_FILE_LOCATION_KEY, this.tokenFile.getAbsolutePath());
+      }
     }
   }
 
@@ -93,15 +97,16 @@ public class HadoopProxy {
    * @param logger logger handler
    * @return proxy secure JVM argument string
    */
-  public String getJVMArgument(Props sysProps, Props jobProps, final Logger logger) {
+  public String getJVMArgument(final Props sysProps, final Props jobProps, final Logger logger) {
     String secure = "";
 
-    if (shouldProxy) {
+    if (this.shouldProxy) {
       logger.info("Setting up secure proxy info for child process");
       secure = " -D" + HadoopSecurityManager.USER_TO_PROXY
           + "=" + jobProps.getString(HadoopSecurityManager.USER_TO_PROXY);
 
-      String extraToken = sysProps.getString(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, "false");
+      final String extraToken = sysProps
+          .getString(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, "false");
       if (extraToken != null) {
         secure += " -D" + HadoopSecurityManager.OBTAIN_BINARY_TOKEN + "=" + extraToken;
       }
@@ -119,18 +124,18 @@ public class HadoopProxy {
    * @param logger logger handler
    */
   public void cancelHadoopTokens(final Logger logger) {
-    if (tokenFile == null) {
+    if (this.tokenFile == null) {
       return;
     }
     try {
-      hadoopSecurityManager.cancelTokens(tokenFile, userToProxy, logger);
-    } catch (HadoopSecurityManagerException e) {
+      this.hadoopSecurityManager.cancelTokens(this.tokenFile, this.userToProxy, logger);
+    } catch (final HadoopSecurityManagerException e) {
       logger.error(e.getCause() + e.getMessage());
-    } catch (Exception e) {
+    } catch (final Exception e) {
       logger.error(e.getCause() + e.getMessage());
     }
-    if (tokenFile.exists()) {
-      tokenFile.delete();
+    if (this.tokenFile.exists()) {
+      this.tokenFile.delete();
     }
   }
 
@@ -140,14 +145,14 @@ public class HadoopProxy {
    * @param jobProps job properties
    * @param logger logger handler
    */
-  public void killAllSpawnedHadoopJobs(Props jobProps, final Logger logger) {
-    if (tokenFile == null) {
+  public void killAllSpawnedHadoopJobs(final Props jobProps, final Logger logger) {
+    if (this.tokenFile == null) {
       return; // do null check for tokenFile
     }
 
     final String logFilePath = jobProps.getString(CommonJobProperties.JOB_LOG_FILE);
     logger.info("Log file path is: " + logFilePath);
 
-    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps, tokenFile, logger);
+    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps, this.tokenFile, logger);
   }
 }

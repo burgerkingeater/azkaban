@@ -15,14 +15,11 @@
  */
 package azkaban.jobtype;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.Map;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.log4j.Logger;
 import azkaban.flow.CommonJobProperties;
 import azkaban.utils.Props;
+import java.io.File;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -38,9 +35,8 @@ import azkaban.utils.Props;
  */
 public class HadoopConfigurationInjector {
 
-  private static Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
-  // File to which the Hadoop configuration to inject will be written.
-  private static final String INJECT_FILE = "hadoop-inject.xml";
+  private static final Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
+
   // Prefix for properties to be automatically injected into the Hadoop conf.
   public static final String INJECT_PREFIX = "hadoop-inject.";
   public static final String WORKFLOW_ID_SEPERATOR = "$";
@@ -52,7 +48,7 @@ public class HadoopConfigurationInjector {
    *
    * @param props The Azkaban properties
    */
-  public static void injectResources(Props props) {
+  public static void injectResources(final Props props) {
     // Add mapred, yarn and hdfs site configs (in addition to core-site, which
     // is automatically added) as default resources before we add the injected
     // configuration. This will cause the injected properties to override the
@@ -66,7 +62,7 @@ public class HadoopConfigurationInjector {
       Configuration.addDefaultResource("hdfs-default.xml");
       Configuration.addDefaultResource("hdfs-site.xml");
     }
-    Configuration.addDefaultResource(INJECT_FILE);
+    //Configuration.addDefaultResource(INJECT_FILE);
   }
 
   /**
@@ -79,48 +75,48 @@ public class HadoopConfigurationInjector {
    * @param props The Azkaban properties
    * @param workingDir The Azkaban job working directory
    */
-  public static void prepareResourcesToInject(Props props, String workingDir) {
+  public static void prepareResourcesToInject(final Props props, final String workingDir) {
     try {
-      Configuration conf = new Configuration(false);
-
-      // First, inject a series of Azkaban links. These are equivalent to
-      // CommonJobProperties.[EXECUTION,WORKFLOW,JOB,JOBEXEC,ATTEMPT]_LINK
-      addHadoopProperties(props);
-
-      // Next, automatically inject any properties that begin with the
-      // designated injection prefix.
-      Map<String, String> confProperties = props.getMapByPrefix(INJECT_PREFIX);
-
-      for (Map.Entry<String, String> entry : confProperties.entrySet()) {
-        String confKey = entry.getKey().replace(INJECT_PREFIX, "");
-        String confVal = entry.getValue();
-        if (confVal != null) {
-          conf.set(confKey, confVal);
-        }
-      }
-
-      // Now write out the configuration file to inject.
-      File file = getConfFile(props, workingDir, INJECT_FILE);
-      OutputStream xmlOut = new FileOutputStream(file);
-      conf.writeXml(xmlOut);
-      xmlOut.close();
-    } catch (Throwable e) {
+//      Configuration conf = new Configuration(false);
+//
+//      // First, inject a series of Azkaban links. These are equivalent to
+//      // CommonJobProperties.[EXECUTION,WORKFLOW,JOB,JOBEXEC,ATTEMPT]_LINK
+//      addHadoopProperties(props);
+//
+//      // Next, automatically inject any properties that begin with the
+//      // designated injection prefix.
+//      Map<String, String> confProperties = props.getMapByPrefix(INJECT_PREFIX);
+//
+//      for (Map.Entry<String, String> entry : confProperties.entrySet()) {
+//        String confKey = entry.getKey().replace(INJECT_PREFIX, "");
+//        String confVal = entry.getValue();
+//        if (confVal != null) {
+//          conf.set(confKey, confVal);
+//        }
+//      }
+//
+//      // Now write out the configuration file to inject.
+//      File file = getConfFile(props, workingDir, INJECT_FILE);
+//      OutputStream xmlOut = new FileOutputStream(file);
+//      conf.writeXml(xmlOut);
+//      xmlOut.close();
+    } catch (final Throwable e) {
       _logger.error("Encountered error while preparing the Hadoop configuration resource file", e);
     }
   }
 
-  private static void addHadoopProperty(Props props, String propertyName) {
+  private static void addHadoopProperty(final Props props, final String propertyName) {
     props.put(INJECT_PREFIX + propertyName, props.get(propertyName));
   }
 
-  private static void addHadoopWorkflowProperty(Props props, String propertyName) {
-    String workflowID = props.get(CommonJobProperties.PROJECT_NAME)
+  private static void addHadoopWorkflowProperty(final Props props, final String propertyName) {
+    final String workflowID = props.get(CommonJobProperties.PROJECT_NAME)
         + WORKFLOW_ID_SEPERATOR + props.get(CommonJobProperties.FLOW_ID);
     props.put(INJECT_PREFIX + propertyName, workflowID);
   }
 
-  private static void addHadoopProperties(Props props) {
-    String[] propsToInject = new String[]{
+  private static void addHadoopProperties(final Props props) {
+    final String[] propsToInject = new String[]{
         CommonJobProperties.EXEC_ID,
         CommonJobProperties.FLOW_ID,
         CommonJobProperties.JOB_ID,
@@ -138,7 +134,7 @@ public class HadoopConfigurationInjector {
         CommonJobProperties.SUBMIT_USER
     };
 
-    for (String propertyName : propsToInject) {
+    for (final String propertyName : propsToInject) {
       addHadoopProperty(props, propertyName);
     }
     addHadoopWorkflowProperty(props, WORKFLOW_ID_CONFIG);
@@ -151,8 +147,9 @@ public class HadoopConfigurationInjector {
    * @param workingDir The Azkaban job working directory
    * @param fileName The desired configuration file name
    */
-  public static File getConfFile(Props props, String workingDir, String fileName) {
-    File jobDir = new File(workingDir, getDirName(props));
+  public static File getConfFile(final Props props, final String workingDir,
+      final String fileName) {
+    final File jobDir = new File(workingDir, getDirName(props));
     if (!jobDir.exists()) {
       jobDir.mkdir();
     }
@@ -165,7 +162,7 @@ public class HadoopConfigurationInjector {
    *
    * @param props The Azkaban properties
    */
-  public static String getDirName(Props props) {
+  public static String getDirName(final Props props) {
     String dirSuffix = props.get(CommonJobProperties.NESTED_FLOW_PATH);
 
     if ((dirSuffix == null) || (dirSuffix.length() == 0)) {
@@ -185,7 +182,7 @@ public class HadoopConfigurationInjector {
    * @param props The Azkaban properties
    * @param workingDir The Azkaban job working directory
    */
-  public static String getPath(Props props, String workingDir) {
+  public static String getPath(final Props props, final String workingDir) {
     return new File(workingDir, getDirName(props)).toString();
   }
 
@@ -196,8 +193,8 @@ public class HadoopConfigurationInjector {
    * @param conf The Hadoop configuration
    * @param name The property name to load from the Azkaban properties into the Hadoop configuration
    */
-  public static void loadProp(Props props, Configuration conf, String name) {
-    String prop = props.get(name);
+  public static void loadProp(final Props props, final Configuration conf, final String name) {
+    final String prop = props.get(name);
     if (prop != null) {
       conf.set(name, prop);
     }

@@ -82,7 +82,7 @@ public class FlowRunnerTestUtil {
 
     InteractiveTestJob.clearTestJobs();
 
-    this.jobtypeManager = new JobTypeManager(null, null, this.getClass().getClassLoader());
+    this.jobtypeManager = new JobTypeManager(null);
     final JobTypePluginSet pluginSet = this.jobtypeManager.getJobTypePluginSet();
     pluginSet.addPluginClass("test", InteractiveTestJob.class);
   }

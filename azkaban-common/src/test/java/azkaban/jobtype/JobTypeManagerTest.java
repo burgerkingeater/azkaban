@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import azkaban.flow.CommonJobProperties;
 import azkaban.jobExecutor.Job;
 import azkaban.utils.Props;
 import com.google.common.io.Resources;
@@ -62,8 +63,7 @@ public class JobTypeManagerTest {
     final URL resourceUrl = Resources.getResource("plugins/jobtypes");
     assertNotNull(resourceUrl);
     FileUtils.copyDirectory(new File(resourceUrl.toURI()), jobTypeDir);
-    this.manager = new JobTypeManager(this.testPluginDirPath, null,
-        this.getClass().getClassLoader());
+    this.manager = new JobTypeManager(this.testPluginDirPath);
   }
 
   @After
@@ -159,12 +159,13 @@ public class JobTypeManagerTest {
    * Test building classes
    */
   @Test
-  public void testBuildClass() throws Exception {
+  public void testBuildClass() {
     final Props jobProps = new Props();
     jobProps.put("type", "anothertestjob");
     jobProps.put("test", "test1");
     jobProps.put("pluginprops3", "4");
-    final Job job = this.manager.buildJobExecutor("anothertestjob", jobProps, this.logger);
+    jobProps.put(CommonJobProperties.JOB_ID, "anothertestjob");
+    final Job job = this.manager.buildJobExecutor(jobProps, this.logger);
 
     assertTrue(job instanceof FakeJavaJob);
     final FakeJavaJob fjj = (FakeJavaJob) job;
@@ -183,12 +184,13 @@ public class JobTypeManagerTest {
    * Test building classes 2
    */
   @Test
-  public void testBuildClass2() throws Exception {
+  public void testBuildClass2() {
     final Props jobProps = new Props();
     jobProps.put("type", "testjob");
     jobProps.put("test", "test1");
     jobProps.put("pluginprops3", "4");
-    final Job job = this.manager.buildJobExecutor("testjob", jobProps, this.logger);
+    jobProps.put(CommonJobProperties.JOB_ID, "testjob");
+    final Job job = this.manager.buildJobExecutor(jobProps, this.logger);
 
     assertTrue(job instanceof FakeJavaJob2);
     final FakeJavaJob2 fjj = (FakeJavaJob2) job;

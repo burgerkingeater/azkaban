@@ -22,15 +22,16 @@ import azkaban.event.EventListener;
 import azkaban.execapp.FlowRunner;
 import azkaban.execapp.JobRunner;
 import azkaban.executor.ExecutableNode;
+import azkaban.remote.YARNFlowRunner;
 import azkaban.spi.EventType;
 
 public class LocalFlowWatcher extends FlowWatcher {
 
   private final LocalFlowWatcherListener watcherListener;
-  private FlowRunner runner;
+  private YARNFlowRunner runner;
   private boolean isShutdown = false;
 
-  public LocalFlowWatcher(final FlowRunner runner) {
+  public LocalFlowWatcher(final YARNFlowRunner runner) {
     super(runner.getExecutableFlow().getExecutionId());
     super.setFlow(runner.getExecutableFlow());
 

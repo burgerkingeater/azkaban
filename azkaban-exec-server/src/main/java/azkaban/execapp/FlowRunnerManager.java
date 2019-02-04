@@ -24,7 +24,6 @@ import azkaban.Constants.ConfigurationKeys;
 import azkaban.event.Event;
 import azkaban.event.EventListener;
 import azkaban.execapp.event.FlowWatcher;
-import azkaban.execapp.event.LocalFlowWatcher;
 import azkaban.execapp.event.RemoteFlowWatcher;
 import azkaban.execapp.metric.NumFailedFlowMetric;
 import azkaban.executor.AlerterHolder;
@@ -151,7 +150,6 @@ public class FlowRunnerManager implements EventListener,
   private final boolean validateProxyUser;
   private PollingService pollingService;
   private int threadPoolQueueSize = -1;
-  private Props globalProps;
   private long lastCleanerThreadCheckTime = -1;
   private long executionDirRetention = 60 * 1000; // 1 min
   // date time of the the last flow submitted.
@@ -203,16 +201,9 @@ public class FlowRunnerManager implements EventListener,
 
     this.validateProxyUser = this.azkabanProps.getBoolean("proxy.user.lock.down", false);
 
-    final String globalPropsPath = props.getString("executor.global.properties", null);
-    if (globalPropsPath != null) {
-      this.globalProps = new Props(null, globalPropsPath);
-    }
-
     this.jobtypeManager =
-        new JobTypeManager(props.getString(
-            AzkabanExecutorServer.JOBTYPE_PLUGIN_DIR,
-            JobTypeManager.DEFAULT_JOBTYPEPLUGINDIR), this.globalProps,
-            getClass().getClassLoader());
+        new JobTypeManager(props.getString(AzkabanExecutorServer.JOBTYPE_PLUGIN_DIR,
+            JobTypeManager.DEFAULT_JOBTYPEPLUGINDIR));
 
     ProjectCacheCleaner cleaner = null;
     try {
@@ -328,14 +319,6 @@ public class FlowRunnerManager implements EventListener,
     return this.lastFlowSubmittedDate;
   }
 
-  public Props getGlobalProps() {
-    return this.globalProps;
-  }
-
-  public void setGlobalProps(final Props globalProps) {
-    this.globalProps = globalProps;
-  }
-
   public void submitFlow(final int execId) throws ExecutorManagerException {
     if (isAlreadyRunning(execId)) {
       return;
@@ -413,7 +396,7 @@ public class FlowRunnerManager implements EventListener,
       final FlowRunner runner = this.runningFlows.get(pipelineExecId);
 
       if (runner != null) {
-        watcher = new LocalFlowWatcher(runner);
+        //watcher = new LocalFlowWatcher(runner);
       } else {
         // also ends up here if execute is called with pipelineExecId that's not running any more
         // (it could have just finished, for example)
