@@ -14,17 +14,16 @@
  * the License.
  */
 
-package azkaban.execapp;
+package azkaban.execapp.job;
 
 import azkaban.jobExecutor.Job;
 
-/**
- * The job launcher which launches an azkaban job as a YARN application.
- */
-class YARNJobLauncher implements JobLauncher {
+interface JobLauncher {
 
-  @Override
-  public void launch(final Job azkabanJob) {
-
-  }
+  /**
+   * Launches an azkaban job.
+   *
+   * @param azkabanJob the job to launch
+   */
+  void launch(Job azkabanJob);
 }
