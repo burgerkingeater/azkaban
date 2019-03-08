@@ -25,15 +25,18 @@ import azkaban.utils.Props;
  */
 public class Launcher {
 
+  private static final String EXECUTION_DIR = "execution";
+  private static final String JOBTYPE_DIR = "jobtype";
+  private static final String AZ_DIR = "azkaban";
+
   private JobTypeManager jobTypeManager;
-  private int projectId;
-  private int projectVersion;
 
   /**
    * launch a job
    */
-  private void launch(final Props jobProps) {
-    prepare(jobProps);
+  private void launch(final String projectZipPath, final String jobTypeZipPath,
+      final Props jobProps) {
+    downloadProjectArtifact(projectZipPath);
     run(jobProps);
   }
 
@@ -50,7 +53,7 @@ public class Launcher {
 
   }
 
-  private void downloadProjectArtifact(final String projectId, final int projectVersion) {
+  private void downloadProjectArtifact(final String projectZipPath) {
 
   }
 }
