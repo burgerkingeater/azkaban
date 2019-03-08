@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.launch;
+package azkaban.remote;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
