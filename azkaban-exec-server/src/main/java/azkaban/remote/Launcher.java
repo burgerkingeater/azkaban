@@ -16,11 +16,21 @@
 
 package azkaban.remote;
 
-import azkaban.jobtype.JobTypeManager;
 import azkaban.utils.Props;
+import java.io.IOException;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
 
 /**
- * This class is responsible for executing an azkaban job in an execution environment
+ * This class is responsible for provoking an azkaban job in an isolated execution unit.
  * e.g, a container.
  */
 public class Launcher {
@@ -29,15 +39,40 @@ public class Launcher {
   private static final String JOBTYPE_DIR = "jobtype";
   private static final String AZ_DIR = "azkaban";
 
-  private JobTypeManager jobTypeManager;
+  private static class ARGUMENT {
+
+    private static final String PROJECT_PATH = "project";
+  }
+
+  //private JobTypeManager jobTypeManager;
+
+  private static Options createOptions() {
+    final Option option = new Option(ARGUMENT.PROJECT_PATH, true, "HDFS path of project zip file");
+    final Options options = new Options();
+    options.addOption(option);
+    return options;
+  }
+
+  public static void main(final String[] args) throws ParseException {
+    final Options options = createOptions();
+    final CommandLineParser parser = new BasicParser();
+    final CommandLine commandLine = parser.parse(options, args);
+    final String projectPath = commandLine.getOptionValue(ARGUMENT.PROJECT_PATH);
+
+    final Launcher launcher = new Launcher();
+    try {
+      launcher.downloadProjectArtifact(projectPath);
+    } catch (final IOException ex) {
+    }
+  }
 
   /**
    * launch a job
    */
   private void launch(final String projectZipPath, final String jobTypeZipPath,
-      final Props jobProps) {
+      final Props jobProps) throws IOException {
     downloadProjectArtifact(projectZipPath);
-    run(jobProps);
+    //run(jobProps);
   }
 
   private void run(final Props jobProps) {
@@ -53,7 +88,30 @@ public class Launcher {
 
   }
 
-  private void downloadProjectArtifact(final String projectZipPath) {
+  /**
+   * Copies {@code src} to {@code dst}. If {@code src} does not have a scheme, it is assumed to be
+   * on local filesystem.
+   *
+   * @param src Source {@code Path}
+   * @param dst Destination {@code Path}
+   * @param conf HDFS configuration
+   */
+  private void copySrcToDest(final Path src, final Path dst, final Configuration conf)
+      throws IOException {
+    final FileSystem srcFs;
+    if (src.toUri().getScheme() == null) {
+      srcFs = FileSystem.getLocal(conf);
+    } else {
+      srcFs = src.getFileSystem(conf);
+    }
+    final FileSystem dstFs = dst.getFileSystem(conf);
+    FileUtil.copy(srcFs, src, dstFs, dst, false, true, conf);
+  }
 
+  private void downloadProjectArtifact(final String projectZipPath) throws IOException {
+    final Path src = new Path(projectZipPath);
+    final Path dest = new Path(EXECUTION_DIR);
+    System.out.println("downloading project " + projectZipPath + ":" + " to " + EXECUTION_DIR);
+    //copySrcToDest(src, dest, new Configuration());
   }
 }
