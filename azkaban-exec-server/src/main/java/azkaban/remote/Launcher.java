@@ -18,16 +18,6 @@ package azkaban.remote;
 
 import azkaban.utils.Props;
 import java.io.IOException;
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
 
 /**
  * This class is responsible for provoking an azkaban job in an isolated execution unit.
@@ -46,6 +36,7 @@ public class Launcher {
 
   //private JobTypeManager jobTypeManager;
 
+  /*
   private static Options createOptions() {
     final Option option = new Option(ARGUMENT.PROJECT_PATH, true, "HDFS path of project zip file");
     final Options options = new Options();
@@ -64,14 +55,14 @@ public class Launcher {
       launcher.downloadProjectArtifact(projectPath);
     } catch (final IOException ex) {
     }
-  }
+  }*/
 
   /**
    * launch a job
    */
   private void launch(final String projectZipPath, final String jobTypeZipPath,
       final Props jobProps) throws IOException {
-    downloadProjectArtifact(projectZipPath);
+    //downloadProjectArtifact(projectZipPath);
     //run(jobProps);
   }
 
@@ -96,6 +87,7 @@ public class Launcher {
    * @param dst Destination {@code Path}
    * @param conf HDFS configuration
    */
+  /*
   private void copySrcToDest(final Path src, final Path dst, final Configuration conf)
       throws IOException {
     final FileSystem srcFs;
@@ -113,5 +105,5 @@ public class Launcher {
     final Path dest = new Path(EXECUTION_DIR);
     System.out.println("downloading project " + projectZipPath + ":" + " to " + EXECUTION_DIR);
     //copySrcToDest(src, dest, new Configuration());
-  }
+  }*/
 }
