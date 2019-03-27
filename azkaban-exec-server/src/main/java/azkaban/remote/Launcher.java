@@ -16,25 +16,57 @@
 
 package azkaban.remote;
 
+import azkaban.jobtype.JobTypeManager;
 import azkaban.utils.Props;
+import azkaban.utils.Utils;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.ZipFile;
 
 /**
  * This class is responsible for provoking an azkaban job in an isolated execution unit.
  * e.g, a container.
+ * It takes following arguments:
+ * 1. local path of the project zip(or directory).
+ * 2. local path of the jobtype zip(or directory).
+ * 3. local path of azkaban lib directory.
  */
 public class Launcher {
 
-  private static final String EXECUTION_DIR = "execution";
+  private static final String PROJECT_DIR = "project";
   private static final String JOBTYPE_DIR = "jobtype";
-  private static final String AZ_DIR = "azkaban";
+  private static final String AZ_DIR = "azkaban_lib";
+  private final Path executionDir;
 
-  private static class ARGUMENT {
-
-    private static final String PROJECT_PATH = "project";
+  public Launcher(final Path executionDir) {
+    Preconditions.checkArgument(Files.exists(executionDir));
+    this.executionDir = executionDir;
   }
 
-  //private JobTypeManager jobTypeManager;
+  public static void main(final String[] args) {
+    //  Launcher
+  }
+
+  private void unzip(final Path src, final Path dest) throws IOException {
+    final ZipFile zip = new ZipFile(src.toFile());
+    Utils.unzip(zip, dest.toFile());
+  }
+
+
+  private JobTypeManager jobTypeManager;
+
+  /**
+   * Sets directories up for job run, which includes:
+   * 1. Unzip project zip to project dir.
+   * 2. Unzip job type zip to job type dir.
+   */
+  private void setup(final Path projectZip, final Path jobTypeZip) throws IOException {
+    unzip(projectZip, Paths.get(this.executionDir.toString(), PROJECT_DIR));
+    unzip(jobTypeZip, Paths.get(this.executionDir.toString(), JOBTYPE_DIR));
+  }
 
   /*
   private static Options createOptions() {
