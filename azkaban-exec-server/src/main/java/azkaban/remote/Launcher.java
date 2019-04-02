@@ -16,61 +16,72 @@
 
 package azkaban.remote;
 
-import azkaban.jobtype.JobTypeManager;
 import azkaban.utils.Props;
-import azkaban.utils.Utils;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.zip.ZipFile;
+
 
 /**
- * This class is responsible for provoking an azkaban job in an isolated execution unit.
+ * This class is responsible for executing an azkaban job in an isolated execution unit.
  * e.g, a container.
  * It takes following arguments:
- * 1. local path of the project zip(or directory).
- * 2. local path of the jobtype zip(or directory).
+ * 1. local path of project directory.
+ * 2. local path of jobtype directory.
  * 3. local path of azkaban lib directory.
  */
 public class Launcher {
 
   private static final String PROJECT_DIR = "project";
   private static final String JOBTYPE_DIR = "jobtype";
-  private static final String AZ_DIR = "azkaban_lib";
-  private final Path executionDir;
+  private static final String AZ_DIR = "azkaban_libs";
 
-  public Launcher(final Path executionDir) {
+  private final Path executionDir;
+  private final Path projectDir;
+  private final Path jobtypeDir;
+  private final Path azLibDir;
+
+
+  public Launcher(final Path executionDir, final String projectDir, final String jobtypeDir,
+      final String azLibDir) {
     Preconditions.checkArgument(Files.exists(executionDir));
     this.executionDir = executionDir;
+    this.projectDir = Paths.get(this.executionDir.toString(), projectDir);
+    this.jobtypeDir = Paths.get(this.executionDir.toString(), jobtypeDir);
+    this.azLibDir = Paths.get(this.executionDir.toString(), azLibDir);
   }
 
-  public static void main(final String[] args) {
+  public static void main(final String[] args) throws IOException {
+    System.out.println("hihihi");
     //  Launcher
+    /*
+    final String projectDir = args[0];
+    final String jobtypeDir = args[1];
+    final String azLibDir = args[2];
+    final Path currentWorkingDir = Paths.get("").toAbsolutePath();
+
+    final Launcher launcher = new Launcher(currentWorkingDir, projectDir, jobtypeDir, azLibDir);
+    launcher.setup();*/
   }
-
-  private void unzip(final Path src, final Path dest) throws IOException {
-    final ZipFile zip = new ZipFile(src.toFile());
-    Utils.unzip(zip, dest.toFile());
-  }
-
-
-  private JobTypeManager jobTypeManager;
 
   /**
    * Sets directories up for job run, which includes:
-   * 1. Unzip project zip to project dir.
-   * 2. Unzip job type zip to job type dir.
+   * 1. Rename project dir
+   * 2. Rename job type dir
+   * 3. Rename AZ lib dir
    */
-  private void setup(final Path projectZip, final Path jobTypeZip) throws IOException {
-    unzip(projectZip, Paths.get(this.executionDir.toString(), PROJECT_DIR));
-    unzip(jobTypeZip, Paths.get(this.executionDir.toString(), JOBTYPE_DIR));
+  private void setup() throws IOException {
+    Files.move(this.projectDir, Paths.get(this.executionDir.toString(), PROJECT_DIR));
+    Files.move(this.jobtypeDir, Paths.get(this.executionDir.toString(), JOBTYPE_DIR));
+    Files.move(this.azLibDir, Paths.get(this.executionDir.toString(), AZ_DIR));
   }
+
 
   /*
   private static Options createOptions() {
-    final Option option = new Option(ARGUMENT.PROJECT_PATH, true, "HDFS path of project zip file");
+    final org.apache.commons.cli.Option option = new Option(ARGUMENT.PROJECT_PATH, true, "HDFS path of project zip file");
     final Options options = new Options();
     options.addOption(option);
     return options;
