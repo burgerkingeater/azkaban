@@ -43,7 +43,6 @@ public class Launcher {
   private final Path jobtypeDir;
   private final Path azLibDir;
 
-
   public Launcher(final Path executionDir, final String projectDir, final String jobtypeDir,
       final String azLibDir) {
     Preconditions.checkArgument(Files.exists(executionDir));
@@ -56,14 +55,14 @@ public class Launcher {
   public static void main(final String[] args) throws IOException {
     System.out.println("hihihi");
     //  Launcher
-    /*
     final String projectDir = args[0];
     final String jobtypeDir = args[1];
     final String azLibDir = args[2];
     final Path currentWorkingDir = Paths.get("").toAbsolutePath();
 
     final Launcher launcher = new Launcher(currentWorkingDir, projectDir, jobtypeDir, azLibDir);
-    launcher.setup();*/
+    launcher.setup();
+
   }
 
   /**
