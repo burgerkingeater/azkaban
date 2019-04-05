@@ -62,8 +62,7 @@ public class JobTypeManagerTest {
     final URL resourceUrl = Resources.getResource("plugins/jobtypes");
     assertNotNull(resourceUrl);
     FileUtils.copyDirectory(new File(resourceUrl.toURI()), jobTypeDir);
-    this.manager = new JobTypeManager(this.testPluginDirPath, null,
-        this.getClass().getClassLoader());
+    this.manager = new JobTypeManager(this.testPluginDirPath);
   }
 
   @After

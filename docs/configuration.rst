@@ -284,11 +284,6 @@ Executor Server Properties
 | executor.port                             | The port for azkaban  | 0 (any free port)     |
 |                                           | executor server       |                       |
 +-------------------------------------------+-----------------------+-----------------------+
-| executor.global.properties                | A path to the         |   none                |
-|                                           | properties that will  |                       |
-|                                           | be the parent for all |                       |
-|                                           | jobs.                 |                       |
-+-------------------------------------------+-----------------------+-----------------------+
 | azkaban.execution.dir                     | The folder for        | executions            |
 |                                           | executing working     |                       |
 |                                           | directories           |                       |

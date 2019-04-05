@@ -124,8 +124,7 @@ ext.deps = [
         jacksonAnnotation   : 'com.fasterxml.jackson.core:jackson-annotations:2.7.4',
         jacksonDatabind     : 'com.fasterxml.jackson.core:jackson-databind:2.7.4',
         jasypt              : 'org.jasypt:jasypt:1.9.2',
-        jacksonCore         : 'com.fasterxml.jackson.core:jackson-core:2.9.2',
-        tonyCli             : 'com.linkedin.tony:tony-cli:0.1.4'
+        jacksonCore         : 'com.fasterxml.jackson.core:jackson-core:2.9.2'
 ]
 
 subprojects {

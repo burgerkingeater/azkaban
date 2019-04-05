@@ -39,8 +39,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
@@ -74,7 +74,7 @@ public class JobRunnerTest {
     }
     this.workingDir.mkdirs();
     this.jobtypeManager =
-        new JobTypeManager(null, null, this.getClass().getClassLoader());
+        new JobTypeManager(null);
     final JobTypePluginSet pluginSet = this.jobtypeManager.getJobTypePluginSet();
     pluginSet.addPluginClass("test", InteractiveTestJob.class);
   }
@@ -129,27 +129,27 @@ public class JobRunnerTest {
         .assertEvents(EventType.JOB_STARTED, EventType.JOB_STATUS_CHANGED, EventType.JOB_FINISHED);
   }
 
-  private void checkRequiredJobProperties(JobRunner runner, File logFile) {
+  private void checkRequiredJobProperties(final JobRunner runner, final File logFile) {
     Field jobField = null;
     try {
       jobField = runner.getClass().getDeclaredField("job");
-    } catch (NoSuchFieldException e) {
+    } catch (final NoSuchFieldException e) {
       Assert.fail("'job' field not found");
     }
     jobField.setAccessible(true);
     InteractiveTestJob job = null;
     try {
       job = (InteractiveTestJob) jobField.get(runner);
-    } catch (IllegalAccessException e) {
+    } catch (final IllegalAccessException e) {
       Assert.fail("'job' field not accessible");
     }
-    Props jobProps = job.getJobProps();
+    final Props jobProps = job.getJobProps();
     Assert.assertEquals("Unexpected log file path in properties",
         logFile.getAbsolutePath(),
         jobProps.get(CommonJobProperties.JOB_LOG_FILE));
   }
 
-  private BufferedReader getLogReader(File logFile) throws FileNotFoundException {
+  private BufferedReader getLogReader(final File logFile) throws FileNotFoundException {
     return new BufferedReader(new InputStreamReader(new FileInputStream(logFile),
         Charset.defaultCharset()));
   }
@@ -381,7 +381,7 @@ public class JobRunnerTest {
     }
   }
 
-  private Props createProps(final int sleepSec, final boolean fail, Props props) {
+  private Props createProps(final int sleepSec, final boolean fail, final Props props) {
     props.put("type", "test");
     props.put("seconds", sleepSec);
     props.put("fail", String.valueOf(fail));
@@ -394,7 +394,8 @@ public class JobRunnerTest {
   }
 
   private JobRunner createJobRunner(final int execId, final String name, final int time,
-      final boolean fail, final ExecutorLoader loader, final EventCollectorListener listener, Props jobProps) {
+      final boolean fail, final ExecutorLoader loader, final EventCollectorListener listener,
+      final Props jobProps) {
     final Props azkabanProps = new Props();
     final ExecutableFlow flow = new ExecutableFlow();
     flow.setExecutionId(execId);

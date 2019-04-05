@@ -24,11 +24,14 @@ import azkaban.jobExecutor.utils.JobExecutionException;
 import azkaban.utils.Props;
 import azkaban.utils.PropsUtils;
 import azkaban.utils.Utils;
+import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -46,16 +49,13 @@ public class JobTypeManager {
   private static final String COMMONSYSCONFFILE = "commonprivate.properties";
   private static final Logger logger = Logger.getLogger(JobTypeManager.class);
   private final String jobTypePluginDir; // the dir for jobtype plugins
-  private final ClassLoader parentLoader;
-  private final Props globalProperties;
   private JobTypePluginSet pluginSet;
 
-  public JobTypeManager(final String jobtypePluginDir, final Props globalProperties,
-      final ClassLoader parentClassLoader) {
-    this.jobTypePluginDir = jobtypePluginDir;
-    this.parentLoader = parentClassLoader;
-    this.globalProperties = globalProperties;
+  public JobTypeManager(final String jobtypePluginDir) {
+    Preconditions.checkArgument(Files.exists(Paths.get(jobtypePluginDir)) && Files
+        .isDirectory(Paths.get(jobtypePluginDir)));
 
+    this.jobTypePluginDir = jobtypePluginDir;
     loadPlugins();
   }
 
@@ -116,7 +116,7 @@ public class JobTypeManager {
       logger.info("Common plugin job props file " + commonJobPropsFile
           + " found. Attempt to load.");
       try {
-        commonPluginJobProps = new Props(this.globalProperties, commonJobPropsFile);
+        commonPluginJobProps = new Props(null, commonJobPropsFile);
       } catch (final IOException e) {
         throw new JobTypeManagerException(
             "Failed to load common plugin job properties" + e.getCause());
@@ -124,7 +124,7 @@ public class JobTypeManager {
     } else {
       logger.info("Common plugin job props file " + commonJobPropsFile
           + " not found. Using only globals props");
-      commonPluginJobProps = new Props(this.globalProperties);
+      commonPluginJobProps = new Props();
     }
 
     // Loads the common properties used by all plugins when loading
@@ -301,8 +301,7 @@ public class JobTypeManager {
         .format("Classpath for plugin[dir: %s, JobType: %s]: %s", pluginDir, jobTypeName,
             resources));
     final ClassLoader jobTypeLoader =
-        new URLClassLoader(resources.toArray(new URL[resources.size()]),
-            this.parentLoader);
+        new URLClassLoader(resources.toArray(new URL[resources.size()]));
     return jobTypeLoader;
   }
 
