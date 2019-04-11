@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
@@ -62,8 +63,7 @@ public class ProcessJob extends AbstractProcessJob {
   private static final String CREATE_FILE = "touch";
   private static final int SUCCESSFUL_EXECUTION = 0;
   private static final String TEMP_FILE_NAME = "user_can_write";
-
-  private final CommonMetrics commonMetrics;
+  private Optional<CommonMetrics> commonMetrics;
   private volatile AzkabanProcess process;
   private volatile boolean killed = false;
   // For testing only. True if the job process exits successfully.
@@ -73,7 +73,12 @@ public class ProcessJob extends AbstractProcessJob {
       final Props jobProps, final Logger log) {
     super(jobId, sysProps, jobProps, log);
     // TODO: reallocf fully guicify CommonMetrics through ProcessJob dependents
-    this.commonMetrics = SERVICE_PROVIDER.getInstance(CommonMetrics.class);
+    this.commonMetrics = null;
+    try {
+      this.commonMetrics = Optional.ofNullable(SERVICE_PROVIDER.getInstance(CommonMetrics.class));
+    } catch (final Exception e) {
+      log.warn(e);
+    }
   }
 
   /**
@@ -160,7 +165,7 @@ public class ProcessJob extends AbstractProcessJob {
         if (isMemGranted) {
           info(String.format("Memory granted for job %s", getId()));
           if (attempt > 1) {
-            this.commonMetrics.decrementOOMJobWaitCount();
+            this.commonMetrics.ifPresent(m -> m.decrementOOMJobWaitCount());
           }
           break;
         }
@@ -170,7 +175,7 @@ public class ProcessJob extends AbstractProcessJob {
                   Constants.MEMORY_CHECK_INTERVAL_MS), attempt,
               Constants.MEMORY_CHECK_RETRY_LIMIT));
           if (attempt == 1) {
-            this.commonMetrics.incrementOOMJobWaitCount();
+            this.commonMetrics.ifPresent(m -> m.incrementOOMJobWaitCount());
           }
           synchronized (this) {
             try {
@@ -181,7 +186,7 @@ public class ProcessJob extends AbstractProcessJob {
             }
           }
           if (this.killed) {
-            this.commonMetrics.decrementOOMJobWaitCount();
+            this.commonMetrics.ifPresent(m -> m.decrementOOMJobWaitCount());
             info(String.format("Job %s was killed while waiting for memory check retry", getId()));
             return;
           }
@@ -189,7 +194,7 @@ public class ProcessJob extends AbstractProcessJob {
       }
 
       if (!isMemGranted) {
-        this.commonMetrics.decrementOOMJobWaitCount();
+        this.commonMetrics.ifPresent(m -> m.decrementOOMJobWaitCount());
         handleError(oomMsg, null);
       }
     }
