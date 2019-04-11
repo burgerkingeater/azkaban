@@ -16,8 +16,8 @@
 
 package azkaban.remote;
 
+import azkaban.jobtype.JobTypeManager;
 import azkaban.utils.Props;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,45 +38,38 @@ public class Launcher {
   private static final String JOBTYPE_DIR = "jobtype";
   private static final String AZ_DIR = "azkaban_libs";
 
-  private final Path executionDir;
-  private final Path projectDir;
-  private final Path jobtypeDir;
-  private final Path azLibDir;
-
-  public Launcher(final Path executionDir, final String projectDir, final String jobtypeDir,
-      final String azLibDir) {
-    Preconditions.checkArgument(Files.exists(executionDir));
-    this.executionDir = executionDir;
-    this.projectDir = Paths.get(this.executionDir.toString(), projectDir);
-    this.jobtypeDir = Paths.get(this.executionDir.toString(), jobtypeDir);
-    this.azLibDir = Paths.get(this.executionDir.toString(), azLibDir);
+  public Launcher() {
   }
 
   public static void main(final String[] args) throws IOException {
-    System.out.println("hihihi");
     //  Launcher
     final String projectDir = args[0];
     final String jobtypeDir = args[1];
     final String azLibDir = args[2];
+    final String jobType = args[3];
     final Path currentWorkingDir = Paths.get("").toAbsolutePath();
 
-    final Launcher launcher = new Launcher(currentWorkingDir, projectDir, jobtypeDir, azLibDir);
-    launcher.setup();
+    System.out.println("moving projectDir:" + projectDir + ": to " + Paths
+        .get(currentWorkingDir.toString(), PROJECT_DIR));
+    System.out.println("moving jobtypeDir:" + jobtypeDir + ": to " + Paths
+        .get(currentWorkingDir.toString(), JOBTYPE_DIR));
+    System.out.println("moving jobtypeDir:" + azLibDir + ": to " + Paths
+        .get(currentWorkingDir.toString(), AZ_DIR));
+
+    Files.move(Paths.get(projectDir), Paths.get(currentWorkingDir.toString(), PROJECT_DIR));
+
+    final Path jobTypeDir = Paths.get(currentWorkingDir.toString(), JOBTYPE_DIR);
+
+    // creating the specific job type dir
+    Files.createDirectories(jobTypeDir);
+    Files.move(Paths.get(jobtypeDir), Paths.get(jobTypeDir.toString(), jobType));
+
+    Files.move(Paths.get(azLibDir), Paths.get(currentWorkingDir.toString(), AZ_DIR));
+
+    final Launcher launcher = new Launcher();
+    launcher.launch(jobType);
 
   }
-
-  /**
-   * Sets directories up for job run, which includes:
-   * 1. Rename project dir
-   * 2. Rename job type dir
-   * 3. Rename AZ lib dir
-   */
-  private void setup() throws IOException {
-    Files.move(this.projectDir, Paths.get(this.executionDir.toString(), PROJECT_DIR));
-    Files.move(this.jobtypeDir, Paths.get(this.executionDir.toString(), JOBTYPE_DIR));
-    Files.move(this.azLibDir, Paths.get(this.executionDir.toString(), AZ_DIR));
-  }
-
 
   /*
   private static Options createOptions() {
@@ -102,15 +95,11 @@ public class Launcher {
   /**
    * launch a job
    */
-  private void launch(final String projectZipPath, final String jobTypeZipPath,
-      final Props jobProps) throws IOException {
-    //downloadProjectArtifact(projectZipPath);
-    //run(jobProps);
+  private void launch(final String jobType) {
+    final JobTypeManager jobTypeManager = new JobTypeManager(JOBTYPE_DIR);
+    System.out.println(jobTypeManager.getJobTypePluginSet().getPluginClass(jobType));
   }
 
-  private void run(final Props jobProps) {
-
-  }
 
   /**
    * Prepares for job execution. It does the following:
