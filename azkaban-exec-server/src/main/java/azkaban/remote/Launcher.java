@@ -47,6 +47,8 @@ public class Launcher {
     final String jobtypeDir = args[1];
     final String azLibDir = args[2];
     final String jobType = args[3];
+    final String commonProperties = args[4];
+    final String commonPrivateProperties = args[5];
     final Path currentWorkingDir = Paths.get("").toAbsolutePath();
 
     System.out.println("moving projectDir:" + projectDir + ": to " + Paths
@@ -62,6 +64,14 @@ public class Launcher {
 
     // creating the specific job type dir
     Files.createDirectories(jobTypeDir);
+
+    System.out.println("moving commonProperties:" + commonProperties + ": to " +
+        Paths.get(jobtypeDir, commonProperties));
+
+    Files.move(Paths.get(commonProperties), Paths.get(jobtypeDir, commonProperties));
+
+    Files.move(Paths.get(commonPrivateProperties), Paths.get(jobtypeDir, commonPrivateProperties));
+
     Files.move(Paths.get(jobtypeDir), Paths.get(jobTypeDir.toString(), jobType));
 
     Files.move(Paths.get(azLibDir), Paths.get(currentWorkingDir.toString(), AZ_DIR));
