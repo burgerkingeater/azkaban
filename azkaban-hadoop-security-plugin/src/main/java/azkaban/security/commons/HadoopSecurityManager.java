@@ -28,8 +28,6 @@ public abstract class HadoopSecurityManager {
 
   public static final String ENABLE_PROXYING = "azkaban.should.proxy"; // boolean
 
-  public static final String PROXY_KEYTAB_LOCATION = "proxy.keytab.location";
-  public static final String PROXY_USER = "proxy.user";
   public static final String USER_TO_PROXY = "user.to.proxy";
   public static final String OBTAIN_BINARY_TOKEN = "obtain.binary.token";
   public static final String MAPREDUCE_JOB_CREDENTIALS_BINARY =
