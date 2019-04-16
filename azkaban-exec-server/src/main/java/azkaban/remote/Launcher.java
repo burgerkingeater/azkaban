@@ -117,7 +117,7 @@ public class Launcher {
    * launch a job
    */
   private void launch(final String jobType) {
-    System.out.print("creating jobtype managerlol");
+    System.out.println("creating jobtype managerlol");
     try {
       final JobTypeManager jobTypeManager = new JobTypeManager(JOBTYPE_DIR);
       System.out.println(jobTypeManager.getJobTypePluginSet().getPluginClass(jobType));

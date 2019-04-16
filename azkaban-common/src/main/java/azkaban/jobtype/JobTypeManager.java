@@ -223,8 +223,8 @@ public class JobTypeManager {
     try {
       final Props fakeSysProps = new Props(pluginLoadProps);
       final Props fakeJobProps = new Props(pluginJobProps);
-      System.out.println("fakeJobProps:" + fakeJobProps);
-      System.out.println("fakeSysProps:" + fakeSysProps);
+      logger.info("fakeJobProps:" + fakeJobProps);
+      logger.info("fakeSysProps:" + fakeSysProps);
       final Job job =
           (Job) Utils.callConstructor(clazz, "dummy", fakeSysProps,
               fakeJobProps, logger);
