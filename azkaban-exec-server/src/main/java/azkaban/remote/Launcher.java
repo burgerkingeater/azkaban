@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 
 /**
@@ -49,36 +50,46 @@ public class Launcher {
     final String jobType = args[3];
     final String commonProperties = args[4];
     final String commonPrivateProperties = args[5];
-    final Path currentWorkingDir = Paths.get("").toAbsolutePath();
+    final String mode = args[6];
+    System.out.println(mode);
+    if (mode.equals("remote")) {
+      final Path currentWorkingDir = Paths.get("").toAbsolutePath();
 
-    System.out.println("moving projectDir:" + projectDir + ": to " + Paths
-        .get(currentWorkingDir.toString(), PROJECT_DIR));
-    System.out.println("moving jobtypeDir:" + jobtypeDir + ": to " + Paths
-        .get(currentWorkingDir.toString(), JOBTYPE_DIR));
-    System.out.println("moving jobtypeDir:" + azLibDir + ": to " + Paths
-        .get(currentWorkingDir.toString(), AZ_DIR));
+      System.out.println("moving projectDir:" + projectDir + ": to " + Paths
+          .get(currentWorkingDir.toString(), PROJECT_DIR));
+      System.out.println("moving jobtypeDir:" + jobtypeDir + ": to " + Paths
+          .get(currentWorkingDir.toString(), JOBTYPE_DIR));
+      System.out.println("moving jobtypeDir:" + azLibDir + ": to " + Paths
+          .get(currentWorkingDir.toString(), AZ_DIR));
 
-    Files.move(Paths.get(projectDir), Paths.get(currentWorkingDir.toString(), PROJECT_DIR));
+      Files.move(Paths.get(projectDir), Paths.get(currentWorkingDir.toString(), PROJECT_DIR));
 
-    final Path jobTypeDir = Paths.get(currentWorkingDir.toString(), JOBTYPE_DIR);
+      final Path jobTypeDir = Paths.get(currentWorkingDir.toString(), JOBTYPE_DIR);
 
-    // creating the specific job type dir
-    Files.createDirectories(jobTypeDir);
+      // creating the specific job type dir
+      Files.createDirectories(jobTypeDir);
 
-    System.out.println("moving commonProperties:" + commonProperties + ": to " +
-        Paths.get(jobtypeDir, commonProperties));
+      System.out.println("Moving commonProperties:" + commonProperties + ": to " +
+          Paths.get(jobTypeDir.toString(), commonProperties));
 
-    Files.move(Paths.get(commonProperties), Paths.get(jobtypeDir, commonProperties));
+      Files.move(Paths.get(commonProperties), Paths.get(jobTypeDir.toString(), commonProperties));
 
-    Files.move(Paths.get(commonPrivateProperties), Paths.get(jobtypeDir, commonPrivateProperties));
+      System.out.println("Moving commonPrivate:" + commonPrivateProperties + ": to " +
+          Paths.get(jobTypeDir.toString(), commonPrivateProperties));
+      Files.move(Paths.get(commonPrivateProperties), Paths.get(jobTypeDir.toString(),
+          commonPrivateProperties));
 
-    Files.move(Paths.get(jobtypeDir), Paths.get(jobTypeDir.toString(), jobType));
+      System.out.println("Moving jobtypeDir:" + jobtypeDir + ": to " +
+          Paths.get(jobTypeDir.toString(), jobType));
+      Files.move(Paths.get(jobtypeDir), Paths.get(jobTypeDir.toString(), jobType));
 
-    Files.move(Paths.get(azLibDir), Paths.get(currentWorkingDir.toString(), AZ_DIR));
+      System.out.println("Moving azLibDir:" + azLibDir + ": to " +
+          Paths.get(currentWorkingDir.toString(), AZ_DIR));
+      Files.move(Paths.get(azLibDir), Paths.get(currentWorkingDir.toString(), AZ_DIR));
+    }
 
     final Launcher launcher = new Launcher();
     launcher.launch(jobType);
-
   }
 
   /*
@@ -106,8 +117,13 @@ public class Launcher {
    * launch a job
    */
   private void launch(final String jobType) {
-    final JobTypeManager jobTypeManager = new JobTypeManager(JOBTYPE_DIR);
-    System.out.println(jobTypeManager.getJobTypePluginSet().getPluginClass(jobType));
+    System.out.print("creating jobtype managerlol");
+    try {
+      final JobTypeManager jobTypeManager = new JobTypeManager(JOBTYPE_DIR);
+      System.out.println(jobTypeManager.getJobTypePluginSet().getPluginClass(jobType));
+    } catch (final Exception e) {
+      System.out.println(ExceptionUtils.getFullStackTrace(e));
+    }
   }
 
 
