@@ -58,9 +58,8 @@ public class Launcher {
     final String jobType = args[3];
     final String commonProperties = args[4];
     final String commonPrivateProperties = args[5];
-    final String jobId = args[6];
-    final String jobPropFile = args[7];
-    final String mode = args[8];
+    final String jobPropFile = args[6];
+    final String mode = args[7];
 
     validateArgument(args);
     System.out.println(mode);
@@ -103,7 +102,7 @@ public class Launcher {
     final Launcher launcher = new Launcher();
 
     final Props jobProp = loadProps(Paths.get(jobPropFile));
-    launcher.launch(jobType, jobId, jobProp);
+    launcher.launch(jobType, jobProp);
   }
 
   private static Props loadProps(final Path propFile) throws IOException {
@@ -134,11 +133,11 @@ public class Launcher {
   /**
    * launch a job
    */
-  private void launch(final String jobType, final String jobId, final Props jobProps) {
+  private void launch(final String jobType, final Props jobProps) {
     System.out.println("creating jobtype managerlol");
     try {
       final JobTypeManager jobTypeManager = new JobTypeManager(JOBTYPE_DIR);
-      final Job job = jobTypeManager.buildJobExecutor(jobId, jobProps, logger);
+      final Job job = jobTypeManager.buildJobExecutor(jobProps, logger);
       job.run();
       System.out.println(jobTypeManager.getJobTypePluginSet().getPluginClass(jobType));
     } catch (final Exception e) {
