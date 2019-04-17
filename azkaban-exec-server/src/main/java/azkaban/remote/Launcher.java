@@ -16,6 +16,7 @@
 
 package azkaban.remote;
 
+import azkaban.jobExecutor.Job;
 import azkaban.jobtype.JobTypeManager;
 import azkaban.utils.Props;
 import java.io.IOException;
@@ -23,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -39,7 +41,13 @@ public class Launcher {
   private static final String JOBTYPE_DIR = "jobtype";
   private static final String AZ_DIR = "azkaban_libs";
 
+  private static final Logger logger = Logger.getLogger(Launcher.class);
+
   public Launcher() {
+  }
+
+  private static void validateArgument(final String[] args) {
+
   }
 
   public static void main(final String[] args) throws IOException {
@@ -50,7 +58,11 @@ public class Launcher {
     final String jobType = args[3];
     final String commonProperties = args[4];
     final String commonPrivateProperties = args[5];
-    final String mode = args[6];
+    final String jobId = args[6];
+    final String jobPropFile = args[7];
+    final String mode = args[8];
+
+    validateArgument(args);
     System.out.println(mode);
     if (mode.equals("remote")) {
       final Path currentWorkingDir = Paths.get("").toAbsolutePath();
@@ -89,7 +101,13 @@ public class Launcher {
     }
 
     final Launcher launcher = new Launcher();
-    launcher.launch(jobType);
+
+    final Props jobProp = loadProps(Paths.get(jobPropFile));
+    launcher.launch(jobType, jobId, jobProp);
+  }
+
+  private static Props loadProps(final Path propFile) throws IOException {
+    return new Props(null, propFile.toFile());
   }
 
   /*
@@ -116,10 +134,12 @@ public class Launcher {
   /**
    * launch a job
    */
-  private void launch(final String jobType) {
+  private void launch(final String jobType, final String jobId, final Props jobProps) {
     System.out.println("creating jobtype managerlol");
     try {
       final JobTypeManager jobTypeManager = new JobTypeManager(JOBTYPE_DIR);
+      final Job job = jobTypeManager.buildJobExecutor(jobId, jobProps, logger);
+      job.run();
       System.out.println(jobTypeManager.getJobTypePluginSet().getPluginClass(jobType));
     } catch (final Exception e) {
       System.out.println(ExceptionUtils.getFullStackTrace(e));
