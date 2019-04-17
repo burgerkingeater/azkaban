@@ -700,7 +700,7 @@ public class JobRunner extends EventHandler implements Runnable {
       }
 
       try {
-        this.job = this.jobtypeManager.buildJobExecutor(this.jobId, this.props, this.logger);
+        this.job = this.jobtypeManager.buildJobExecutor(this.props, this.logger);
       } catch (final JobTypeManagerException e) {
         this.logger.error("Failed to build job type", e);
         return null;

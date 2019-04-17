@@ -16,6 +16,7 @@
 
 package azkaban.jobtype;
 
+import azkaban.flow.CommonJobProperties;
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.jobExecutor.Job;
 import azkaban.jobExecutor.NoopJob;
@@ -311,13 +312,15 @@ public class JobTypeManager {
     return jobTypeLoader;
   }
 
-  public Job buildJobExecutor(final String jobId, Props jobProps, final Logger logger)
+  public Job buildJobExecutor(Props jobProps, final Logger logger)
       throws JobTypeManagerException {
     // This is final because during build phase, you should never need to swap
     // the pluginSet for safety reasons
     final JobTypePluginSet pluginSet = getJobTypePluginSet();
 
     Job job = null;
+    final String jobId = jobProps.getString(CommonJobProperties.JOB_ID);
+
     try {
       final String jobType = jobProps.getString("type");
       if (jobType == null || jobType.length() == 0) {
