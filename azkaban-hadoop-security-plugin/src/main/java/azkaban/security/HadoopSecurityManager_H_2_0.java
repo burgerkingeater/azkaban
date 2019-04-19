@@ -437,6 +437,9 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
         + hiveConf.get(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname));
 
     final IMetaStoreClient hiveClient = createRetryingMetaStoreClient(hiveConf);
+    logger.info("userToProxy:" + userToProxy);
+    logger.info("UserGroupInformation.getLoginUser().getShortUserName():" + UserGroupInformation
+        .getLoginUser());
     final String hcatTokenStr =
         hiveClient.getDelegationToken(userToProxy, UserGroupInformation
             .getLoginUser().getShortUserName());
