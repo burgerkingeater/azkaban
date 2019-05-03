@@ -37,8 +37,6 @@ public class HadoopConfigurationInjector {
 
   private static final Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
 
-  // File to which the Hadoop configuration to inject will be written.
-  private static final String INJECT_FILE = "hadoop-inject.xml";
   // Prefix for properties to be automatically injected into the Hadoop conf.
   public static final String INJECT_PREFIX = "hadoop-inject.";
   public static final String WORKFLOW_ID_SEPERATOR = "$";
