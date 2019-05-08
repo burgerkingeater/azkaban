@@ -18,6 +18,7 @@ package azkaban.remote;
 
 import azkaban.jobExecutor.AbstractProcessJob;
 import azkaban.jobExecutor.Job;
+import azkaban.jobtype.HadoopProxy;
 import azkaban.jobtype.JobTypeManager;
 import azkaban.utils.Props;
 import java.io.IOException;
@@ -140,8 +141,8 @@ public class Launcher {
       final JobTypeManager jobTypeManager = new JobTypeManager(JOBTYPE_DIR);
       final Job job = jobTypeManager.buildJobExecutor(jobProps, logger);
       if (job instanceof AbstractProcessJob) {
-        Props allProps = ((AbstractProcessJob) job).getAllProps();
-        HadoopProxy hadoopProxy
+        final Props allProps = ((AbstractProcessJob) job).getAllProps();
+        final HadoopProxy hadoopProxy = new HadoopProxy();
         job.run();
       }
       System.out.println(jobTypeManager.getJobTypePluginSet().getPluginClass(jobType));
