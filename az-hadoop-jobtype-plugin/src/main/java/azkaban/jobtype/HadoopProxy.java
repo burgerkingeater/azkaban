@@ -79,9 +79,12 @@ public class HadoopProxy {
     if (isProxyEnabled()) {
       this.userToProxy = jobProps.getString(HadoopSecurityManager.USER_TO_PROXY);
       logger.info("Need to proxy. Getting tokens.");
-      // get tokens into a file, and put the location in props
-      this.tokenFile = HadoopJobUtils.getHadoopTokens(this.hadoopSecurityManager, props, logger);
-      jobProps.put("env." + HADOOP_TOKEN_FILE_LOCATION, this.tokenFile.getAbsolutePath());
+      final String HADOOP_TOKEN_FILE_LOCATION_KEY = "env." + HADOOP_TOKEN_FILE_LOCATION;
+      if (!jobProps.containsKey(HADOOP_TOKEN_FILE_LOCATION_KEY)) {
+        // get tokens into a file, and put the location in props
+        this.tokenFile = HadoopJobUtils.getHadoopTokens(this.hadoopSecurityManager, props, logger);
+        jobProps.put(HADOOP_TOKEN_FILE_LOCATION_KEY, this.tokenFile.getAbsolutePath());
+      }
     }
   }
 
