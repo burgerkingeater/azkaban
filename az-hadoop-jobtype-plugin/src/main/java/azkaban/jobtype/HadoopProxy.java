@@ -83,6 +83,7 @@ public class HadoopProxy {
       if (!jobProps.containsKey(HADOOP_TOKEN_FILE_LOCATION_KEY)) {
         // get tokens into a file, and put the location in props
         this.tokenFile = HadoopJobUtils.getHadoopTokens(this.hadoopSecurityManager, props, logger);
+        logger.info("tokenfile" + this.tokenFile);
         jobProps.put(HADOOP_TOKEN_FILE_LOCATION_KEY, this.tokenFile.getAbsolutePath());
       }
     }

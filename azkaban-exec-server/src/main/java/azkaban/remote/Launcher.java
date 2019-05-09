@@ -18,7 +18,6 @@ package azkaban.remote;
 
 import azkaban.jobExecutor.AbstractProcessJob;
 import azkaban.jobExecutor.Job;
-import azkaban.jobtype.HadoopProxy;
 import azkaban.jobtype.JobTypeManager;
 import azkaban.utils.Props;
 import java.io.IOException;
@@ -61,7 +60,8 @@ public class Launcher {
     final String commonProperties = args[4];
     final String commonPrivateProperties = args[5];
     final String jobPropFile = args[6];
-    final String mode = args[7];
+    final String tokenFilePath = args[7];
+    final String mode = args[8];
 
     validateArgument(args);
     System.out.println(mode);
@@ -104,7 +104,7 @@ public class Launcher {
     final Launcher launcher = new Launcher();
 
     final Props jobProp = loadProps(Paths.get(jobPropFile));
-    launcher.launch(jobType, jobProp);
+    launcher.launch(jobType, jobProp, Paths.get(tokenFilePath));
   }
 
   private static Props loadProps(final Path propFile) throws IOException {
@@ -135,14 +135,21 @@ public class Launcher {
   /**
    * launch a job
    */
-  private void launch(final String jobType, final Props jobProps) {
+  private void launch(final String jobType, final Props jobProps, final Path tokenFile) {
     System.out.println("creating jobtype managerlol");
     try {
       final JobTypeManager jobTypeManager = new JobTypeManager(JOBTYPE_DIR);
+      if (Files.exists(tokenFile)) {
+        jobProps.put("env.HADOOP_TOKEN_FILE_LOCATION", tokenFile.toAbsolutePath().toString());
+      }
       final Job job = jobTypeManager.buildJobExecutor(jobProps, logger);
       if (job instanceof AbstractProcessJob) {
-        final Props allProps = ((AbstractProcessJob) job).getAllProps();
-        final HadoopProxy hadoopProxy = new HadoopProxy();
+//        final Props resolvedSysProps = ((AbstractProcessJob) job).getSysProps();
+//        final Props resolvedJobProps = ((AbstractProcessJob) job).getJobProps();
+//        final Props allProps = ((AbstractProcessJob) job).getAllProps();
+//        final HadoopProxy hadoopProxy = new HadoopProxy(resolvedSysProps, resolvedJobProps, logger);
+        //hadoopProxy.setupPropsForProxy(allProps, jobProps, logger);
+        // read HADOOP_TOKEN_FILE from job props or env variable? System.getenv
         job.run();
       }
       System.out.println(jobTypeManager.getJobTypePluginSet().getPluginClass(jobType));

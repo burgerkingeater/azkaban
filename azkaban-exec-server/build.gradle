@@ -19,6 +19,7 @@ apply plugin: 'distribution'
 dependencies {
     compile(project(':az-core'))
     compile(project(':azkaban-common'))
+    compile(project(':az-hadoop-jobtype-plugin'))
 
     compile deps.guava
     compile deps.jsr305

@@ -185,8 +185,11 @@ public class JobTypeManager {
       final Props commonPluginJobProps = plugins.getCommonPluginJobProps();
       final Props commonPluginLoadProps = plugins.getCommonPluginLoadProps();
       if (pluginJobPropsFile.exists()) {
+        logger.info("commonPluginJobProps" + commonPluginJobProps);
+        logger.info("commonPluginLoadProps" + commonPluginLoadProps);
         pluginJobProps = new Props(commonPluginJobProps, pluginJobPropsFile);
       } else {
+        logger.info("commonPluginJobProps" + commonPluginJobProps);
         pluginJobProps = new Props(commonPluginJobProps);
       }
 
@@ -203,6 +206,7 @@ public class JobTypeManager {
           + e.getMessage(), e);
     }
     // Add properties into the plugin set
+    logger.info("adding " + jobTypeName + ":" + pluginLoadProps);
     plugins.addPluginLoadProps(jobTypeName, pluginLoadProps);
     if (pluginJobProps != null) {
       plugins.addPluginJobProps(jobTypeName, pluginJobProps);
@@ -357,6 +361,7 @@ public class JobTypeManager {
       Props pluginLoadProps = pluginSet.getPluginLoaderProps(jobType);
       if (pluginLoadProps != null) {
         pluginLoadProps = PropsUtils.resolveProps(pluginLoadProps);
+        System.out.println("1pluginloadprops:" + pluginLoadProps.toString());
       } else {
         // pluginSet.getCommonPluginLoadProps() will return null if there is no plugins directory.
         // hence assigning default Props() if that's the case
@@ -364,8 +369,10 @@ public class JobTypeManager {
         if (pluginLoadProps == null) {
           pluginLoadProps = new Props();
         }
+        System.out.println("2pluginloadprops:" + pluginLoadProps.toString());
       }
 
+      System.out.println("3pluginloadprops:" + pluginLoadProps.toString());
       job =
           (Job) Utils.callConstructor(executorClass, jobId, pluginLoadProps,
               jobProps, logger);
