@@ -248,29 +248,29 @@ public class ProcessJob extends AbstractProcessJob {
       }
       // Set parent directory permissions to <uid>:azkaban so user can write in their execution directory
       // if the directory is not permissioned correctly already (should happen once per execution)
-      if (!canWriteInCurrentWorkingDirectory(effectiveUser)) {
-        info("Changing current working directory ownership");
-        assignUserFileOwnership(effectiveUser, getWorkingDirectory());
-      }
-      // Set property file permissions to <uid>:azkaban so user can write to their prop files
-      // in order to pass properties from one job to another
-      for (final File propFile : propFiles) {
-        info("Changing properties files ownership");
-        assignUserFileOwnership(effectiveUser, propFile.getAbsolutePath());
-      }
+//      if (!canWriteInCurrentWorkingDirectory(effectiveUser)) {
+//        info("Changing current working directory ownership");
+//        assignUserFileOwnership(effectiveUser, getWorkingDirectory());
+//      }
+//      // Set property file permissions to <uid>:azkaban so user can write to their prop files
+//      // in order to pass properties from one job to another
+//      for (final File propFile : propFiles) {
+//        info("Changing properties files ownership");
+//        assignUserFileOwnership(effectiveUser, propFile.getAbsolutePath());
+//      }
     }
 
-    for (String command : commands) {
+    for (final String command : commands) {
       AzkabanProcessBuilder builder = null;
       if (isExecuteAsUser) {
-        command =
-            String.format("%s %s %s", executeAsUserBinaryPath, effectiveUser,
-                command);
-        info("Command: " + command);
+//        command =
+//            String.format("%s %s %s", executeAsUserBinaryPath, effectiveUser,
+//                command);
+        info("Command1: " + command);
         builder =
             new AzkabanProcessBuilder(partitionCommandLine(command))
                 .setEnv(envVars).setWorkingDir(getCwd()).setLogger(getLog())
-                .enableExecuteAsUser().setExecuteAsUserBinaryPath(executeAsUserBinaryPath)
+                .enableExecuteAsUser()//.setExecuteAsUserBinaryPath(executeAsUserBinaryPath)
                 .setEffectiveUser(effectiveUser);
       } else {
         info("Command: " + command);
