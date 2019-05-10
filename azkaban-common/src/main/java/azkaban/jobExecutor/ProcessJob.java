@@ -272,6 +272,7 @@ public class ProcessJob extends AbstractProcessJob {
                 .setEnv(envVars).setWorkingDir(getCwd()).setLogger(getLog())
                 .enableExecuteAsUser()//.setExecuteAsUserBinaryPath(executeAsUserBinaryPath)
                 .setEffectiveUser(effectiveUser);
+        info("working dir:" + new File(".").getAbsolutePath());
       } else {
         info("Command: " + command);
         builder =

@@ -148,7 +148,7 @@ public class Launcher {
 //        final Props resolvedJobProps = ((AbstractProcessJob) job).getJobProps();
 //        final Props allProps = ((AbstractProcessJob) job).getAllProps();
 //        final HadoopProxy hadoopProxy = new HadoopProxy(resolvedSysProps, resolvedJobProps, logger);
-        //hadoopProxy.setupPropsForProxy(allProps, jobProps, logger);
+//        hadoopProxy.setupPropsForProxy(allProps, jobProps, logger);
         // read HADOOP_TOKEN_FILE from job props or env variable? System.getenv
         job.run();
       }
