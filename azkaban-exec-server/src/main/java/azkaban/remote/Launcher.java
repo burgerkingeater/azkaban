@@ -41,10 +41,12 @@ public class Launcher {
   private static final String PROJECT_DIR = "project";
   private static final String JOBTYPE_DIR = "jobtype";
   private static final String AZ_DIR = "azkaban_libs";
+  private final Path currentWorkingDir;
 
   private static final Logger logger = Logger.getLogger(Launcher.class);
 
-  public Launcher() {
+  public Launcher(final Path currentWorkingDir) {
+    this.currentWorkingDir = currentWorkingDir;
   }
 
   private static void validateArgument(final String[] args) {
@@ -65,8 +67,8 @@ public class Launcher {
 
     validateArgument(args);
     System.out.println(mode);
+    final Path currentWorkingDir = Paths.get("").toAbsolutePath();
     if (mode.equals("remote")) {
-      final Path currentWorkingDir = Paths.get("").toAbsolutePath();
 
       System.out.println("moving projectDir:" + projectDir + ": to " + Paths
           .get(currentWorkingDir.toString(), PROJECT_DIR));
@@ -101,7 +103,7 @@ public class Launcher {
       Files.move(Paths.get(azLibDir), Paths.get(currentWorkingDir.toString(), AZ_DIR));
     }
 
-    final Launcher launcher = new Launcher();
+    final Launcher launcher = new Launcher(currentWorkingDir);
 
     final Props jobProp = loadProps(Paths.get(jobPropFile));
     launcher.launch(jobType, jobProp, Paths.get(tokenFilePath));
@@ -142,6 +144,7 @@ public class Launcher {
       if (Files.exists(tokenFile)) {
         jobProps.put("env.HADOOP_TOKEN_FILE_LOCATION", tokenFile.toAbsolutePath().toString());
       }
+      jobProps.put("working.dir", this.currentWorkingDir.toString());
       final Job job = jobTypeManager.buildJobExecutor(jobProps, logger);
       if (job instanceof AbstractProcessJob) {
 //        final Props resolvedSysProps = ((AbstractProcessJob) job).getSysProps();
