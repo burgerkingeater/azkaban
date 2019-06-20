@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 
 public class User {
 
@@ -105,62 +107,81 @@ public class User {
   }
 
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((this.userid == null) ? 0 : this.userid.hashCode());
-    return result;
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    final User user = (User) o;
+
+    return new EqualsBuilder()
+        .append(this.userid, user.userid)
+        .append(this.roles, user.roles)
+        .append(this.groups, user.groups)
+        .append(this.properties, user.properties)
+        .append(this.email, user.email)
+        .append(this.userPermissions, user.userPermissions)
+        .isEquals();
   }
 
   @Override
-  public boolean equals(final Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    final User other = (User) obj;
-    if (this.userid == null) {
-      if (other.userid != null) {
-        return false;
-      }
-    } else if (!this.userid.equals(other.userid)) {
-      return false;
-    }
-    return true;
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(this.userid)
+        .append(this.roles)
+        .append(this.groups)
+        .append(this.properties)
+        .append(this.email)
+        .append(this.userPermissions)
+        .toHashCode();
   }
 
-  public static interface UserPermissions {
-
-    public boolean hasPermission(String permission);
-
-    public void addPermission(String permission);
-  }
-
-  public static class DefaultUserPermission implements UserPermissions {
+  public static class UserPermissions {
 
     Set<String> permissions;
 
-    public DefaultUserPermission() {
+    public UserPermissions() {
       this(new HashSet<>());
     }
 
-    public DefaultUserPermission(final Set<String> permissions) {
+    public UserPermissions(final Set<String> permissions) {
       this.permissions = permissions;
     }
 
-    @Override
     public boolean hasPermission(final String permission) {
       return this.permissions.contains(permission);
     }
 
-    @Override
     public void addPermission(final String permission) {
       this.permissions.add(permission);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) {
+        return true;
+      }
+
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      final UserPermissions that = (UserPermissions) o;
+
+      return new EqualsBuilder()
+          .append(this.permissions, that.permissions)
+          .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+      return new HashCodeBuilder(17, 37)
+          .append(this.permissions)
+          .toHashCode();
     }
   }
 }
